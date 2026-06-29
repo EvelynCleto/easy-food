@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS coupons_active_read ON public.coupons;
