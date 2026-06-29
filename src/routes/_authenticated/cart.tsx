@@ -15,67 +15,64 @@ function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-[520px] py-12 text-center sm:py-20">
-        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-accent">
-          <ShoppingBag size={32} strokeWidth={1.6} className="text-accent-foreground" />
+      <div className="animate-rise mx-auto max-w-[520px] py-12 text-center sm:py-20">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ background: "var(--surface)" }}>
+          <ShoppingBag size={26} strokeWidth={1.6} style={{ color: "var(--ink-2)" }} />
         </div>
-        <h1 className="text-display mt-8">Seu carrinho está vazio</h1>
-        <p className="mt-3 text-[15px] text-muted-foreground">
-          Que tal explorar nossos pratos saudáveis?
+        <h1 className="text-display-m mt-8">Carrinho vazio</h1>
+        <p className="mt-3 text-body" style={{ color: "var(--ink-2)" }}>
+          Explore o catálogo para começar.
         </p>
         <Link to="/catalog" className="btn-primary mt-8 inline-flex">
-          Explorar pratos <ArrowRight size={16} />
+          Explorar pratos <ArrowRight size={15} />
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[860px]">
-      <header className="mb-8">
-        <h1 className="text-display">Carrinho</h1>
-        <p className="mt-2 text-[15px] text-muted-foreground">
+    <div className="animate-rise mx-auto max-w-[1000px]">
+      <header className="mb-10">
+        <p className="text-eyebrow">checkout</p>
+        <h1 className="text-display-m mt-3">Carrinho</h1>
+        <p className="mt-3 text-body-sm" style={{ color: "var(--ink-2)" }}>
           {items.length} {items.length === 1 ? "item" : "itens"}
         </p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         {/* Items */}
         <div className="space-y-3">
           {items.map((it) => (
-            <div key={it.productId} className="card-base flex gap-4 p-4 sm:p-5">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-surface sm:h-28 sm:w-28">
-                {it.image && <img src={it.image} alt={it.name} className="h-full w-full object-cover" />}
+            <div key={it.productId} className="card-nested flex gap-4 p-4 sm:p-5">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[14px] sm:h-28 sm:w-28" style={{ background: "var(--surface)" }}>
+                {it.image && <img src={it.image} alt={it.name} className="plate-photo h-full w-full object-cover" />}
               </div>
               <div className="flex min-w-0 flex-1 flex-col justify-between">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="line-clamp-2 text-[15px] font-semibold text-foreground">{it.name}</h3>
-                    <p className="mt-1 text-[15px] font-bold tabular-nums text-foreground">{brl(it.price)}</p>
+                    <h3 className="line-clamp-2 text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{it.name}</h3>
+                    <p className="mt-1 text-[14px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>{brl(it.price)}</p>
                   </div>
-                  <button
-                    onClick={() => remove(it.productId)}
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-surface hover:text-destructive"
-                    aria-label="Remover"
-                  >
-                    <Trash2 size={16} />
+                  <button onClick={() => remove(it.productId)}
+                    className="btn-icon"
+                    aria-label="Remover">
+                    <Trash2 size={15} />
                   </button>
                 </div>
-                <div className="mt-3 inline-flex w-fit items-center gap-2 rounded-full bg-surface p-1">
-                  <button
-                    onClick={() => setQty(it.productId, it.quantity - 1)}
-                    className="grid h-8 w-8 place-items-center rounded-full bg-card text-foreground shadow-sm transition hover:opacity-70"
-                    aria-label="Diminuir"
-                  >
-                    <Minus size={14} />
+                <div className="mt-3 inline-flex w-fit items-center gap-2 rounded-full p-1" style={{ background: "var(--surface)" }}>
+                  <button onClick={() => setQty(it.productId, it.quantity - 1)}
+                    className="press grid h-7 w-7 place-items-center rounded-full transition"
+                    style={{ background: "var(--card)", color: "var(--ink-1)" }}
+                    aria-label="Diminuir">
+                    <Minus size={13} />
                   </button>
-                  <span className="min-w-[28px] text-center text-[14px] font-bold tabular-nums">{it.quantity}</span>
-                  <button
-                    onClick={() => setQty(it.productId, it.quantity + 1)}
-                    className="grid h-8 w-8 place-items-center rounded-full bg-card text-foreground shadow-sm transition hover:opacity-70"
-                    aria-label="Aumentar"
-                  >
-                    <Plus size={14} />
+                  <span className="min-w-[28px] text-center text-[13.5px] font-semibold tabular-nums">{it.quantity}</span>
+                  <button onClick={() => setQty(it.productId, it.quantity + 1)}
+                    className="press grid h-7 w-7 place-items-center rounded-full transition"
+                    style={{ background: "var(--card)", color: "var(--ink-1)" }}
+                    aria-label="Aumentar">
+                    <Plus size={13} />
                   </button>
                 </div>
               </div>
@@ -84,32 +81,33 @@ function CartPage() {
         </div>
 
         {/* Summary */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="card-base p-6">
-            <h2 className="text-title-3">Resumo</h2>
-            <div className="mt-5 space-y-3 text-[15px]">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
-                <span className="text-foreground tabular-nums">{brl(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Taxa de serviço</span>
-                <span className="text-foreground tabular-nums">{brl(fee)}</span>
-              </div>
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <div className="card-aurora p-6">
+            <p className="text-eyebrow">resumo</p>
+            <div className="mt-5 space-y-3 text-body-sm">
+              <Row label="Subtotal" value={brl(subtotal)} />
+              <Row label="Taxa de serviço" value={brl(fee)} />
             </div>
-            <div className="mt-5 flex items-baseline justify-between border-t border-border/60 pt-5">
-              <span className="text-[15px] font-semibold">Total</span>
-              <span className="font-display text-[28px] font-bold tracking-tight tabular-nums">{brl(total)}</span>
+            <div className="mt-5 flex items-baseline justify-between pt-5" style={{ borderTop: "0.5px solid var(--hairline)" }}>
+              <span className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>Total</span>
+              <span className="font-display text-[28px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>{brl(total)}</span>
             </div>
             <button onClick={() => navigate({ to: "/checkout" })} className="btn-primary mt-6 w-full">
-              Ir para checkout <ArrowRight size={16} />
+              Ir para o checkout <ArrowRight size={15} />
             </button>
-            <p className="mt-4 text-center text-[12.5px] text-muted-foreground">
-              Pagamento seguro · Retirada em segundos
-            </p>
+            <p className="mt-4 text-center text-caption">Pagamento seguro · Retirada em segundos</p>
           </div>
-        </div>
+        </aside>
       </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between">
+      <span style={{ color: "var(--ink-2)" }}>{label}</span>
+      <span className="tabular-nums" style={{ color: "var(--ink-1)" }}>{value}</span>
     </div>
   );
 }

@@ -22,32 +22,54 @@ function NotificationsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
+  // Group by day
+  const groups = notes.reduce<Record<string, typeof notes>>((acc, n) => {
+    const key = new Date(n.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
+    (acc[key] ||= []).push(n);
+    return acc;
+  }, {});
+
   return (
-    <div className="mx-auto max-w-[760px]">
-      <header className="flex items-baseline justify-between">
-        <h1 className="text-display">Notificações</h1>
+    <div className="animate-rise mx-auto max-w-[760px]">
+      <header className="mb-10 flex items-baseline justify-between">
+        <div>
+          <p className="text-eyebrow">central</p>
+          <h1 className="text-display-m mt-3">Notificações</h1>
+        </div>
         <button onClick={() => markAll.mutate()} className="btn-ghost">
-          Marcar todas como lidas
+          Marcar como lidas
         </button>
       </header>
 
-      <div className="mt-10 divide-y divide-border/60 border-y border-border/60">
-        {notes.length === 0 && (
-          <div className="py-20 text-center text-body text-muted-foreground">Nenhuma notificação ainda.</div>
-        )}
-        {notes.map((n) => (
-          <div key={n.id} className="flex gap-4 py-5">
-            <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-primary"}`} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-[15px] font-semibold text-foreground">{n.title}</h3>
-                <span className="shrink-0 text-[12px] text-muted-foreground">{new Date(n.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>
+      {notes.length === 0 ? (
+        <div className="card-flat grid h-60 place-items-center">
+          <p className="text-caption">Sem notificações</p>
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {Object.entries(groups).map(([day, group]) => (
+            <section key={day}>
+              <p className="text-eyebrow mb-4">{day}</p>
+              <div className="card-nested overflow-hidden">
+                {group.map((n, i) => (
+                  <div key={n.id} className="flex gap-4 px-5 py-4" style={{ borderTop: i > 0 ? "0.5px solid var(--hairline)" : "none" }}>
+                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: n.read ? "transparent" : "var(--primary)", boxShadow: n.read ? "none" : "0 0 8px var(--primary-glow)" }} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <h3 className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{n.title}</h3>
+                        <span className="shrink-0 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                          {new Date(n.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      {n.body && <p className="mt-1 text-body-sm" style={{ color: "var(--ink-2)" }}>{n.body}</p>}
+                    </div>
+                  </div>
+                ))}
               </div>
-              {n.body && <p className="mt-1 text-[14px] text-muted-foreground">{n.body}</p>}
-            </div>
-          </div>
-        ))}
-      </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

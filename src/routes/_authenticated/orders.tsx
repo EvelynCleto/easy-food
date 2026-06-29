@@ -38,41 +38,49 @@ function OrdersPage() {
   });
 
   return (
-    <div className="mx-auto max-w-[760px]">
-      <h1 className="text-display">Pedidos</h1>
+    <div className="animate-rise mx-auto max-w-[860px]">
+      <header className="mb-10">
+        <p className="text-eyebrow">histórico</p>
+        <h1 className="text-display-m mt-3">Pedidos</h1>
+      </header>
 
-      <div className="relative mt-10">
-        <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar pelo código"
-          className="h-12 w-full rounded-full bg-surface pr-5 text-[15px] outline-none placeholder:text-muted-foreground focus:bg-card focus:ring-2 focus:ring-primary/20"
-          style={{ paddingLeft: "3.25rem" }} />
+      <div className="relative">
+        <Search size={17} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-3)" }} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por código"
+          className="input-aurora" style={{ paddingLeft: "3rem", height: "48px" }} />
       </div>
 
-      <div className="no-scrollbar mt-5 -mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:px-0">
+      <div className="no-scrollbar mt-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0">
         {FILTERS.map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
-            className={cn("shrink-0 rounded-full px-4 py-2 text-[14px] font-medium transition",
-              filter === f.id ? "bg-foreground text-background" : "bg-surface text-foreground/80 hover:text-foreground")}>
+            className={cn("shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition")}
+            style={{
+              background: filter === f.id ? "var(--ink-1)" : "var(--surface)",
+              color: filter === f.id ? "var(--card)" : "var(--ink-2)",
+            }}>
             {f.label}
           </button>
         ))}
       </div>
 
-      <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
-        {filtered.length === 0 && (
-          <div className="py-20 text-center text-body text-muted-foreground">Nenhum pedido encontrado.</div>
+      <div className="mt-8 card-nested overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="py-16 text-center text-caption">Nenhum pedido encontrado</div>
+        ) : (
+          filtered.map((o, i) => (
+            <Link key={o.id} to="/orders/$id" params={{ id: o.id }}
+              className="group flex items-center gap-4 px-5 py-5 transition hover:opacity-80"
+              style={{ borderTop: i > 0 ? "0.5px solid var(--hairline)" : "none" }}>
+              <div className="min-w-0 flex-1">
+                <p className="text-caption">#{o.id.slice(0,8).toUpperCase()} · {new Date(o.created_at).toLocaleDateString("pt-BR")}</p>
+                <p className="mt-1 text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{statusLabel(o.status)}</p>
+                {o.pickup_code && <p className="mt-1 font-mono text-[12.5px]" style={{ color: "var(--ink-2)" }}>Código {o.pickup_code}</p>}
+              </div>
+              <span className="font-display text-[17px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>{brl(o.total)}</span>
+              <ChevronRight size={17} className="shrink-0 transition group-hover:translate-x-0.5" style={{ color: "var(--ink-3)" }} />
+            </Link>
+          ))
         )}
-        {filtered.map((o) => (
-          <Link key={o.id} to="/orders/$id" params={{ id: o.id }} className="group flex items-center gap-4 py-5 transition">
-            <div className="min-w-0 flex-1">
-              <p className="text-caption">#{o.id.slice(0,8).toUpperCase()} · {new Date(o.created_at).toLocaleDateString("pt-BR")}</p>
-              <p className="mt-1 text-[15px] font-medium">{statusLabel(o.status)}</p>
-              {o.pickup_code && <p className="mt-0.5 font-mono text-[13px] text-muted-foreground">Código {o.pickup_code}</p>}
-            </div>
-            <span className="font-display text-[17px] font-semibold tabular-nums">{brl(o.total)}</span>
-            <ChevronRight size={18} className="shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5" />
-          </Link>
-        ))}
       </div>
     </div>
   );

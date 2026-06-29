@@ -41,8 +41,8 @@ function CheckoutPage() {
       const r = await validateCoupon({ data: { code: coupon, subtotal } });
       if (!r.ok) { toast.error(r.error); return; }
       setAppliedDiscount(r.discount); setAppliedCouponId(r.id);
-      toast.success(`Cupom aplicado: -${brl(r.discount)}`);
-    } catch { toast.error("Não foi possível validar o cupom"); }
+      toast.success(`Cupom: -${brl(r.discount)}`);
+    } catch { toast.error("Cupom inválido"); }
   }
 
   async function placeOrder() {
@@ -71,23 +71,19 @@ function CheckoutPage() {
     });
     await supabase.from("notifications").insert({
       user_id: user.id, type: "order",
-      title: result.status === "approved" ? "Pedido confirmado!" : "Pedido aguardando pagamento",
+      title: result.status === "approved" ? "Pedido confirmado" : "Aguardando pagamento",
       body: result.status === "approved" ? `Retire na máquina com o código ${pickupCode}.` : `Pague o PIX em até 30 min. Código ${pickupCode}.`,
     });
     if (result.status === "approved") {
       await supabase.from("loyalty_events").insert({ user_id: user.id, kind: "order", points: 10, meta: { order_id: order.id, amount: total } });
     }
     clear(); setBusy(false);
-    toast.success(result.message ?? "Pedido criado!");
+    toast.success(result.message ?? "Pedido criado");
     navigate({ to: "/orders/$id", params: { id: order.id } });
   }
 
   if (items.length === 0) {
-    return (
-      <div className="mx-auto max-w-[520px] py-20 text-center">
-        <p className="text-[15px] text-muted-foreground">Carrinho vazio.</p>
-      </div>
-    );
+    return <div className="grid h-[60vh] place-items-center text-caption">Carrinho vazio.</div>;
   }
 
   const methods: { id: Method; label: string; Icon: typeof CreditCard }[] = [
@@ -98,35 +94,36 @@ function CheckoutPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-[860px]">
+    <div className="animate-rise mx-auto max-w-[1000px]">
       <header className="mb-10">
-        <h1 className="text-display">Finalizar pedido</h1>
-        <p className="mt-2 text-[15px] text-muted-foreground">Escolha máquina e forma de pagamento</p>
+        <p className="text-eyebrow">finalizar pedido</p>
+        <h1 className="text-display-m mt-3">Checkout</h1>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-8">
+      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-6">
           {/* Machine */}
-          <section className="card-base p-6 sm:p-7">
-            <h2 className="text-title-3 mb-5">Onde retirar</h2>
-            <div className="space-y-2">
+          <section className="card-nested p-6 sm:p-7">
+            <p className="text-eyebrow">onde retirar</p>
+            <h2 className="text-title-lg mt-2">Escolha a máquina</h2>
+            <div className="mt-5 space-y-1">
               {machines.map((m) => {
                 const active = machineId === m.id;
                 return (
-                  <button
-                    key={m.id} onClick={() => setMachineId(m.id)}
-                    className={`flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition ${
-                      active ? "bg-accent" : "hover:bg-surface"
-                    }`}
-                  >
-                    <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition ${
-                      active ? "border-primary bg-primary" : "border-border"
-                    }`}>
-                      {active && <Check size={14} className="text-primary-foreground" strokeWidth={3} />}
+                  <button key={m.id} onClick={() => setMachineId(m.id)}
+                    className="press flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition"
+                    style={{ background: active ? "var(--accent)" : "transparent" }}>
+                    <div
+                      className="grid h-5 w-5 shrink-0 place-items-center rounded-full transition"
+                      style={{
+                        background: active ? "var(--primary)" : "transparent",
+                        border: active ? "1.5px solid var(--primary)" : "1.5px solid var(--ink-3)",
+                      }}>
+                      {active && <Check size={11} className="text-white" strokeWidth={3.5} />}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[15px] font-semibold">{m.name}</div>
-                      <div className="text-[13px] text-muted-foreground">{m.address}</div>
+                      <div className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{m.name}</div>
+                      <div className="text-caption">{m.address}</div>
                     </div>
                   </button>
                 );
@@ -135,20 +132,21 @@ function CheckoutPage() {
           </section>
 
           {/* Payment */}
-          <section className="card-base p-6 sm:p-7">
-            <h2 className="text-title-3 mb-5">Forma de pagamento</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <section className="card-nested p-6 sm:p-7">
+            <p className="text-eyebrow">pagamento</p>
+            <h2 className="text-title-lg mt-2">Forma de pagamento</h2>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {methods.map(({ id, label, Icon }) => {
                 const active = method === id;
                 return (
-                  <button
-                    key={id} onClick={() => setMethod(id)}
-                    className={`flex flex-col items-center gap-2 rounded-2xl py-5 transition ${
-                      active ? "bg-foreground text-background" : "bg-surface hover:opacity-80"
-                    }`}
-                  >
-                    <Icon size={22} strokeWidth={1.8} />
-                    <span className="text-[13px] font-semibold">{label}</span>
+                  <button key={id} onClick={() => setMethod(id)}
+                    className="press flex flex-col items-center gap-2 rounded-2xl py-5 transition"
+                    style={{
+                      background: active ? "var(--ink-1)" : "var(--surface)",
+                      color: active ? "var(--card)" : "var(--ink-1)",
+                    }}>
+                    <Icon size={20} strokeWidth={1.7} />
+                    <span className="text-[12.5px] font-semibold">{label}</span>
                   </button>
                 );
               })}
@@ -156,45 +154,38 @@ function CheckoutPage() {
           </section>
 
           {/* Coupon */}
-          <section className="card-base p-6 sm:p-7">
-            <h2 className="text-title-3 mb-5">Cupom de desconto</h2>
-            <div className="flex gap-2">
+          <section className="card-nested p-6 sm:p-7">
+            <p className="text-eyebrow">cupom</p>
+            <h2 className="text-title-lg mt-2">Código de desconto</h2>
+            <div className="mt-5 flex gap-2">
               <input
                 value={coupon}
                 onChange={(e) => setCoupon(e.target.value.toUpperCase())}
                 placeholder="Digite o código"
-                className="input-field flex-1 uppercase"
+                className="input-aurora flex-1 uppercase"
               />
               <button onClick={applyCoupon} className="btn-secondary px-6">Aplicar</button>
             </div>
             {appliedDiscount > 0 && (
-              <p className="mt-3 text-[13px] font-semibold text-primary">
+              <p className="mt-3 text-[13px] font-semibold" style={{ color: "var(--primary)" }}>
                 ✓ Desconto de {brl(appliedDiscount)} aplicado
               </p>
             )}
           </section>
         </div>
 
-        {/* Summary sidebar */}
+        {/* Summary */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="card-base p-6">
-            <h2 className="text-title-3">Resumo</h2>
-            <div className="mt-5 space-y-3 text-[15px]">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span><span className="text-foreground tabular-nums">{brl(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Taxa</span><span className="text-foreground tabular-nums">{brl(fee)}</span>
-              </div>
-              {appliedDiscount > 0 && (
-                <div className="flex justify-between text-primary">
-                  <span>Desconto</span><span className="tabular-nums">-{brl(appliedDiscount)}</span>
-                </div>
-              )}
+          <div className="card-aurora p-6">
+            <p className="text-eyebrow">resumo</p>
+            <div className="mt-5 space-y-3 text-body-sm">
+              <Row label="Subtotal" value={brl(subtotal)} />
+              <Row label="Taxa" value={brl(fee)} />
+              {appliedDiscount > 0 && <Row label="Desconto" value={`-${brl(appliedDiscount)}`} colored />}
             </div>
-            <div className="mt-5 flex items-baseline justify-between border-t border-border/60 pt-5">
-              <span className="text-[15px] font-semibold">Total</span>
-              <span className="font-display text-[28px] font-bold tracking-tight tabular-nums">{brl(total)}</span>
+            <div className="mt-5 flex items-baseline justify-between pt-5" style={{ borderTop: "0.5px solid var(--hairline)" }}>
+              <span className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>Total</span>
+              <span className="font-display text-[28px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>{brl(total)}</span>
             </div>
             <button onClick={placeOrder} disabled={busy} className="btn-primary mt-6 w-full">
               {busy && <Loader2 size={16} className="animate-spin" />}
@@ -203,6 +194,15 @@ function CheckoutPage() {
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function Row({ label, value, colored }: { label: string; value: string; colored?: boolean }) {
+  return (
+    <div className="flex justify-between">
+      <span style={{ color: "var(--ink-2)" }}>{label}</span>
+      <span className="tabular-nums" style={{ color: colored ? "var(--primary)" : "var(--ink-1)" }}>{value}</span>
     </div>
   );
 }

@@ -10,7 +10,7 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Entrar — EasyFood" },
-      { name: "description", content: "Entre ou crie sua conta EasyFood." },
+      { name: "description", content: "Acesse sua conta EasyFood." },
     ],
   }),
   component: AuthPage,
@@ -33,14 +33,14 @@ function AuthPage() {
     try {
       if (mode === "login") {
         const { error } = await signIn(email, password);
-        if (error) toast.error(error); else toast.success("Bem-vindo de volta!");
+        if (error) toast.error(error); else toast.success("Bem-vinda de volta");
       } else if (mode === "signup") {
         const { error } = await signUp(email, password, name);
-        if (error) toast.error(error); else toast.success("Conta criada!");
+        if (error) toast.error(error); else toast.success("Conta criada");
       } else {
         const { error } = await resetPassword(email);
         if (error) toast.error(error);
-        else { toast.success("E-mail de recuperação enviado."); setMode("login"); }
+        else { toast.success("Link enviado para o seu e-mail"); setMode("login"); }
       }
     } finally { setBusy(false); }
   }
@@ -48,67 +48,81 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(result.error.message ?? "Falha"); setBusy(false); return; }
+    if (result.error) { toast.error(result.error.message ?? "Falha no login"); setBusy(false); return; }
     if (result.redirected) return;
     navigate({ to: "/" });
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="grid min-h-screen lg:grid-cols-2">
-        {/* LEFT — Visual side */}
+    <div className="min-h-screen" style={{ background: "var(--background)" }}>
+      <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
+        {/* LEFT — Aurora visual */}
         <div
           className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-14"
           style={{
             background:
-              "radial-gradient(ellipse at top right, oklch(0.65 0.18 145 / 0.35), transparent 60%), linear-gradient(160deg, oklch(0.18 0.02 240) 0%, oklch(0.12 0.015 250) 100%)",
+              "radial-gradient(ellipse 100% 80% at 0% 0%, rgba(45,171,107,.20), transparent 60%)," +
+              "radial-gradient(ellipse 60% 80% at 100% 100%, rgba(107,91,254,.18), transparent 60%)," +
+              "#0A0B0D",
           }}
         >
           <Logo />
-          <div className="relative text-white">
-            <h2 className="text-hero">
-              Comece a se<br />sentir <em className="not-italic text-[oklch(0.78_0.16_145)]">incrível</em>.
-            </h2>
-            <p className="mt-6 max-w-md text-[17px] leading-relaxed text-white/60">
-              Análise nutricional por IA, planos semanais inteligentes e refeições saudáveis prontas em segundos.
+
+          <div className="relative">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/40">
+              Smart Food OS
             </p>
-            <div className="mt-8 flex items-center gap-6 text-[13px] text-white/50">
+            <h1
+              className="mt-5 font-display font-semibold tracking-[-0.045em] text-white"
+              style={{ fontSize: "clamp(2.5rem, 4vw, 4rem)", lineHeight: 1.02 }}
+            >
+              A tecnologia<br />que sabe o que<br />você precisa comer.
+            </h1>
+            <p className="mt-7 max-w-md text-[15px] leading-relaxed text-white/55">
+              Análise nutricional por IA, planos personalizados e refeições prontas em máquinas inteligentes.
+            </p>
+
+            <div className="mt-10 grid max-w-md grid-cols-3 gap-6">
               <Stat n="50k+" l="usuárias" />
               <Stat n="4.9" l="avaliação" />
               <Stat n="120+" l="máquinas" />
             </div>
           </div>
-          <p className="relative text-[12px] text-white/35">© 2025 EasyFood. Saúde simplificada.</p>
+
+          <p className="relative text-[11px] text-white/30">© 2026 EasyFood. Saúde simplificada.</p>
         </div>
 
         {/* RIGHT — Form */}
-        <div className="flex items-center justify-center px-6 py-12 lg:px-12">
+        <div className="flex items-center justify-center px-6 py-12 lg:px-16">
           <div className="w-full max-w-[400px]">
-            <div className="mb-10 lg:hidden">
+            <div className="mb-12 lg:hidden">
               <Logo />
             </div>
 
-            <h1 className="text-display">
+            <h1 className="text-display-m" style={{ color: "var(--ink-1)" }}>
               {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Recuperar senha"}
             </h1>
-            <p className="mt-2 text-[15px] text-muted-foreground">
+            <p className="mt-3 text-body-sm" style={{ color: "var(--ink-2)" }}>
               {mode === "login"
                 ? "Acesse sua conta EasyFood."
                 : mode === "signup"
-                  ? "Comece sua jornada em segundos."
-                  : "Enviaremos um link de recuperação."}
+                  ? "Em segundos. Sem fricção."
+                  : "Enviaremos um link para o seu e-mail."}
             </p>
 
             <form onSubmit={handleSubmit} className="mt-10 space-y-3">
               {mode === "signup" && (
-                <Field placeholder="Nome completo" value={name} onChange={setName} type="text" required />
+                <input className="input-aurora" required type="text" placeholder="Nome"
+                  value={name} onChange={(e) => setName(e.target.value)} />
               )}
-              <Field placeholder="E-mail" value={email} onChange={setEmail} type="email" required />
+              <input className="input-aurora" required type="email" placeholder="E-mail"
+                value={email} onChange={(e) => setEmail(e.target.value)} />
               {mode !== "reset" && (
-                <Field placeholder="Senha" value={password} onChange={setPassword} type="password" required minLength={6} />
+                <input className="input-aurora" required type="password" placeholder="Senha"
+                  minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
               )}
 
-              <button type="submit" disabled={busy} className="btn-primary mt-7 w-full">
+              <button type="submit" disabled={busy} className="btn-primary mt-6 w-full">
                 {busy && <Loader2 size={16} className="animate-spin" />}
                 {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Enviar link"}
               </button>
@@ -116,13 +130,13 @@ function AuthPage() {
 
             {mode !== "reset" && (
               <>
-                <div className="my-6 flex items-center gap-4 text-[13px] text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" />
+                <div className="my-6 flex items-center gap-4 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  <div className="hairline flex-1" />
                   ou
-                  <div className="h-px flex-1 bg-border" />
+                  <div className="hairline flex-1" />
                 </div>
                 <button onClick={handleGoogle} disabled={busy} className="btn-secondary w-full">
-                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+                  <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden>
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z" />
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
                     <path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84Z" />
@@ -133,19 +147,19 @@ function AuthPage() {
               </>
             )}
 
-            <div className="mt-10 flex justify-between text-[14px]">
+            <div className="mt-10 flex justify-between text-[13.5px]">
               {mode === "login" ? (
                 <>
-                  <button onClick={() => setMode("reset")} className="text-muted-foreground hover:text-foreground transition">
+                  <button onClick={() => setMode("reset")} className="transition hover:opacity-70" style={{ color: "var(--ink-2)" }}>
                     Esqueci a senha
                   </button>
-                  <button onClick={() => setMode("signup")} className="font-semibold text-primary hover:opacity-70 transition">
+                  <button onClick={() => setMode("signup")} className="font-semibold transition hover:opacity-70" style={{ color: "var(--primary)" }}>
                     Criar conta
                   </button>
                 </>
               ) : (
-                <button onClick={() => setMode("login")} className="text-muted-foreground hover:text-foreground transition">
-                  ← Voltar
+                <button onClick={() => setMode("login")} className="transition hover:opacity-70" style={{ color: "var(--ink-2)" }}>
+                  ← Voltar para entrar
                 </button>
               )}
             </div>
@@ -156,32 +170,11 @@ function AuthPage() {
   );
 }
 
-function Field({
-  type, placeholder, value, onChange, required, minLength,
-}: {
-  type: string; placeholder: string; value: string; onChange: (v: string) => void;
-  required?: boolean; minLength?: number;
-}) {
-  return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      required={required}
-      minLength={minLength}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="input-field"
-      onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.background = "var(--card)"; }}
-      onBlur={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "var(--surface)"; }}
-    />
-  );
-}
-
 function Stat({ n, l }: { n: string; l: string }) {
   return (
     <div>
-      <div className="font-display text-[20px] font-bold text-white">{n}</div>
-      <div className="mt-0.5 text-[11px] uppercase tracking-wider text-white/40">{l}</div>
+      <div className="font-display text-[22px] font-semibold tabular-nums text-white">{n}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-[0.1em] text-white/40">{l}</div>
     </div>
   );
 }
