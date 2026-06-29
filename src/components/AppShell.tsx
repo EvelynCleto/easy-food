@@ -5,7 +5,7 @@ import { Logo } from "./Logo";
 import { ThemeToggle } from "./premium/ThemeToggle";
 import { CookieBanner } from "./CookieBanner";
 import { useCart } from "@/contexts/CartContext";
-import { cn } from "@/lib/format";
+import { cn, brl } from "@/lib/format";
 
 const navItems = [
   { to: "/",          label: "Início"   },
@@ -23,8 +23,9 @@ const navMobile = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { count } = useCart();
+  const { count, subtotal } = useCart();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showCartBar = count > 0 && !pathname.startsWith("/cart") && !pathname.startsWith("/checkout");
 
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "short", day: "numeric", month: "short",
@@ -163,6 +164,32 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </div>
       </nav>
+
+      {/* ═════════ FLOATING CART CTA ═════════ */}
+      {showCartBar && (
+        <div className="fixed inset-x-0 bottom-24 z-50 px-5 lg:bottom-8 lg:left-[240px] lg:px-16">
+          <Link
+            to="/cart"
+            className="press mx-auto flex max-w-md items-center justify-between gap-4 rounded-2xl px-5 py-4 shadow-lg transition active:scale-[0.98] lg:max-w-lg"
+            style={{
+              background: "var(--primary)",
+              color: "var(--primary-foreground)",
+              boxShadow: "0 12px 32px -8px var(--primary-glow, rgba(45,171,107,0.5))",
+            }}
+          >
+            <span className="flex items-center gap-3">
+              <span className="relative grid h-10 w-10 place-items-center rounded-full" style={{ background: "rgba(255,255,255,0.18)" }}>
+                <ShoppingBag size={19} strokeWidth={2} />
+                <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-bold leading-none" style={{ background: "#fff", color: "var(--primary)" }}>
+                  {count}
+                </span>
+              </span>
+              <span className="text-[15px] font-bold">Ver carrinho</span>
+            </span>
+            <span className="text-[16px] font-bold tabular-nums">{brl(subtotal)}</span>
+          </Link>
+        </div>
+      )}
 
       <CookieBanner />
     </div>

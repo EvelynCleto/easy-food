@@ -310,18 +310,19 @@ function HomePage() {
           fatGoal={fatGoal}
           water={daily?.water_ml ?? 0}
           waterGoal={waterGoal}
+          onAddWater={(ml) => logWater.mutate(ml)}
         />
       </section>
 
       {/* 4. Última análise IA */}
       <section className="mb-8 animate-rise-delayed">
         {lastAnalysis ? (
-          <div className="card-aurora p-5">
+          <Link to="/nutrition/history" className="card-aurora block p-5 transition hover:opacity-90 active:scale-[0.99]">
             <div className="flex items-center justify-between">
               <p className="text-eyebrow">última análise IA</p>
-              <Link to="/nutrition/history" className="text-[11px] font-semibold" style={{ color: "var(--primary)" }}>
+              <span className="text-[11px] font-semibold" style={{ color: "var(--primary)" }}>
                 Ver histórico →
-              </Link>
+              </span>
             </div>
             <div className="mt-3 flex items-center gap-4">
               <div
@@ -349,7 +350,7 @@ function HomePage() {
               </div>
               <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
             </div>
-          </div>
+          </Link>
         ) : (
           <div className="card-aurora flex items-center justify-between p-5">
             <div>

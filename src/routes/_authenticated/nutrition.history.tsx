@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, ChevronLeft, Star, UtensilsCrossed } from "lucide-react";
+import { useState } from "react";
+import { Camera, ChevronLeft, Star, UtensilsCrossed, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -32,6 +33,7 @@ const MEAL_EMOJI: Record<string, string> = {
 
 function NutritionHistoryPage() {
   const { user } = useAuth();
+  const [zoom, setZoom] = useState<string | null>(null);
 
   const { data: rows = [], isLoading, error } = useQuery({
     queryKey: ["nutri-history", user?.id],
@@ -110,11 +112,18 @@ function NutritionHistoryPage() {
               <div key={r.id} className="card-aurora overflow-hidden p-5 sm:p-6">
                 <div className="flex items-start gap-4">
                   {r.image_url ? (
-                    <img
-                      src={r.image_url}
-                      alt="Refeição"
-                      className="h-16 w-16 shrink-0 rounded-xl object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setZoom(r.image_url)}
+                      className="press h-16 w-16 shrink-0 overflow-hidden rounded-xl"
+                      aria-label="Ampliar foto"
+                    >
+                      <img
+                        src={r.image_url}
+                        alt="Refeição"
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
                   ) : (
                     <div
                       className="grid h-16 w-16 shrink-0 place-items-center rounded-xl text-2xl"
@@ -213,6 +222,32 @@ function NutritionHistoryPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {zoom && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center p-6"
+          style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(8px)" }}
+          onClick={() => setZoom(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            onClick={() => setZoom(null)}
+            className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full"
+            style={{ background: "rgba(255,255,255,0.16)", color: "#fff" }}
+            aria-label="Fechar"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={zoom}
+            alt="Refeição ampliada"
+            className="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

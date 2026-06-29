@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Camera } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Camera, Plus } from "lucide-react";
 
 type Props = {
   date: string;          // "qua · 29 jun"
@@ -15,25 +14,8 @@ type Props = {
   fatGoal: number;
   water: number;
   waterGoal: number;
+  onAddWater?: (ml: number) => void;
 };
-
-function useCountUp(target: number, duration = 1200) {
-  const [v, setV] = useState(0);
-  useEffect(() => {
-    let start: number | null = null;
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-    let raf = 0;
-    const tick = (ts: number) => {
-      if (start == null) start = ts;
-      const p = Math.min(1, (ts - start) / duration);
-      setV(Math.round(target * ease(p)));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-  return v;
-}
 
 function fmt(n: number) {
   // Thin space separator for thousands (1 440)
@@ -41,14 +23,15 @@ function fmt(n: number) {
 }
 
 export function PulseCard(props: Props) {
-  const cal = useCountUp(props.calories);
+  const cal = props.calories;
   const pct = Math.min(100, Math.round((props.calories / Math.max(props.caloriesGoal, 1)) * 100));
+  const calLeft = Math.max(0, props.caloriesGoal - props.calories);
+  const waterPct = Math.min(100, Math.round((props.water / Math.max(props.waterGoal, 1)) * 100));
 
   const macros: { label: string; value: number; goal: number; unit: string }[] = [
     { label: "Proteína", value: props.protein,    goal: props.proteinGoal, unit: "g"  },
     { label: "Carbo",    value: props.carbs,      goal: props.carbsGoal,   unit: "g"  },
     { label: "Gordura",  value: props.fat,        goal: props.fatGoal,     unit: "g"  },
-    { label: "Água",     value: props.water/1000, goal: props.waterGoal/1000, unit: "L" },
   ];
 
   return (
@@ -80,7 +63,11 @@ export function PulseCard(props: Props) {
           {fmt(cal)}
         </h1>
         <p className="mt-2 text-body" style={{ color: "var(--ink-2)" }}>
-          kcal hoje · <span className="font-semibold" style={{ color: pct >= 90 ? "var(--primary)" : "var(--ink-1)" }}>{pct}%</span> de {fmt(props.caloriesGoal)}
+          {calLeft > 0 ? (
+            <>kcal de hoje · faltam <span className="font-semibold" style={{ color: "var(--ink-1)" }}>{fmt(calLeft)}</span> para a meta</>
+          ) : (
+            <span className="font-semibold" style={{ color: "var(--primary)" }}>meta de calorias atingida 🎉</span>
+          )}
         </p>
       </div>
 
@@ -97,20 +84,55 @@ export function PulseCard(props: Props) {
       </div>
 
       {/* Macros grid */}
-      <div className="relative mt-9 grid grid-cols-2 gap-x-8 gap-y-5 sm:mt-12 sm:grid-cols-4">
+      <div className="relative mt-9 grid grid-cols-3 gap-x-8 gap-y-5 sm:mt-12">
         {macros.map((m) => (
           <Macro key={m.label} {...m} />
         ))}
       </div>
 
+      {/* Water — live value + quick add */}
+      <div className="relative mt-7 rounded-2xl p-4 sm:mt-9" style={{ background: "var(--surface)" }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[12px] font-medium uppercase tracking-[0.08em]" style={{ color: "var(--ink-3)" }}>
+              💧 Água
+            </p>
+            <p className="mt-1 font-display text-[20px] font-semibold tabular-nums" style={{ color: waterPct >= 100 ? "var(--primary)" : "var(--ink-1)" }}>
+              {(props.water / 1000).toFixed(1)}
+              <span className="text-[13px] font-normal" style={{ color: "var(--ink-3)" }}> / {(props.waterGoal / 1000).toFixed(1)} L</span>
+            </p>
+          </div>
+          {props.onAddWater && (
+            <div className="flex items-center gap-2">
+              {[250, 500].map((ml) => (
+                <button
+                  key={ml}
+                  type="button"
+                  onClick={() => props.onAddWater?.(ml)}
+                  className="press flex items-center gap-1 rounded-full px-3 py-2 text-[13px] font-semibold transition"
+                  style={{ background: "var(--card)", color: "var(--ink-1)" }}
+                  aria-label={`Adicionar ${ml}ml de água`}
+                >
+                  <Plus size={14} strokeWidth={2.4} style={{ color: "var(--primary)" }} />
+                  {ml}ml
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="mt-3 h-[4px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${waterPct}%`, background: "var(--primary)" }} />
+        </div>
+      </div>
+
       {/* Quick analyze button */}
       <Link
         to="/nutrition/"
-        className="press absolute bottom-5 right-5 grid h-12 w-12 place-items-center rounded-full shadow-sm transition sm:bottom-8 sm:right-8"
-        style={{ background: "var(--primary)", color: "var(--primary-foreground)", boxShadow: "0 4px 14px -2px var(--primary-glow)" }}
-        aria-label="Analisar refeição"
+        className="press relative mt-7 flex items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold transition"
+        style={{ background: "var(--ink-1)", color: "var(--card)" }}
       >
-        <Camera size={18} strokeWidth={1.8} />
+        <Camera size={17} strokeWidth={2} />
+        Analisar uma refeição
       </Link>
     </div>
   );

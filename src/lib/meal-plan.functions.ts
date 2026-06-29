@@ -90,7 +90,7 @@ REGRAS:
 1. USE PRIORITARIAMENTE os produtos do catálogo acima em TODAS as refeições — o usuário só pode comprar o que está no catálogo. Quando usar um produto do catálogo, o campo product_match DEVE ser o nome exato dele.
 2. Só sugira uma refeição fora do catálogo se nenhum produto servir para aquele encaixe; nesse caso use uma receita caseira simples e defina product_match como null.
 3. Varie os pratos ao longo dos 7 dias — não repita o mesmo produto mais de 3 vezes
-4. Cada nota (note) deve ser personalizada ao objetivo do usuário (ex: para emagrecer, mencione o déficit; para ganho de massa, mencione a janela anabólica)
+4. Cada nota (note) deve ser personalizada ao objetivo e soar como um coach humano falando em português brasileiro — calorosa, curta e natural, nunca robótica ou genérica (evite "considere", "opte por", "é importante"). Ex: "Esse aqui te segura até a tarde sem pesar."
 5. Respeite ESTRITAMENTE as alergias e restrições
 
 Responda APENAS JSON sem markdown: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome exato do catálogo ou null","note":"dica personalizada ao objetivo"},"almoco":{...},"lanche":{...},"jantar":{...}}}, ... todos os 7 dias]}`;
