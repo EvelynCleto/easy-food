@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, Loader2, RefreshCw } from "lucide-react";
+import { Camera, Loader2, RefreshCw, Sparkles, TrendingUp, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,84 +36,159 @@ function NutritionPage() {
     reader.readAsDataURL(f);
   }
 
+  const scoreColor =
+    result?.score == null ? "var(--color-muted-foreground)"
+    : result.score >= 7.5 ? "var(--color-primary)"
+    : result.score >= 5 ? "var(--color-warning)"
+    : "var(--color-destructive)";
+
   return (
-    <div className="mx-auto max-w-[760px]">
-      <h1 className="text-display">Análise nutricional</h1>
-      <p className="mt-3 text-body-lg text-muted-foreground">
-        Tire uma foto da sua refeição. Identificamos os alimentos e calculamos os nutrientes.
-      </p>
-
-      <div className="mt-12">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-surface">
-          {preview ? (
-            <img src={preview} alt="Refeição" className="h-full w-full object-cover" />
-          ) : (
-            <div className="grid h-full place-items-center">
-              <Camera size={40} strokeWidth={1.5} className="text-muted-foreground/50" />
-            </div>
-          )}
-          {busy && (
-            <div className="absolute inset-0 grid place-items-center bg-background/70 backdrop-blur-sm">
-              <Loader2 size={32} className="animate-spin text-primary" />
-            </div>
-          )}
+    <div className="mx-auto max-w-[860px]">
+      <header className="mb-10 flex items-start justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[12px] font-semibold text-accent-foreground">
+            <Sparkles size={12} strokeWidth={2.2} /> Coach IA
+          </div>
+          <h1 className="text-display mt-4">Análise nutricional</h1>
+          <p className="mt-3 text-[15px] text-muted-foreground">
+            Tire uma foto e a IA identifica os alimentos e calcula nutrientes.
+          </p>
         </div>
+        <Link to="/nutrition/dashboard" className="btn-secondary hidden h-10 px-5 sm:inline-flex">
+          <TrendingUp size={15} /> Histórico
+        </Link>
+      </header>
 
-        <div className="mt-5 flex gap-3">
-          <input ref={fileInput} type="file" accept="image/*" capture="environment" className="hidden"
-            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-          <button onClick={() => fileInput.current?.click()} className="btn-primary flex-1">
-            <Camera size={17} /> {preview ? "Nova foto" : "Tirar foto"}
-          </button>
-          {preview && (
-            <button onClick={() => { setPreview(null); setResult(null); }}
-              className="grid h-12 w-12 place-items-center rounded-full bg-surface text-foreground transition hover:opacity-80">
-              <RefreshCw size={17} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {result && (
-        <div className="mt-16">
-          <h2 className="text-title-1">Resultado</h2>
-
-          <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
-            {[
-              ["Calorias", `${result.calories} kcal`],
-              ["Proteínas", `${result.protein} g`],
-              ["Carboidratos", `${result.carbs} g`],
-              ["Fibras", `${result.fiber} g`],
-              ["Gorduras", `${result.fat} g`],
-            ].map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between py-4">
-                <span className="text-[15px] text-muted-foreground">{k}</span>
-                <span className="text-[15px] font-medium tabular-nums">{v}</span>
+      {/* UPLOAD AREA */}
+      <section>
+        <div className="card-base overflow-hidden">
+          <div className="relative aspect-[4/3] bg-surface sm:aspect-[16/9]">
+            {preview ? (
+              <img src={preview} alt="Refeição" className="h-full w-full object-cover" />
+            ) : (
+              <div className="grid h-full place-items-center">
+                <div className="text-center">
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-accent">
+                    <Camera size={28} strokeWidth={1.6} className="text-accent-foreground" />
+                  </div>
+                  <p className="mt-4 text-[14px] text-muted-foreground">Tire ou envie uma foto da sua refeição</p>
+                </div>
               </div>
-            ))}
+            )}
+            {busy && (
+              <div className="absolute inset-0 grid place-items-center bg-background/80 backdrop-blur-sm">
+                <div className="text-center">
+                  <Loader2 size={32} className="mx-auto animate-spin text-primary" />
+                  <p className="mt-3 text-[13px] font-medium">Analisando refeição...</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="mt-16">
-            <h2 className="text-title-1">Alimentos identificados</h2>
-            <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
+          <div className="flex gap-3 p-4">
+            <input
+              ref={fileInput} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+            />
+            <button onClick={() => fileInput.current?.click()} className="btn-primary flex-1">
+              {preview ? <RefreshCw size={17} /> : <Upload size={17} />}
+              {preview ? "Nova foto" : "Escolher foto"}
+            </button>
+            {preview && (
+              <button
+                onClick={() => { setPreview(null); setResult(null); }}
+                className="grid h-13 w-13 shrink-0 place-items-center rounded-full bg-surface text-foreground transition hover:opacity-80"
+                style={{ height: "52px", width: "52px" }}
+                aria-label="Limpar"
+              >
+                <RefreshCw size={17} />
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* RESULT */}
+      {result && (
+        <div className="animate-fade-up mt-10 space-y-8">
+          {/* Score card */}
+          {result.score != null && (
+            <div className="card-base flex items-center gap-6 p-6 sm:p-8">
+              <div className="relative h-24 w-24 shrink-0">
+                <svg width="96" height="96" className="-rotate-90">
+                  <circle cx="48" cy="48" r="40" strokeWidth="8" stroke="color-mix(in oklab, var(--color-muted) 75%, transparent)" fill="none" />
+                  <circle
+                    cx="48" cy="48" r="40" strokeWidth="8" stroke={scoreColor}
+                    strokeLinecap="round" fill="none"
+                    strokeDasharray={251.3}
+                    strokeDashoffset={251.3 * (1 - (result.score / 10))}
+                    style={{ transition: "stroke-dashoffset 1s ease-out" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 grid place-items-center">
+                  <span className="font-display text-[24px] font-bold tabular-nums">{result.score.toFixed(1)}</span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="text-caption">Nota nutricional</p>
+                <h2 className="text-title-2 mt-1">
+                  {result.score >= 7.5 ? "Excelente refeição" : result.score >= 5 ? "Refeição razoável" : "Pode melhorar"}
+                </h2>
+                {result.meal_type && (
+                  <p className="mt-1 text-[14px] capitalize text-muted-foreground">{result.meal_type}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Macros */}
+          <div>
+            <h2 className="text-title-2 mb-5">Macronutrientes</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {[
+                ["Calorias", result.calories, "kcal"],
+                ["Proteína", result.protein, "g"],
+                ["Carbos", result.carbs, "g"],
+                ["Fibras", result.fiber, "g"],
+                ["Gorduras", result.fat, "g"],
+              ].map(([k, v, u]) => (
+                <div key={k as string} className="card-base p-5 text-center">
+                  <p className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">{k}</p>
+                  <p className="mt-2 font-display text-[24px] font-bold tabular-nums">{v}</p>
+                  <p className="text-[12px] text-muted-foreground">{u}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Foods */}
+          <div>
+            <h2 className="text-title-2 mb-5">Alimentos identificados</h2>
+            <div className="card-base overflow-hidden">
               {result.foods.map((f, i) => (
-                <div key={i} className="flex justify-between py-3">
+                <div key={i} className={`flex justify-between px-5 py-3.5 ${i > 0 ? "border-t border-border/40" : ""}`}>
                   <span className="text-[15px] font-medium">{f.name}</span>
                   <span className="text-[14px] text-muted-foreground">{f.quantity}</span>
                 </div>
               ))}
             </div>
-            {result.notes && <p className="mt-6 text-[14px] italic text-muted-foreground">{result.notes}</p>}
+            {result.notes && <p className="mt-4 text-[13.5px] italic text-muted-foreground">{result.notes}</p>}
           </div>
 
+          {/* Suggestions */}
           {result.ai_suggestions && result.ai_suggestions.length > 0 && (
-            <div className="mt-16">
-              <h2 className="text-title-1">Sugestões</h2>
-              <ul className="mt-6 space-y-3">
+            <div>
+              <h2 className="text-title-2 mb-5">Sugestões do coach</h2>
+              <div className="card-tint-mint space-y-4 p-6 sm:p-8">
                 {result.ai_suggestions.map((s, i) => (
-                  <li key={i} className="text-body-lg leading-relaxed text-foreground/80">{s}</li>
+                  <div key={i} className="flex gap-3">
+                    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                      <Sparkles size={13} strokeWidth={2.2} />
+                    </div>
+                    <p className="flex-1 text-[15px] leading-relaxed text-foreground/85">{s}</p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>

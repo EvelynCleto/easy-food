@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { ArrowLeft, Heart, Star } from "lucide-react";
+import { ArrowLeft, Flame, Heart, ShoppingBag, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,9 +55,7 @@ function ProductPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["fav", id, user?.id] }),
   });
 
-  if (!product) {
-    return <div className="py-20 text-center text-body text-muted-foreground">Carregando...</div>;
-  }
+  if (!product) return <div className="py-20 text-center text-muted-foreground">Carregando...</div>;
 
   const price = Number(product.promo_price ?? product.price);
 
@@ -66,58 +64,73 @@ function ProductPage() {
     toast.success("Adicionado ao carrinho");
   }
 
-  const nutrition: [string, string][] = [
+  const macros: [string, string][] = [
     ["Calorias", `${product.calories ?? 0} kcal`],
-    ["Proteínas", `${product.protein ?? 0} g`],
-    ["Carboidratos", `${product.carbs ?? 0} g`],
-    ["Fibras", `${product.fiber ?? 0} g`],
-    ["Gorduras", `${product.fat ?? 0} g`],
-    ["Sódio", `${product.sodium_mg ?? 0} mg`],
-    ["Açúcares", `${product.sugar_g ?? 0} g`],
+    ["Proteínas", `${product.protein ?? 0}g`],
+    ["Carboidratos", `${product.carbs ?? 0}g`],
+    ["Fibras", `${product.fiber ?? 0}g`],
+    ["Gorduras", `${product.fat ?? 0}g`],
+    ["Sódio", `${product.sodium_mg ?? 0}mg`],
   ];
 
   return (
-    <div className="mx-auto max-w-[1040px]">
-      <button onClick={() => navigate({ to: "/catalog" })} className="mb-8 inline-flex items-center gap-1.5 text-[14px] text-muted-foreground transition hover:text-foreground">
+    <div className="mx-auto max-w-[1080px]">
+      <button onClick={() => navigate({ to: "/catalog" })}
+        className="mb-6 inline-flex items-center gap-1.5 text-[14px] font-medium text-muted-foreground transition hover:text-foreground">
         <ArrowLeft size={16} /> Voltar
       </button>
 
-      {/* Hero: image left, info right */}
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+        {/* IMAGE */}
         <div className="relative">
-          <div className="aspect-square overflow-hidden rounded-3xl bg-surface">
+          <div className="aspect-square overflow-hidden rounded-[28px] bg-surface">
             {product.image_url && <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />}
           </div>
-          <button onClick={() => toggleFav.mutate()}
-            className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full bg-background/85 backdrop-blur transition hover:bg-background"
-            aria-label="Favoritar">
-            <Heart size={18} className={cn(fav ? "fill-destructive text-destructive" : "text-foreground")} />
+          <button
+            onClick={() => toggleFav.mutate()}
+            className="absolute right-5 top-5 grid h-12 w-12 place-items-center rounded-full bg-card/85 shadow-sm backdrop-blur-md transition hover:bg-card"
+            aria-label="Favoritar"
+          >
+            <Heart size={19} className={cn(fav ? "fill-destructive text-destructive" : "text-foreground")} />
           </button>
         </div>
 
-        <div className="flex flex-col justify-center">
+        {/* INFO */}
+        <div className="flex flex-col">
           <p className="text-caption">{product.producer ?? "EasyFood"}</p>
           <h1 className="text-display mt-2">{product.name}</h1>
 
-          <div className="mt-5 flex items-center gap-4 text-[14px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <Star size={14} className="fill-warning text-warning" />
-              {num(product.rating, 1)} ({product.rating_count})
-            </span>
-            {product.calories && <span>{product.calories} kcal</span>}
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[14px] text-muted-foreground">
+            {product.rating > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Star size={14} className="fill-warning text-warning" />
+                <span className="font-semibold text-foreground">{num(product.rating, 1)}</span>
+                ({product.rating_count} avaliações)
+              </span>
+            )}
+            {product.calories && (
+              <span className="inline-flex items-center gap-1.5">
+                <Flame size={14} strokeWidth={1.8} />
+                {product.calories} kcal
+              </span>
+            )}
           </div>
 
-          <div className="mt-8 flex items-baseline gap-3">
-            <span className="font-display text-[44px] font-bold tracking-tight tabular-nums">{brl(price)}</span>
-            {product.promo_price && <span className="text-[17px] text-muted-foreground line-through">{brl(product.price)}</span>}
+          <div className="mt-7 flex items-baseline gap-3">
+            <span className="font-display text-[40px] font-bold tracking-tight tabular-nums">{brl(price)}</span>
+            {product.promo_price && (
+              <span className="text-[17px] text-muted-foreground line-through tabular-nums">{brl(product.price)}</span>
+            )}
           </div>
 
           {product.description && (
-            <p className="mt-6 text-body-lg leading-relaxed text-muted-foreground">{product.description}</p>
+            <p className="mt-6 text-[15.5px] leading-relaxed text-muted-foreground">{product.description}</p>
           )}
 
-          <div className="mt-10 flex gap-3">
-            <button onClick={addToCart} className="btn-secondary flex-1">Adicionar</button>
+          <div className="mt-8 flex gap-3">
+            <button onClick={addToCart} className="btn-secondary flex-1">
+              <ShoppingBag size={17} /> Adicionar
+            </button>
             <button onClick={() => { addToCart(); navigate({ to: "/checkout" }); }} className="btn-primary flex-1">
               Comprar agora
             </button>
@@ -125,51 +138,54 @@ function ProductPage() {
         </div>
       </div>
 
-      {/* Nutrition */}
-      <section className="mt-24">
+      {/* NUTRITION */}
+      <section className="mt-20">
         <h2 className="text-title-1">Informação nutricional</h2>
-        <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
-          {nutrition.map(([k, v]) => (
-            <div key={k} className="flex items-center justify-between py-4">
-              <span className="text-[15px] text-muted-foreground">{k}</span>
-              <span className="text-[15px] font-medium tabular-nums">{v}</span>
+        <p className="mt-2 text-[14px] text-muted-foreground">Por porção</p>
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {macros.map(([k, v]) => (
+            <div key={k} className="card-base p-5">
+              <p className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">{k}</p>
+              <p className="mt-2 font-display text-[20px] font-bold tabular-nums">{v}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Ingredients */}
+      {/* INGREDIENTS */}
       {product.ingredients && (
-        <section className="mt-24">
+        <section className="mt-16">
           <h2 className="text-title-1">Ingredientes</h2>
-          <p className="mt-6 text-body-lg leading-relaxed text-muted-foreground">{product.ingredients}</p>
+          <p className="mt-5 text-[15.5px] leading-relaxed text-muted-foreground">{product.ingredients}</p>
         </section>
       )}
 
-      {/* Reviews */}
-      <section className="mt-24">
+      {/* REVIEWS */}
+      <section className="mt-16">
         <h2 className="text-title-1">Avaliações</h2>
         {reviews.length === 0 ? (
-          <p className="mt-6 text-body text-muted-foreground">Ainda sem avaliações.</p>
+          <p className="mt-5 text-[14px] text-muted-foreground">Ainda sem avaliações.</p>
         ) : (
-          <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
+          <div className="card-base mt-6 overflow-hidden">
             {reviews.map((r, i) => (
-              <div key={i} className="py-5">
+              <div key={i} className={`p-5 ${i > 0 ? "border-t border-border/40" : ""}`}>
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: r.rating }).map((_, j) => <Star key={j} size={13} className="fill-warning text-warning" />)}
+                  {Array.from({ length: r.rating }).map((_, j) => (
+                    <Star key={j} size={14} className="fill-warning text-warning" />
+                  ))}
                 </div>
-                {r.comment && <p className="mt-2 text-[15px] leading-relaxed text-foreground">{r.comment}</p>}
+                {r.comment && <p className="mt-2 text-[15px] leading-relaxed">{r.comment}</p>}
               </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* Similar */}
+      {/* SIMILAR */}
       {similar.length > 0 && (
-        <section className="mt-24">
+        <section className="mt-16">
           <h2 className="text-title-1">Você também pode gostar</h2>
-          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
             {similar.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
         </section>

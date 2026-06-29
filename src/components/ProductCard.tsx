@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { brl } from "@/lib/format";
+import { Flame, Star } from "lucide-react";
+import { brl, num } from "@/lib/format";
 
 export type ProductCardData = {
   id: string;
@@ -19,36 +20,52 @@ export function ProductCard({ p }: { p: ProductCardData; badges?: string[] | nul
       params={{ id: p.id }}
       className="group flex flex-col"
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-surface">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[20px] bg-surface ring-1 ring-border/40">
         {p.image_url ? (
           <img
             src={p.image_url}
             alt={p.name}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]"
           />
-        ) : null}
+        ) : (
+          <div className="grid h-full w-full place-items-center">
+            <Flame size={28} strokeWidth={1.6} className="text-muted-foreground/40" />
+          </div>
+        )}
+
         {p.promo_price && (
-          <span className="absolute left-3 top-3 rounded-full bg-foreground px-2.5 py-1 text-[11px] font-semibold text-background">
-            Oferta
+          <span className="absolute left-3 top-3 rounded-full bg-foreground/90 px-2.5 py-1 text-[11px] font-semibold text-background backdrop-blur">
+            -{Math.round(((p.price - p.promo_price) / p.price) * 100)}%
+          </span>
+        )}
+
+        {p.rating > 0 && (
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-card/90 px-2 py-1 text-[11px] font-semibold backdrop-blur">
+            <Star size={11} className="fill-warning text-warning" />
+            {num(p.rating, 1)}
           </span>
         )}
       </div>
-      <div className="px-1 pt-3">
-        <h3 className="line-clamp-1 text-[15px] font-medium leading-snug text-foreground">
+
+      <div className="px-1 pt-3.5">
+        <h3 className="line-clamp-2 text-[14.5px] font-semibold leading-snug text-foreground">
           {p.name}
         </h3>
-        <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-[15px] font-semibold tracking-tight text-foreground">
+        {p.calories != null && (
+          <p className="mt-1 text-[12.5px] text-muted-foreground">
+            <Flame size={11} className="mr-1 inline -translate-y-[1px]" strokeWidth={2} />
+            {p.calories} kcal
+          </p>
+        )}
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-[15.5px] font-bold tracking-tight tabular-nums text-foreground">
             {brl(price)}
           </span>
           {p.promo_price && (
-            <span className="text-[13px] text-muted-foreground line-through">{brl(p.price)}</span>
+            <span className="text-[12.5px] text-muted-foreground line-through tabular-nums">{brl(p.price)}</span>
           )}
         </div>
-        {p.calories != null && (
-          <p className="mt-0.5 text-[13px] text-muted-foreground">{p.calories} kcal</p>
-        )}
       </div>
     </Link>
   );

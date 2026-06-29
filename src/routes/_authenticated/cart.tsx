@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { brl } from "@/lib/format";
 
@@ -15,66 +15,101 @@ function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-[640px] py-20 text-center">
-        <h1 className="text-display">Carrinho</h1>
-        <p className="mt-6 text-body-lg text-muted-foreground">Seu carrinho está vazio.</p>
-        <Link to="/catalog" className="btn-primary mt-10">Explorar pratos</Link>
+      <div className="mx-auto max-w-[520px] py-12 text-center sm:py-20">
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-accent">
+          <ShoppingBag size={32} strokeWidth={1.6} className="text-accent-foreground" />
+        </div>
+        <h1 className="text-display mt-8">Seu carrinho está vazio</h1>
+        <p className="mt-3 text-[15px] text-muted-foreground">
+          Que tal explorar nossos pratos saudáveis?
+        </p>
+        <Link to="/catalog" className="btn-primary mt-8 inline-flex">
+          Explorar pratos <ArrowRight size={16} />
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[760px]">
-      <h1 className="text-display">Carrinho</h1>
-      <p className="text-caption mt-2">{items.length} {items.length === 1 ? "item" : "itens"}</p>
+    <div className="mx-auto max-w-[860px]">
+      <header className="mb-8">
+        <h1 className="text-display">Carrinho</h1>
+        <p className="mt-2 text-[15px] text-muted-foreground">
+          {items.length} {items.length === 1 ? "item" : "itens"}
+        </p>
+      </header>
 
-      <div className="mt-12 divide-y divide-border/60 border-y border-border/60">
-        {items.map((it) => (
-          <div key={it.productId} className="flex gap-5 py-6">
-            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-surface">
-              {it.image && <img src={it.image} alt={it.name} className="h-full w-full object-cover" />}
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col justify-between">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="line-clamp-2 text-[15px] font-medium text-foreground">{it.name}</h3>
-                  <p className="mt-1 text-[15px] font-semibold tabular-nums text-foreground">{brl(it.price)}</p>
+      <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+        {/* Items */}
+        <div className="space-y-3">
+          {items.map((it) => (
+            <div key={it.productId} className="card-base flex gap-4 p-4 sm:p-5">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-surface sm:h-28 sm:w-28">
+                {it.image && <img src={it.image} alt={it.name} className="h-full w-full object-cover" />}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col justify-between">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-[15px] font-semibold text-foreground">{it.name}</h3>
+                    <p className="mt-1 text-[15px] font-bold tabular-nums text-foreground">{brl(it.price)}</p>
+                  </div>
+                  <button
+                    onClick={() => remove(it.productId)}
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-surface hover:text-destructive"
+                    aria-label="Remover"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-                <button onClick={() => remove(it.productId)} className="text-muted-foreground transition hover:text-destructive" aria-label="Remover">
-                  <Trash2 size={18} />
-                </button>
-              </div>
-              <div className="mt-3 inline-flex w-fit items-center gap-3 rounded-full bg-surface px-1.5 py-1.5">
-                <button onClick={() => setQty(it.productId, it.quantity - 1)} className="grid h-7 w-7 place-items-center rounded-full bg-card text-foreground transition hover:opacity-70">
-                  <Minus size={14} />
-                </button>
-                <span className="min-w-[20px] text-center text-[14px] font-semibold tabular-nums">{it.quantity}</span>
-                <button onClick={() => setQty(it.productId, it.quantity + 1)} className="grid h-7 w-7 place-items-center rounded-full bg-card text-foreground transition hover:opacity-70">
-                  <Plus size={14} />
-                </button>
+                <div className="mt-3 inline-flex w-fit items-center gap-2 rounded-full bg-surface p-1">
+                  <button
+                    onClick={() => setQty(it.productId, it.quantity - 1)}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-card text-foreground shadow-sm transition hover:opacity-70"
+                    aria-label="Diminuir"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="min-w-[28px] text-center text-[14px] font-bold tabular-nums">{it.quantity}</span>
+                  <button
+                    onClick={() => setQty(it.productId, it.quantity + 1)}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-card text-foreground shadow-sm transition hover:opacity-70"
+                    aria-label="Aumentar"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Summary */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="card-base p-6">
+            <h2 className="text-title-3">Resumo</h2>
+            <div className="mt-5 space-y-3 text-[15px]">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span className="text-foreground tabular-nums">{brl(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Taxa de serviço</span>
+                <span className="text-foreground tabular-nums">{brl(fee)}</span>
+              </div>
+            </div>
+            <div className="mt-5 flex items-baseline justify-between border-t border-border/60 pt-5">
+              <span className="text-[15px] font-semibold">Total</span>
+              <span className="font-display text-[28px] font-bold tracking-tight tabular-nums">{brl(total)}</span>
+            </div>
+            <button onClick={() => navigate({ to: "/checkout" })} className="btn-primary mt-6 w-full">
+              Ir para checkout <ArrowRight size={16} />
+            </button>
+            <p className="mt-4 text-center text-[12.5px] text-muted-foreground">
+              Pagamento seguro · Retirada em segundos
+            </p>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-10 space-y-3 text-[15px]">
-        <div className="flex justify-between text-muted-foreground">
-          <span>Subtotal</span><span className="tabular-nums">{brl(subtotal)}</span>
-        </div>
-        <div className="flex justify-between text-muted-foreground">
-          <span>Taxa de serviço</span><span className="tabular-nums">{brl(fee)}</span>
         </div>
       </div>
-
-      <div className="mt-6 flex items-baseline justify-between border-t border-border/60 pt-6">
-        <span className="text-title-3">Total</span>
-        <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{brl(total)}</span>
-      </div>
-
-      <button onClick={() => navigate({ to: "/checkout" })} className="btn-primary mt-10 w-full">
-        Ir para o checkout
-      </button>
     </div>
   );
 }

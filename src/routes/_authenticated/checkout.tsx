@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Loader2, QrCode, Wallet, Check } from "lucide-react";
+import { Check, CreditCard, Loader2, QrCode, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -84,8 +84,8 @@ function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-[640px] py-20 text-center">
-        <p className="text-body-lg text-muted-foreground">Carrinho vazio.</p>
+      <div className="mx-auto max-w-[520px] py-20 text-center">
+        <p className="text-[15px] text-muted-foreground">Carrinho vazio.</p>
       </div>
     );
   }
@@ -94,82 +94,115 @@ function CheckoutPage() {
     { id: "pix", label: "PIX", Icon: QrCode },
     { id: "credit_card", label: "Crédito", Icon: CreditCard },
     { id: "debit_card", label: "Débito", Icon: CreditCard },
-    { id: "meal_voucher", label: "Vale Refeição", Icon: Wallet },
+    { id: "meal_voucher", label: "VR", Icon: Wallet },
   ];
 
   return (
-    <div className="mx-auto max-w-[760px]">
-      <h1 className="text-display">Checkout</h1>
+    <div className="mx-auto max-w-[860px]">
+      <header className="mb-10">
+        <h1 className="text-display">Finalizar pedido</h1>
+        <p className="mt-2 text-[15px] text-muted-foreground">Escolha máquina e forma de pagamento</p>
+      </header>
 
-      {/* Machine */}
-      <section className="mt-12">
-        <h2 className="text-title-3 mb-4">Escolha a máquina</h2>
-        <div className="divide-y divide-border/60 border-y border-border/60">
-          {machines.map((m) => (
-            <button key={m.id} onClick={() => setMachineId(m.id)}
-              className="flex w-full items-center gap-4 py-4 text-left transition hover:bg-surface/40">
-              <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${machineId === m.id ? "border-primary bg-primary" : "border-border"}`}>
-                {machineId === m.id && <Check size={14} className="text-primary-foreground" strokeWidth={3} />}
+      <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+        <div className="space-y-8">
+          {/* Machine */}
+          <section className="card-base p-6 sm:p-7">
+            <h2 className="text-title-3 mb-5">Onde retirar</h2>
+            <div className="space-y-2">
+              {machines.map((m) => {
+                const active = machineId === m.id;
+                return (
+                  <button
+                    key={m.id} onClick={() => setMachineId(m.id)}
+                    className={`flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition ${
+                      active ? "bg-accent" : "hover:bg-surface"
+                    }`}
+                  >
+                    <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition ${
+                      active ? "border-primary bg-primary" : "border-border"
+                    }`}>
+                      {active && <Check size={14} className="text-primary-foreground" strokeWidth={3} />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[15px] font-semibold">{m.name}</div>
+                      <div className="text-[13px] text-muted-foreground">{m.address}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Payment */}
+          <section className="card-base p-6 sm:p-7">
+            <h2 className="text-title-3 mb-5">Forma de pagamento</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {methods.map(({ id, label, Icon }) => {
+                const active = method === id;
+                return (
+                  <button
+                    key={id} onClick={() => setMethod(id)}
+                    className={`flex flex-col items-center gap-2 rounded-2xl py-5 transition ${
+                      active ? "bg-foreground text-background" : "bg-surface hover:opacity-80"
+                    }`}
+                  >
+                    <Icon size={22} strokeWidth={1.8} />
+                    <span className="text-[13px] font-semibold">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Coupon */}
+          <section className="card-base p-6 sm:p-7">
+            <h2 className="text-title-3 mb-5">Cupom de desconto</h2>
+            <div className="flex gap-2">
+              <input
+                value={coupon}
+                onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+                placeholder="Digite o código"
+                className="input-field flex-1 uppercase"
+              />
+              <button onClick={applyCoupon} className="btn-secondary px-6">Aplicar</button>
+            </div>
+            {appliedDiscount > 0 && (
+              <p className="mt-3 text-[13px] font-semibold text-primary">
+                ✓ Desconto de {brl(appliedDiscount)} aplicado
+              </p>
+            )}
+          </section>
+        </div>
+
+        {/* Summary sidebar */}
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <div className="card-base p-6">
+            <h2 className="text-title-3">Resumo</h2>
+            <div className="mt-5 space-y-3 text-[15px]">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal</span><span className="text-foreground tabular-nums">{brl(subtotal)}</span>
               </div>
-              <div className="min-w-0">
-                <div className="text-[15px] font-medium">{m.name}</div>
-                <div className="text-[13px] text-muted-foreground">{m.address}</div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Taxa</span><span className="text-foreground tabular-nums">{brl(fee)}</span>
               </div>
+              {appliedDiscount > 0 && (
+                <div className="flex justify-between text-primary">
+                  <span>Desconto</span><span className="tabular-nums">-{brl(appliedDiscount)}</span>
+                </div>
+              )}
+            </div>
+            <div className="mt-5 flex items-baseline justify-between border-t border-border/60 pt-5">
+              <span className="text-[15px] font-semibold">Total</span>
+              <span className="font-display text-[28px] font-bold tracking-tight tabular-nums">{brl(total)}</span>
+            </div>
+            <button onClick={placeOrder} disabled={busy} className="btn-primary mt-6 w-full">
+              {busy && <Loader2 size={16} className="animate-spin" />}
+              Pagar {brl(total)}
             </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Payment */}
-      <section className="mt-12">
-        <h2 className="text-title-3 mb-4">Forma de pagamento</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {methods.map(({ id, label, Icon }) => (
-            <button key={id} onClick={() => setMethod(id)}
-              className={`flex flex-col items-center gap-2 rounded-2xl py-5 transition ${
-                method === id ? "bg-foreground text-background" : "bg-surface hover:opacity-80"
-              }`}>
-              <Icon size={20} strokeWidth={1.8} />
-              <span className="text-[13px] font-medium">{label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Coupon */}
-      <section className="mt-12">
-        <h2 className="text-title-3 mb-4">Cupom</h2>
-        <div className="flex gap-2">
-          <input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="Digite o código"
-            className="input-field flex-1 uppercase" />
-          <button onClick={applyCoupon} className="btn-secondary">Aplicar</button>
-        </div>
-      </section>
-
-      {/* Summary */}
-      <section className="mt-12 space-y-3 text-[15px]">
-        <div className="flex justify-between text-muted-foreground">
-          <span>Subtotal</span><span className="tabular-nums">{brl(subtotal)}</span>
-        </div>
-        <div className="flex justify-between text-muted-foreground">
-          <span>Taxa</span><span className="tabular-nums">{brl(fee)}</span>
-        </div>
-        {appliedDiscount > 0 && (
-          <div className="flex justify-between text-primary">
-            <span>Desconto</span><span className="tabular-nums">-{brl(appliedDiscount)}</span>
           </div>
-        )}
-      </section>
-
-      <div className="mt-6 flex items-baseline justify-between border-t border-border/60 pt-6">
-        <span className="text-title-3">Total</span>
-        <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{brl(total)}</span>
+        </aside>
       </div>
-
-      <button onClick={placeOrder} disabled={busy} className="btn-primary mt-10 w-full">
-        {busy && <Loader2 size={16} className="animate-spin" />}
-        Pagar {brl(total)}
-      </button>
     </div>
   );
 }
