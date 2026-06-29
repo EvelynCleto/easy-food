@@ -127,8 +127,8 @@ function HomePage() {
 
   return (
     <AppShell>
-      {/* Layout responsivo: coluna única no mobile, duas colunas no desktop */}
-      <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 xl:grid-cols-[1fr_380px]">
+      {/* ── Desktop: 3 colunas. Mobile: 1 coluna ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px]">
 
         {/* Coluna principal */}
         <div>

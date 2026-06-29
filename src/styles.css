@@ -59,108 +59,137 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ============================================================
+   LIGHT MODE — Apple .com aesthetic
+   ============================================================ */
 :root {
   --radius: 0.875rem;
-  --background: oklch(0.99 0.002 240);
-  --foreground: oklch(0.16 0.01 250);
-  --surface: oklch(0.965 0.003 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.01 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.01 250);
-  --primary: oklch(0.48 0.15 142);
+
+  /* Backgrounds */
+  --background:      oklch(0.985 0.002 260);   /* #FBFBFD — Apple off-white */
+  --surface:         oklch(0.960 0.003 260);   /* #F5F5F7 — Apple section bg */
+  --card:            oklch(1 0 0);              /* pure white */
+
+  /* Text */
+  --foreground:      oklch(0.155 0.010 260);   /* #1D1D1F — Apple headline */
+  --card-foreground: oklch(0.155 0.010 260);
+  --popover:         oklch(1 0 0);
+  --popover-foreground: oklch(0.155 0.010 260);
+  --muted:           oklch(0.960 0.003 260);
+  --muted-foreground: oklch(0.470 0.010 260);  /* #6E6E73 — Apple secondary */
+
+  /* Brand green — Apple Fitness+ green */
+  --primary:         oklch(0.500 0.160 142);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.965 0.003 240);
-  --secondary-foreground: oklch(0.16 0.01 250);
-  --muted: oklch(0.965 0.003 240);
-  --muted-foreground: oklch(0.48 0.01 250);
-  --accent: oklch(0.94 0.025 142);
-  --accent-foreground: oklch(0.32 0.12 142);
-  --destructive: oklch(0.58 0.22 27);
+
+  /* Accent / hover states */
+  --secondary:       oklch(0.960 0.003 260);
+  --secondary-foreground: oklch(0.155 0.010 260);
+  --accent:          oklch(0.940 0.028 142);
+  --accent-foreground: oklch(0.320 0.120 142);
+
+  /* Semantic */
+  --destructive:     oklch(0.580 0.230 27);
   --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.48 0.15 142);
+  --success:         oklch(0.500 0.160 142);
   --success-foreground: oklch(1 0 0);
-  --warning: oklch(0.75 0.16 75);
-  --border: oklch(0.9 0.004 240);
-  --input: oklch(0.965 0.003 240);
-  --ring: oklch(0.48 0.15 142);
-  --chart-1: oklch(0.48 0.15 142);
-  --chart-2: oklch(0.75 0.16 75);
-  --chart-3: oklch(0.55 0.15 250);
-  --chart-4: oklch(0.65 0.14 30);
-  --chart-5: oklch(0.5 0.12 300);
+  --warning:         oklch(0.740 0.160 75);
+
+  /* Structural */
+  --border:  oklch(0.880 0.004 260);
+  --input:   oklch(0.960 0.003 260);
+  --ring:    oklch(0.500 0.160 142);
+
+  /* Charts */
+  --chart-1: oklch(0.500 0.160 142);
+  --chart-2: oklch(0.740 0.160 75);
+  --chart-3: oklch(0.550 0.150 250);
+  --chart-4: oklch(0.650 0.140 30);
+  --chart-5: oklch(0.500 0.120 300);
+
+  /* Sidebar */
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.16 0.01 250);
-  --sidebar-primary: oklch(0.48 0.15 142);
+  --sidebar-foreground: oklch(0.155 0.010 260);
+  --sidebar-primary: oklch(0.500 0.160 142);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.94 0.025 142);
-  --sidebar-accent-foreground: oklch(0.32 0.12 142);
-  --sidebar-border: oklch(0.9 0.004 240);
-  --sidebar-ring: oklch(0.48 0.15 142);
+  --sidebar-accent: oklch(0.940 0.028 142);
+  --sidebar-accent-foreground: oklch(0.320 0.120 142);
+  --sidebar-border: oklch(0.880 0.004 260);
+  --sidebar-ring: oklch(0.500 0.160 142);
 }
 
+/* ============================================================
+   DARK MODE — macOS dark aesthetic
+   ============================================================ */
 .dark {
-  --background: oklch(0.14 0.01 260);
-  --foreground: oklch(0.96 0.004 240);
-  --surface: oklch(0.17 0.01 260);
-  --card: oklch(0.19 0.01 260);
-  --card-foreground: oklch(0.96 0.004 240);
-  --popover: oklch(0.19 0.01 260);
-  --popover-foreground: oklch(0.96 0.004 240);
-  --primary: oklch(0.62 0.17 142);
-  --primary-foreground: oklch(0.12 0.01 260);
-  --secondary: oklch(0.22 0.01 260);
-  --secondary-foreground: oklch(0.96 0.004 240);
-  --muted: oklch(0.22 0.01 260);
-  --muted-foreground: oklch(0.65 0.008 250);
-  --accent: oklch(0.24 0.04 142);
-  --accent-foreground: oklch(0.88 0.08 142);
-  --destructive: oklch(0.62 0.22 27);
+  --background:      oklch(0.115 0.008 260);   /* deep dark */
+  --surface:         oklch(0.148 0.008 260);
+  --card:            oklch(0.172 0.009 260);   /* elevated card */
+  --foreground:      oklch(0.970 0.004 250);   /* near white */
+  --card-foreground: oklch(0.970 0.004 250);
+  --popover:         oklch(0.172 0.009 260);
+  --popover-foreground: oklch(0.970 0.004 250);
+  --muted:           oklch(0.210 0.009 260);
+  --muted-foreground: oklch(0.640 0.009 255);  /* soft secondary */
+
+  --primary:         oklch(0.650 0.180 142);   /* bright green on dark */
+  --primary-foreground: oklch(0.100 0.010 260);
+
+  --secondary:       oklch(0.210 0.009 260);
+  --secondary-foreground: oklch(0.970 0.004 250);
+  --accent:          oklch(0.240 0.040 142);
+  --accent-foreground: oklch(0.880 0.085 142);
+
+  --destructive:     oklch(0.620 0.230 27);
   --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.62 0.17 142);
-  --success-foreground: oklch(0.12 0.01 260);
-  --warning: oklch(0.8 0.16 75);
-  --border: oklch(0.26 0.008 260);
-  --input: oklch(0.22 0.01 260);
-  --ring: oklch(0.62 0.17 142);
-  --sidebar: oklch(0.17 0.01 260);
-  --sidebar-foreground: oklch(0.96 0.004 240);
-  --sidebar-border: oklch(0.26 0.008 260);
+  --success:         oklch(0.650 0.180 142);
+  --success-foreground: oklch(0.100 0.010 260);
+  --warning:         oklch(0.790 0.160 75);
+
+  --border:  oklch(0.250 0.007 260);
+  --input:   oklch(0.210 0.009 260);
+  --ring:    oklch(0.650 0.180 142);
+
+  --sidebar: oklch(0.148 0.008 260);
+  --sidebar-foreground: oklch(0.970 0.004 250);
+  --sidebar-border: oklch(0.250 0.007 260);
 }
 
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
+  * { border-color: var(--color-border); box-sizing: border-box; }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.025em;
-    line-height: 1.2;
+    line-height: 1.15;
   }
 }
 
-/* ---- Premium animation utilities ---- */
+/* ============================================================
+   UTILITIES
+   ============================================================ */
 @keyframes shimmer {
-  0% { background-position: -800px 0; }
-  100% { background-position: 800px 0; }
-}
-@keyframes float-up {
-  0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
 }
 @keyframes ring-fill {
   from { stroke-dashoffset: var(--ring-circ, 283); }
-  to { stroke-dashoffset: var(--ring-target, 0); }
+  to   { stroke-dashoffset: var(--ring-target, 0); }
 }
 
 @utility shimmer {
@@ -175,15 +204,17 @@
 }
 
 @utility press {
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.10s ease, box-shadow 0.10s ease;
   &:active { transform: scale(0.97); }
 }
 
 @utility card-premium {
   background: var(--card);
-  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
   border-radius: var(--radius-2xl);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 12px 32px -16px rgba(0,0,0,0.08);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.05),
+    0 8px 24px -12px rgba(0,0,0,0.10);
 }
 
 @utility no-scrollbar {
@@ -199,11 +230,20 @@
   & > * { scroll-snap-align: start; }
 }
 
+/* Desktop nav — force display above 768px */
+@media (min-width: 768px) {
+  .desktop-nav { display: flex !important; }
+  .mobile-nav  { display: none  !important; }
+}
+@media (max-width: 767px) {
+  .desktop-nav { display: none  !important; }
+  .mobile-nav  { display: grid  !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
   }
 }

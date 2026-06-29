@@ -5,7 +5,11 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git branch *)",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\evely\\\\Downloads\\\\Easy Fuel\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(head -50)",
+      "Bash(git push *)"
     ]
   }
 }
