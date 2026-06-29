@@ -3,7 +3,9 @@ import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const Input = z.object({ imageBase64: z.string().min(20) });
+const Input = z.object({
+  imageBase64: z.string().min(20),
+});
 
 export type NutritionResult = {
   foods: { name: string; quantity: string }[];
@@ -18,83 +20,105 @@ export type NutritionResult = {
   meal_type?: string;
 };
 
-const FALLBACK: NutritionResult = {
-  foods: [
-    { name: "Arroz integral", quantity: "1 xícara (~150g)" },
-    { name: "Frango grelhado", quantity: "1 filé (~120g)" },
-    { name: "Salada de folhas", quantity: "1 prato" },
-  ],
-  calories: 480,
-  protein: 38,
-  carbs: 52,
-  fiber: 6,
-  fat: 12,
-  notes: "Análise estimada — IA indisponível, mostrando exemplo.",
-  score: 7.8,
-  ai_suggestions: [
-    "Adicione brócolis ou couve para aumentar fibras.",
-    "Boa fonte de proteína magra — mantenha essa base.",
-    "Inclua azeite de oliva cru para gorduras boas.",
-  ],
-  meal_type: "almoço",
-};
+function extractBase64Image(dataUrl: string): {
+  mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+  base64: string;
+} {
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+
+  if (!match) {
+    throw new Error("Imagem inválida. Envie uma imagem em base64/dataURL.");
+  }
+
+  const rawMediaType = match[1];
+  const base64 = match[2];
+
+  const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
+
+  if (!allowed.includes(rawMediaType as any)) {
+    throw new Error(`Formato de imagem não suportado: ${rawMediaType}`);
+  }
+
+  return {
+    mediaType: rawMediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+    base64,
+  };
+}
+
+function getTextFromAnthropicResponse(response: Anthropic.Messages.Message): string {
+  return response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === "text")
+    .map((block) => block.text)
+    .join("\n")
+    .trim();
+}
+
+function parseNutritionJson(text: string): NutritionResult {
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  const match = cleaned.match(/\{[\s\S]*\}/);
+
+  if (!match) {
+    throw new Error(`A IA não retornou JSON válido. Resposta: ${cleaned.slice(0, 500)}`);
+  }
+
+  const parsed = JSON.parse(match[0]) as NutritionResult;
+
+  return {
+    foods: Array.isArray(parsed.foods) ? parsed.foods : [],
+    calories: Number(parsed.calories || 0),
+    protein: Number(parsed.protein || 0),
+    carbs: Number(parsed.carbs || 0),
+    fiber: Number(parsed.fiber || 0),
+    fat: Number(parsed.fat || 0),
+    notes: parsed.notes,
+    score: parsed.score == null ? undefined : Number(parsed.score),
+    ai_suggestions: Array.isArray(parsed.ai_suggestions) ? parsed.ai_suggestions : [],
+    meal_type: parsed.meal_type,
+  };
+}
 
 export const analyzeMeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data, context }): Promise<NutritionResult & { id: string }> => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    let parsed: NutritionResult = FALLBACK;
 
-    if (apiKey) {
-      try {
-        const anthropic = new Anthropic({ apiKey });
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY não configurada no ambiente.");
+    }
 
-const imageBase64 = data.imageBase64.replace(
-  /^data:image\/[a-zA-Z0-9.+-]+;base64,/,
-  ""
-);
+    const { mediaType, base64 } = extractBase64Image(data.imageBase64);
 
-const mediaTypeMatch = data.imageBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/);
-const mediaType = mediaTypeMatch?.[1] ?? "image/jpeg";
+    const anthropic = new Anthropic({ apiKey });
 
-const response = await anthropic.messages.create({
-  model: "claude-sonnet-4-6",
-  max_tokens: 1200,
-  system:
-    "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number (0-10, qualidade nutricional global),\"ai_suggestions\":[\"3 dicas curtas e práticas em PT-BR para melhorar essa refeição\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas (calorias em kcal). NÃO use markdown.",
-  messages: [
-    {
-      role: "user",
-      content: [
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-latest",
+      max_tokens: 1200,
+      system:
+        "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido no formato: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number,\"ai_suggestions\":[\"dica 1\",\"dica 2\",\"dica 3\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas, calorias em kcal. Não use markdown.",
+      messages: [
         {
-          type: "text",
-          text: "Identifique os alimentos e estime a nutrição.",
-        },
-        {
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-            data: imageBase64,
-          },
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Identifique os alimentos visíveis nesta refeição e estime os nutrientes com realismo.",
+            },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mediaType,
+                data: base64,
+              },
+            },
+          ],
         },
       ],
-    },
-  ],
-});
+    });
 
-const text = response.content
-  .filter((block) => block.type === "text")
-  .map((block) => block.text)
-  .join("\n");
-        const cleaned = text.replace(/```json|```/g, "").trim();
-        const match = cleaned.match(/\{[\s\S]*\}/);
-        if (match) parsed = JSON.parse(match[0]) as NutritionResult;
-      } catch (e) {
-        console.error("AI analysis failed", e);
-      }
-    }
+    const text = getTextFromAnthropicResponse(response);
+    const parsed = parseNutritionJson(text);
 
     const { data: row, error } = await context.supabase
       .from("nutritional_analysis")
@@ -113,6 +137,10 @@ const text = response.content
       })
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
     return { ...parsed, id: row!.id };
   });
