@@ -5,6 +5,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Input = z.object({
   goal: z.enum(["emagrecimento", "manutencao", "ganho_massa", "saude"]),
+  // The user's own everyday foods / things they can buy outside the machine
+  customFoods: z.array(z.string().min(1).max(60)).max(40).optional(),
+  // Approximate budget per meal, in BRL
+  budgetPerMeal: z.number().min(0).max(1000).optional(),
+  // How the user wants to eat: only machine marmitas, eating out/home, or a mix
+  eatMode: z.enum(["marmita", "fora", "ambos"]).optional(),
 });
 
 type Meal = { name: string; product_match?: string | null; calories: number; protein: number; carbs: number; fat: number; note?: string };
@@ -54,7 +60,7 @@ export const generateMealPlan = createServerFn({ method: "POST" })
     // Load profile + available products
     const [{ data: profile }, { data: products }] = await Promise.all([
       context.supabase.from("profiles").select("calorie_goal,protein_goal,weight_kg,dietary_restrictions,allergies,favorite_foods").eq("id", context.userId).maybeSingle(),
-      context.supabase.from("products").select("name,calories,protein,carbs,fat,tags").limit(40),
+      context.supabase.from("products").select("name,calories,protein,carbs,fat,tags,price").limit(40),
     ]);
 
     // Catalog-based fallback — never invents dishes outside the catalog.
@@ -64,7 +70,15 @@ export const generateMealPlan = createServerFn({ method: "POST" })
       try {
 const anthropic = new Anthropic({ apiKey });
 
-const catalog = (products ?? []).map((p) => `${p.name} (${p.calories}kcal, P:${p.protein}g, C:${p.carbs}g, G:${p.fat}g, tags:${(p.tags ?? []).join(",")})`).join(" | ");
+const catalog = (products ?? []).map((p) => `${p.name} (R$${Number((p as { price?: number }).price ?? 0).toFixed(2)}, ${p.calories}kcal, P:${p.protein}g, C:${p.carbs}g, G:${p.fat}g, tags:${(p.tags ?? []).join(",")})`).join(" | ");
+
+const customFoods = (data.customFoods ?? []).filter(Boolean);
+const eatMode = data.eatMode ?? "ambos";
+const eatModeText: Record<string, string> = {
+  marmita: "só quer comer as marmitas das máquinas EasyFood (use SOMENTE o catálogo).",
+  fora: "prefere cozinhar / comer fora com as próprias comidas (priorize os alimentos do usuário; use o catálogo só como complemento).",
+  ambos: "quer misturar as marmitas das máquinas com as próprias comidas do dia a dia.",
+};
 
 const goalLabel: Record<string, string> = {
   emagrecimento: "emagrecer — déficit calórico moderado, alta proteína, baixo carboidrato refinado",
@@ -82,16 +96,20 @@ PERFIL DO USUÁRIO:
 - Peso: ${profile?.weight_kg ?? "não informado"}kg
 - Restrições alimentares: ${(profile?.dietary_restrictions ?? []).join(", ") || "nenhuma"}
 - Alergias: ${(profile?.allergies ?? []).join(", ") || "nenhuma"}
+- Como o usuário quer comer: ${eatModeText[eatMode]}
+${data.budgetPerMeal ? `- Orçamento aproximado por refeição: R$${data.budgetPerMeal.toFixed(2)} — respeite esse limite ao escolher itens do catálogo (cada produto tem o preço entre parênteses).` : ""}
+${customFoods.length ? `- Comidas que o usuário come/compra no dia a dia (fora da máquina): ${customFoods.join(", ")}` : ""}
 
-CATÁLOGO EasyFood (USE ESSES PRODUTOS quando possível — campo product_match deve ser o nome exato):
+CATÁLOGO EasyFood (marmitas compráveis nas máquinas — campo product_match deve ser o nome exato):
 ${catalog}
 
 REGRAS:
-1. USE PRIORITARIAMENTE os produtos do catálogo acima em TODAS as refeições — o usuário só pode comprar o que está no catálogo. Quando usar um produto do catálogo, o campo product_match DEVE ser o nome exato dele.
-2. Só sugira uma refeição fora do catálogo se nenhum produto servir para aquele encaixe; nesse caso use uma receita caseira simples e defina product_match como null.
-3. Varie os pratos ao longo dos 7 dias — não repita o mesmo produto mais de 3 vezes
-4. Cada nota (note) deve ser personalizada ao objetivo e soar como um coach humano falando em português brasileiro — calorosa, curta e natural, nunca robótica ou genérica (evite "considere", "opte por", "é importante"). Ex: "Esse aqui te segura até a tarde sem pesar."
-5. Respeite ESTRITAMENTE as alergias e restrições
+1. Itens do CATÁLOGO: quando usar uma marmita do catálogo, product_match DEVE ser o nome exato dela. Se houver orçamento, prefira marmitas dentro do limite por refeição.
+2. Comidas do usuário: quando usar um dos alimentos que o usuário citou (ou uma receita caseira simples compatível com eles), defina product_match como null — são coisas que ele faz/compra fora da máquina, não do catálogo.
+3. Siga o modo escolhido: "marmita" = só catálogo; "fora" = priorize as comidas do usuário; "ambos" = equilibre marmitas e comidas do usuário ao longo da semana.
+4. Varie os pratos ao longo dos 7 dias — não repita o mesmo item mais de 3 vezes.
+5. Cada nota (note) deve ser personalizada ao objetivo e soar como um coach humano falando em português brasileiro — calorosa, curta e natural, nunca robótica ou genérica (evite "considere", "opte por", "é importante"). Ex: "Esse aqui te segura até a tarde sem pesar."
+6. Respeite ESTRITAMENTE as alergias e restrições.
 
 Responda APENAS JSON sem markdown: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome exato do catálogo ou null","note":"dica personalizada ao objetivo"},"almoco":{...},"lanche":{...},"jantar":{...}}}, ... todos os 7 dias]}`;
 

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Plus, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { generateMealPlan, getLatestMealPlan, type MealPlan } from "@/lib/meal-plan.functions";
@@ -18,6 +18,26 @@ const GOALS = [
 ] as const;
 
 const LABELS = { cafe: "Café da manhã", almoco: "Almoço", lanche: "Lanche", jantar: "Jantar" } as const;
+
+const EAT_MODES = [
+  { id: "marmita", label: "Só marmitas", hint: "máquinas EasyFood" },
+  { id: "ambos",   label: "Os dois",     hint: "marmita + suas comidas" },
+  { id: "fora",    label: "Comer fora",  hint: "suas próprias comidas" },
+] as const;
+type EatMode = (typeof EAT_MODES)[number]["id"];
+
+const PREFS_KEY = "easyfood_mealplan_prefs_v1";
+type Prefs = { eatMode: EatMode; budget: string; foods: string[] };
+const DEFAULT_PREFS: Prefs = { eatMode: "ambos", budget: "", foods: [] };
+
+function loadPrefs(): Prefs {
+  if (typeof window === "undefined") return DEFAULT_PREFS;
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (raw) return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
+  } catch { /* ignore */ }
+  return DEFAULT_PREFS;
+}
 
 const PROGRESS_MESSAGES = [
   "Analisando seu perfil...",
@@ -48,12 +68,33 @@ function MealPlanPage() {
   const gen = useServerFn(generateMealPlan);
   const qc = useQueryClient();
   const [goal, setGoal] = useState<(typeof GOALS)[number]["id"]>("manutencao");
-  const progressMsg = useProgressMessage(false); // will be driven by isPending below
+  const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
+  const [foodInput, setFoodInput] = useState("");
+
+  useEffect(() => {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch { /* ignore */ }
+  }, [prefs]);
+
+  const addFood = () => {
+    const v = foodInput.trim();
+    if (!v) return;
+    setPrefs((p) => (p.foods.includes(v) || p.foods.length >= 40 ? p : { ...p, foods: [...p.foods, v] }));
+    setFoodInput("");
+  };
+  const removeFood = (f: string) => setPrefs((p) => ({ ...p, foods: p.foods.filter((x) => x !== f) }));
 
   const { data: plan, isLoading } = useQuery({ queryKey: ["meal-plan"], queryFn: () => get() });
 
   const mutate = useMutation({
-    mutationFn: (g: typeof goal) => gen({ data: { goal: g } }),
+    mutationFn: (g: typeof goal) =>
+      gen({
+        data: {
+          goal: g,
+          eatMode: prefs.eatMode,
+          customFoods: prefs.foods,
+          budgetPerMeal: prefs.budget ? Number(prefs.budget) : undefined,
+        },
+      }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["meal-plan"] }); toast.success("Plano gerado com sucesso!"); },
     onError: (e: Error) => toast.error(e?.message ?? "Falha ao gerar plano. Tente novamente."),
   });
@@ -66,7 +107,7 @@ function MealPlanPage() {
         <p className="text-eyebrow" style={{ color: "var(--ai)" }}>◇ IA · plano semanal</p>
         <h1 className="text-display-m mt-3">Seu plano</h1>
         <p className="mt-3 text-body-sm" style={{ color: "var(--ink-2)" }}>
-          Cardápio de 7 dias usando pratos disponíveis nas máquinas EasyFood.
+          Cardápio de 7 dias que mistura as marmitas das máquinas EasyFood com as suas próprias comidas e o seu orçamento.
         </p>
       </header>
 
@@ -86,6 +127,90 @@ function MealPlanPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Como você quer comer */}
+        <p className="text-eyebrow mt-8">como você quer comer</p>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {EAT_MODES.map((m) => {
+            const active = prefs.eatMode === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setPrefs((p) => ({ ...p, eatMode: m.id }))}
+                className="press rounded-2xl px-3 py-3 text-center transition"
+                style={{
+                  background: active ? "var(--ai)" : "var(--surface)",
+                  color: active ? "#fff" : "var(--ink-1)",
+                }}
+              >
+                <span className="block text-[13px] font-semibold">{m.label}</span>
+                <span className="mt-0.5 block text-[10.5px]" style={{ color: active ? "rgba(255,255,255,0.8)" : "var(--ink-3)" }}>{m.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Suas comidas */}
+        {prefs.eatMode !== "marmita" && (
+          <>
+            <p className="text-eyebrow mt-8">o que você costuma comer / comprar</p>
+            <p className="mt-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
+              Adicione pratos e alimentos do seu dia a dia — a IA mistura com as marmitas das máquinas.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <input
+                value={foodInput}
+                onChange={(e) => setFoodInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFood(); } }}
+                placeholder="ex: ovo mexido, arroz e feijão, açaí..."
+                className="flex-1 rounded-xl px-4 py-3 text-[14px] outline-none"
+                style={{ background: "var(--surface)", color: "var(--ink-1)", border: "0.5px solid var(--hairline)" }}
+              />
+              <button
+                type="button"
+                onClick={addFood}
+                className="press grid w-12 shrink-0 place-items-center rounded-xl"
+                style={{ background: "var(--ink-1)", color: "var(--card)" }}
+                aria-label="Adicionar comida"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+            {prefs.foods.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {prefs.foods.map((f) => (
+                  <span
+                    key={f}
+                    className="flex items-center gap-1.5 rounded-full py-1.5 pl-3 pr-2 text-[12.5px] font-medium"
+                    style={{ background: "var(--surface)", color: "var(--ink-1)" }}
+                  >
+                    {f}
+                    <button type="button" onClick={() => removeFood(f)} aria-label={`Remover ${f}`} className="grid h-4 w-4 place-items-center rounded-full" style={{ color: "var(--ink-3)" }}>
+                      <X size={13} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Orçamento */}
+        <p className="text-eyebrow mt-8">orçamento por refeição (opcional)</p>
+        <div className="mt-3 flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "var(--surface)", border: "0.5px solid var(--hairline)", maxWidth: 220 }}>
+          <span className="text-[14px] font-semibold" style={{ color: "var(--ink-3)" }}>R$</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            value={prefs.budget}
+            onChange={(e) => setPrefs((p) => ({ ...p, budget: e.target.value }))}
+            placeholder="25,00"
+            className="w-full bg-transparent text-[14px] outline-none"
+            style={{ color: "var(--ink-1)" }}
+          />
         </div>
 
         <button
@@ -154,7 +279,7 @@ function MealPlanPage() {
                         <div>
                           <p className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{m.name}</p>
                           {m.note && <p className="mt-1 text-caption">{m.note}</p>}
-                          {hasMatch && (
+                          {hasMatch ? (
                             <Link
                               to="/catalog"
                               className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold"
@@ -162,6 +287,10 @@ function MealPlanPage() {
                             >
                               ◇ Disponível no catálogo →
                             </Link>
+                          ) : (
+                            <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "var(--ink-3)" }}>
+                              ◦ sua comida
+                            </span>
                           )}
                         </div>
                         <p className="text-caption tabular-nums sm:text-right">
