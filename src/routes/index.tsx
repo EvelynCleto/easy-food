@@ -13,7 +13,6 @@ import { DiscoveryCard } from "@/components/aurora/DiscoveryCard";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
 import { computeIntent, streakNarrative, todayString } from "@/lib/intent";
 import { coachGreeting } from "@/lib/coach";
-import { WaterTracker } from "@/components/premium/WaterTracker";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -287,11 +286,6 @@ function HomePage() {
           water={daily?.water_ml ?? 0}
           waterGoal={waterGoal}
         />
-      </section>
-
-      {/* 3. Água */}
-      <section className="mb-8">
-        <WaterTracker goalMl={waterGoal} />
       </section>
 
       {/* 4. Última análise IA */}
