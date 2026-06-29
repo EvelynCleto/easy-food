@@ -4,12 +4,16 @@ import { type ReactNode } from "react";
 
 type IntentVariant = "ai" | "neutral";
 
+type Action =
+  | { label: string; to: string; onClick?: never }
+  | { label: string; onClick: () => void; to?: never };
+
 type Props = {
   eyebrow?: string;
   title: string;
   description?: string | ReactNode;
-  primaryAction?: { label: string; to: string };
-  secondaryAction?: { label: string; to: string };
+  primaryAction?: Action;
+  secondaryAction?: Action;
   variant?: IntentVariant;
 };
 
@@ -61,14 +65,26 @@ export function IntentCard({
       {(primaryAction || secondaryAction) && (
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {primaryAction && (
-            <Link to={primaryAction.to as any} className="btn-primary">
-              {primaryAction.label} <ArrowRight size={15} />
-            </Link>
+            primaryAction.onClick ? (
+              <button type="button" onClick={primaryAction.onClick} className="btn-primary">
+                {primaryAction.label} <ArrowRight size={15} />
+              </button>
+            ) : (
+              <Link to={primaryAction.to as any} className="btn-primary">
+                {primaryAction.label} <ArrowRight size={15} />
+              </Link>
+            )
           )}
           {secondaryAction && (
-            <Link to={secondaryAction.to as any} className="btn-ghost">
-              {secondaryAction.label}
-            </Link>
+            secondaryAction.onClick ? (
+              <button type="button" onClick={secondaryAction.onClick} className="btn-ghost">
+                {secondaryAction.label}
+              </button>
+            ) : (
+              <Link to={secondaryAction.to as any} className="btn-ghost">
+                {secondaryAction.label}
+              </Link>
+            )
           )}
         </div>
       )}

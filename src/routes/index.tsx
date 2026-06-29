@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronRight, ShoppingBag, Utensils, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/AppShell";
@@ -171,7 +172,27 @@ function HomePage() {
   const carbsGoal = Math.round((calGoal * 0.45) / 4);
   const fatGoal = Math.round((calGoal * 0.3) / 9);
 
-  const intent = useMemo(
+  const qc = useQueryClient();
+  const logWater = useMutation({
+    mutationFn: async (ml: number) => {
+      if (!user) throw new Error("Usuário não autenticado");
+      const { error } = await supabase.from("water_logs").insert({
+        user_id: user.id,
+        amount_ml: ml,
+        logged_at: new Date().toISOString(),
+      });
+      if (error) throw new Error(error.message);
+      return ml;
+    },
+    onSuccess: (ml) => {
+      qc.invalidateQueries({ queryKey: ["water-today"] });
+      qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
+      toast.success(`+${ml}ml registrado 💧`);
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const rawIntent = useMemo(
     () =>
       computeIntent({
         hour,
@@ -184,6 +205,18 @@ function HomePage() {
       }),
     [hour, daily, calGoal, proteinGoal, waterGoal],
   );
+
+  // Replace navigation with direct action for water intent
+  const intent = useMemo(() => {
+    if (!rawIntent.isWaterIntent) return rawIntent;
+    return {
+      ...rawIntent,
+      primaryAction: {
+        label: rawIntent.primaryAction.label,
+        onClick: () => logWater.mutate(250),
+      },
+    };
+  }, [rawIntent, logWater]);
 
   const streakLine = streakNarrative(streak);
   const coach = coachGreeting({
