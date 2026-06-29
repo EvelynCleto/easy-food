@@ -82,16 +82,14 @@ function HomePage() {
     queryFn: async () => (await supabase.from("categories").select("id,name,slug").order("sort_order")).data ?? [],
   });
 
-  if (!user) return null;
-
-  const firstName = ((profile as any)?.full_name ?? user.email ?? "").split(/[\s@]/)[0];
+  const firstName = ((profile as any)?.full_name ?? user?.email ?? "").split(/[\s@]/)[0];
   const calGoal = (profile as any)?.calorie_goal ?? 2000;
   const proteinGoal = (profile as any)?.protein_goal ?? 120;
   const waterGoal = (profile as any)?.water_goal_ml ?? 2500;
   const streak = (profile as any)?.streak_days ?? 0;
   const hour = now.getHours();
 
-  // Derived goals for carbs and fat (40/30 of remaining calories as defaults)
+  // Derived goals
   const carbsGoal = Math.round((calGoal * 0.45) / 4);
   const fatGoal = Math.round((calGoal * 0.30) / 9);
 
@@ -108,45 +106,19 @@ function HomePage() {
   const greeting = greetingForHour(firstName, hour);
   const streakLine = streakNarrative(streak);
 
-  // Build smart discovery cards from real data
   const discoveryCards = useMemo(() => {
     const cards: { eyebrow: string; title: string; image?: string | null; to: string; variant?: "ai" | "default" }[] = [];
-
-    cards.push({
-      eyebrow: "esta semana",
-      title: "Mais saudáveis",
-      image: featured[0]?.image_url,
-      to: "/catalog",
-    });
-
-    cards.push({
-      eyebrow: "para você",
-      title: "Alta proteína",
-      image: featured[1]?.image_url,
-      to: "/catalog",
-      variant: "ai",
-    });
-
-    cards.push({
-      eyebrow: "rotina",
-      title: "Plano semanal IA",
-      image: featured[2]?.image_url,
-      to: "/meal-plan",
-      variant: "ai",
-    });
-
+    cards.push({ eyebrow: "esta semana",  title: "Mais saudáveis",     image: featured[0]?.image_url, to: "/catalog" });
+    cards.push({ eyebrow: "para você",    title: "Alta proteína",      image: featured[1]?.image_url, to: "/catalog",   variant: "ai" });
+    cards.push({ eyebrow: "rotina",       title: "Plano semanal IA",   image: featured[2]?.image_url, to: "/meal-plan", variant: "ai" });
     if (categories.length > 0) {
       const first = categories[0];
-      cards.push({
-        eyebrow: first.name.toLowerCase(),
-        title: `Pratos ${first.name}`,
-        image: featured[3]?.image_url,
-        to: "/catalog",
-      });
+      cards.push({ eyebrow: first.name.toLowerCase(), title: `Pratos ${first.name}`, image: featured[3]?.image_url, to: "/catalog" });
     }
-
     return cards;
   }, [featured, categories]);
+
+  if (!user) return null;
 
   return (
     <AppShell>
