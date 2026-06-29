@@ -1,39 +1,33 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2, RefreshCw, TrendingUp, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { analyzeMeal, type NutritionResult } from "@/lib/nutrition.functions";
 import { grantAchievement, checkHealthyWeek } from "@/lib/achievements";
+import { makeThumbnail } from "@/lib/image";
 import { IntentCard } from "@/components/aurora/IntentCard";
 
 export const Route = createFileRoute("/_authenticated/nutrition/")({
   component: NutritionPage,
 });
 
-// Downscale to a small JPEG thumbnail so the history list stays light.
-async function makeThumbnail(dataUrl: string, max = 256): Promise<string | undefined> {
-  try {
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("img load"));
-      img.src = dataUrl;
-    });
-    const scale = Math.min(1, max / Math.max(img.width, img.height));
-    const w = Math.round(img.width * scale);
-    const h = Math.round(img.height * scale);
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return undefined;
-    ctx.drawImage(img, 0, 0, w, h);
-    return canvas.toDataURL("image/jpeg", 0.7);
-  } catch {
-    return undefined;
-  }
+const ANALYZING_MESSAGES = [
+  "Identificando os alimentos...",
+  "Estimando as porções...",
+  "Calculando proteínas e carboidratos...",
+  "Montando suas dicas...",
+];
+
+function useAnalyzingMessage(active: boolean) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (!active) { setIdx(0); return; }
+    const id = setInterval(() => setIdx((i) => Math.min(i + 1, ANALYZING_MESSAGES.length - 1)), 1400);
+    return () => clearInterval(id);
+  }, [active]);
+  return ANALYZING_MESSAGES[idx];
 }
 
 function NutritionPage() {
@@ -43,6 +37,7 @@ function NutritionPage() {
   const fileInput = useRef<HTMLInputElement>(null);
   const analyze = useServerFn(analyzeMeal);
   const qc = useQueryClient();
+  const analyzingMsg = useAnalyzingMessage(busy);
 
   async function onFile(f: File) {
     const reader = new FileReader();
@@ -115,7 +110,7 @@ function NutritionPage() {
               >
                 <div className="text-center">
                   <Loader2 size={28} className="mx-auto animate-spin" style={{ color: "var(--primary)" }} />
-                  <p className="mt-3 text-[13px] font-medium" style={{ color: "var(--ink-1)" }}>Analisando...</p>
+                  <p className="mt-3 text-[13px] font-medium transition-opacity" style={{ color: "var(--ink-1)" }}>{analyzingMsg}</p>
                 </div>
               </div>
             )}

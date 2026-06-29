@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-  Calendar, ChevronRight, Heart, Lock, LogOut,
+  Activity, Calendar, Camera, ChevronRight, Heart, Loader2, Lock, LogOut,
   Receipt, User as UserIcon, TrendingDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { streakNarrative } from "@/lib/intent";
+import { makeThumbnail, fileToDataUrl } from "@/lib/image";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -20,6 +21,7 @@ function ProfilePage() {
   const qc = useQueryClient();
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalWeight, setGoalWeight] = useState<string>("");
+  const avatarInput = useRef<HTMLInputElement>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -55,7 +57,21 @@ function ProfilePage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile"] }); setEditingGoal(false); toast.success("Meta atualizada"); },
   });
 
-  const items: { icon: typeof UserIcon; label: string; to: "/orders" | "/favorites" | "/meal-plan" | "/onboarding" }[] = [
+  const uploadAvatar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Sem sessão");
+      const dataUrl = await fileToDataUrl(file);
+      const thumb = await makeThumbnail(dataUrl, 256, 0.8);
+      if (!thumb) throw new Error("Não foi possível processar a imagem");
+      const { error } = await supabase.from("profiles").update({ avatar_url: thumb }).eq("id", user.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile"] }); toast.success("Foto atualizada"); },
+    onError: (e: Error) => toast.error(e?.message ?? "Falha ao enviar foto"),
+  });
+
+  const items: { icon: typeof UserIcon; label: string; to: "/orders" | "/favorites" | "/meal-plan" | "/onboarding" | "/nutrition/dashboard" }[] = [
+    { icon: Activity, label: "Saúde & progresso", to: "/nutrition/dashboard" },
     { icon: Calendar, label: "Plano semanal", to: "/meal-plan" },
     { icon: Receipt, label: "Pedidos", to: "/orders" },
     { icon: Heart, label: "Favoritos", to: "/favorites" },
@@ -78,15 +94,40 @@ function ProfilePage() {
     <div className="animate-rise mx-auto max-w-[920px]">
       {/* HEADER */}
       <header className="flex items-center gap-5">
-        <div
-          className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full font-display text-[26px] font-semibold text-white"
+        <input
+          ref={avatarInput}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar.mutate(f); e.target.value = ""; }}
+        />
+        <button
+          type="button"
+          onClick={() => avatarInput.current?.click()}
+          disabled={uploadAvatar.isPending}
+          className="press group relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full font-display text-[26px] font-semibold text-white"
           style={{ background: "linear-gradient(135deg, #2DAB6B 0%, #1E8654 100%)" }}
+          aria-label="Alterar foto de perfil"
         >
           {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : firstLetter}
-        </div>
+          <span
+            className={`absolute inset-0 grid place-items-center transition-opacity ${uploadAvatar.isPending ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+            style={{ background: "rgba(0,0,0,0.45)" }}
+          >
+            {uploadAvatar.isPending ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+          </span>
+        </button>
         <div className="min-w-0">
           <h1 className="text-headline truncate">{profile?.full_name ?? "Visitante"}</h1>
           <p className="mt-1 truncate text-body-sm" style={{ color: "var(--ink-2)" }}>{user?.email}</p>
+          <button
+            type="button"
+            onClick={() => avatarInput.current?.click()}
+            className="mt-2 text-[12px] font-semibold"
+            style={{ color: "var(--primary)" }}
+          >
+            {profile?.avatar_url ? "Trocar foto" : "Adicionar foto"}
+          </button>
         </div>
       </header>
 

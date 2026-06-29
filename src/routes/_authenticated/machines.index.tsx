@@ -82,9 +82,20 @@ function MachinesPage() {
       <header className="mb-8">
         <p className="text-eyebrow">rede EasyFood</p>
         <h1 className="text-display-m mt-3">Máquinas</h1>
-        <p className="mt-3 text-body-sm" style={{ color: "var(--ink-2)" }}>
-          {geo.fallback ? "Mostrando São Paulo (ative a localização para precisão)" : "Ordenadas por distância de você"}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <p className="text-body-sm" style={{ color: "var(--ink-2)" }}>
+            {geo.fallback ? "Mostrando São Paulo (ative a localização para precisão)" : "Ordenadas por distância de você"}
+          </p>
+          {machines.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11.5px] font-semibold" style={{ background: "var(--accent)", color: "var(--primary)" }}>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: "var(--primary)" }} />
+                <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: "var(--primary)" }} />
+              </span>
+              {machines.filter((m) => m.status === "online").length} online agora
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="overflow-hidden rounded-[28px]" style={{ background: "var(--surface)" }}>

@@ -57,6 +57,7 @@ function Dashboard() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["weights"] });
       qc.invalidateQueries({ queryKey: ["profile-dash"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
       setNewWeight("");
       toast.success("Peso registrado");
     },
@@ -100,7 +101,7 @@ function Dashboard() {
     const total = rows.filter((r) => new Date(r.created_at).toDateString() === key).reduce((a, r) => a + (r.calories ?? 0), 0);
     const scoreRows = rows.filter((r) => new Date(r.created_at).toDateString() === key && r.score != null);
     const score = scoreRows.length ? scoreRows.reduce((a, r) => a + Number(r.score), 0) / scoreRows.length : 0;
-    return { label: d.toLocaleDateString("pt-BR", { weekday: "short" }), total, score };
+    return { label: d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", ""), total, score };
   });
   const max = Math.max(1, ...days.map((d) => d.total));
 
@@ -119,138 +120,210 @@ function Dashboard() {
     activeDaysLast7: adherenceDays,
     avgMealScore: avgScore,
   });
+  const weightSeries = [...weights].reverse().map((w) => Number(w.weight_kg));
   const weightTrend = weights.length >= 2 ? Number(weights[0].weight_kg) - Number(weights[weights.length - 1].weight_kg) : 0;
   const bmi = profile?.weight_kg && profile?.height_cm ? Number(profile.weight_kg) / Math.pow(Number(profile.height_cm) / 100, 2) : null;
 
+  const proteinPct = Math.min(100, (totals.protein / proteinGoal) * 100);
+
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Saúde</h1>
-          <p className="text-sm text-muted-foreground">Sua evolução, ao estilo Apple Health.</p>
-        </div>
-      </div>
+    <div className="animate-rise mx-auto max-w-3xl">
+      <header className="mb-8">
+        <p className="text-eyebrow">saúde · progresso</p>
+        <h1 className="text-display-m mt-3">Sua evolução</h1>
+        <p className="mt-3 text-body-sm" style={{ color: "var(--ink-2)" }}>
+          Acompanhe calorias, proteína, hidratação e peso ao longo dos dias.
+        </p>
+      </header>
 
-      <XpBar xp={profile?.xp ?? 0} />
+      <div className="space-y-4">
+        <XpBar xp={profile?.xp ?? 0} />
 
-      <HealthScoreCard score={health.score} breakdown={health.breakdown} />
+        <HealthScoreCard score={health.score} breakdown={health.breakdown} />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="flex flex-col items-center rounded-3xl bg-gradient-to-br from-primary to-[oklch(0.5_0.16_140)] p-5 text-primary-foreground">
-          <div className="text-xs uppercase opacity-90">Calorias hoje</div>
-          <MetricRing value={totals.calories} max={calorieGoal} label="kcal" unit="" color="hsl(0 0% 100%)" />
-        </div>
-        <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-          <div className="text-xs uppercase text-muted-foreground">Proteína</div>
-          <div className="mt-1 text-2xl font-bold">{totals.protein.toFixed(0)}<span className="text-sm text-muted-foreground">/{proteinGoal}g</span></div>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-rose-500" style={{ width: `${Math.min(100, (totals.protein / proteinGoal) * 100)}%` }} />
-          </div>
-          <div className="mt-2 text-xs text-muted-foreground">
-            {totals.protein < proteinGoal
-              ? `Faltam ${(proteinGoal - totals.protein).toFixed(0)}g para sua meta.`
-              : "Meta de proteína batida 🎉"}
-          </div>
-        </div>
-        <WaterTracker goalMl={profile?.water_goal_ml ?? 2500} />
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-          <div className="text-xs uppercase text-muted-foreground">Carboidratos</div>
-          <div className="mt-1 text-2xl font-bold">{totals.carbs.toFixed(0)}<span className="text-sm text-muted-foreground">g</span></div>
-        </div>
-        <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-          <div className="text-xs uppercase text-muted-foreground">Gorduras</div>
-          <div className="mt-1 text-2xl font-bold">{totals.fat.toFixed(0)}<span className="text-sm text-muted-foreground">g</span></div>
-        </div>
-        <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-          <div className="text-xs uppercase text-muted-foreground">Fibras</div>
-          <div className="mt-1 text-2xl font-bold">{totals.fiber.toFixed(0)}<span className="text-sm text-muted-foreground">g</span></div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Evolução semanal</h2>
-          <span className="text-[11px] text-muted-foreground">{adherenceDays}/7 dias ativos</span>
-        </div>
-        <div className="mt-4 flex h-32 items-end gap-2">
-          {days.map((d, i) => (
-            <div key={i} className="flex flex-1 flex-col items-center gap-1">
-              <div className="relative w-full rounded-t-md bg-gradient-to-t from-primary to-primary/60 transition-all" style={{ height: `${(d.total / max) * 100}%`, minHeight: 4 }}>
-                {d.score > 0 && (
-                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-emerald-600">{d.score.toFixed(1)}</span>
-                )}
-              </div>
-              <div className="text-[10px] text-muted-foreground">{d.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold"><Scale size={14} /> Peso</h2>
-            <div className="text-xs text-muted-foreground">
-              Atual: <strong className="text-foreground">{profile?.weight_kg ? `${Number(profile.weight_kg).toFixed(1)} kg` : "—"}</strong>
-              {bmi && <> · IMC {bmi.toFixed(1)}</>}
+        {/* Today — calorie ring + protein + water */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div
+            className="flex flex-col items-center justify-center rounded-[24px] p-5 text-white"
+            style={{ background: "linear-gradient(135deg, #2DAB6B 0%, #1E8654 100%)" }}
+          >
+            <div className="text-eyebrow" style={{ color: "rgba(255,255,255,0.85)" }}>calorias hoje</div>
+            <div className="mt-1">
+              <MetricRing value={totals.calories} max={calorieGoal} label="" unit="" color="rgba(255,255,255,0.95)" />
             </div>
           </div>
-          {weightTrend !== 0 && (
-            <div className={`flex items-center gap-1 text-xs font-semibold ${weightTrend < 0 ? "text-emerald-600" : "text-amber-600"}`}>
-              {weightTrend < 0 ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
-              {Math.abs(weightTrend).toFixed(1)} kg
+
+          <div className="card-nested p-5">
+            <p className="text-eyebrow">proteína</p>
+            <p className="mt-1 font-display text-[26px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
+              {totals.protein.toFixed(0)}<span className="text-[14px] font-normal" style={{ color: "var(--ink-3)" }}> / {proteinGoal}g</span>
+            </p>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+              <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${proteinPct}%`, background: proteinPct >= 100 ? "var(--primary)" : "var(--ink-2)" }} />
             </div>
-          )}
+            <p className="mt-2 text-caption">
+              {totals.protein < proteinGoal ? `Faltam ${(proteinGoal - totals.protein).toFixed(0)}g hoje.` : "Meta batida 🎉"}
+            </p>
+          </div>
+
+          <WaterTracker goalMl={profile?.water_goal_ml ?? 2500} />
         </div>
-        <div className="mt-3 flex gap-2">
-          <input type="number" step="0.1" placeholder="Novo peso (kg)" value={newWeight}
-            onChange={(e) => setNewWeight(e.target.value)}
-            className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm" />
-          <button disabled={!newWeight || addWeight.isPending} onClick={() => addWeight.mutate(Number(newWeight))}
-            className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50">
-            Registrar
-          </button>
+
+        {/* Macro breakdown */}
+        <div className="grid grid-cols-3 gap-4">
+          <MacroCell label="Carboidratos" value={totals.carbs} />
+          <MacroCell label="Gorduras" value={totals.fat} />
+          <MacroCell label="Fibras" value={totals.fiber} />
         </div>
-        {weights.length > 1 && (
-          <div className="mt-3 flex h-16 items-end gap-1">
-            {[...weights].reverse().slice(-14).map((w, i) => {
-              const arr = weights.map((x) => Number(x.weight_kg));
-              const mn = Math.min(...arr) - 0.5;
-              const mx = Math.max(...arr) + 0.5;
-              const h = ((Number(w.weight_kg) - mn) / (mx - mn || 1)) * 100;
-              return <div key={i} className="flex-1 rounded-t bg-emerald-500/70" style={{ height: `${h}%`, minHeight: 4 }} />;
+
+        {/* Weekly evolution */}
+        <div className="card-nested p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-eyebrow">evolução semanal</p>
+              <h2 className="text-title-lg mt-1">Calorias por dia</h2>
+            </div>
+            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "var(--accent)", color: "var(--primary)" }}>
+              {adherenceDays}/7 dias ativos
+            </span>
+          </div>
+          <div className="mt-6 flex h-40 items-end gap-2.5">
+            {days.map((d, i) => {
+              const h = (d.total / max) * 100;
+              return (
+                <div key={i} className="flex flex-1 flex-col items-center gap-2">
+                  <div className="relative flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t-lg transition-all duration-700 ease-out"
+                      style={{
+                        height: `${Math.max(h, d.total > 0 ? 6 : 2)}%`,
+                        background: d.total > 0 ? "linear-gradient(180deg, #2DAB6B 0%, #1E8654 100%)" : "var(--surface-2)",
+                      }}
+                    >
+                      {d.score > 0 && (
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold" style={{ color: "var(--primary)" }}>
+                          {d.score.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-[10.5px] capitalize" style={{ color: "var(--ink-3)" }}>{d.label}</div>
+                </div>
+              );
             })}
           </div>
-        )}
-      </div>
+          <p className="mt-4 text-caption">Números verdes = nota média da IA naquele dia.</p>
+        </div>
 
-      <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Histórico recente</h2>
-          <Link to="/nutrition/history" className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
-            Ver tudo →
-          </Link>
-        </div>
-        <div className="mt-3 space-y-2">
-          {rows.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma análise ainda.</p>}
-          {rows.slice(0, 10).map((r) => (
-            <div key={r.id} className="flex items-center justify-between rounded-xl bg-surface p-3 text-sm">
-              <div>
-                <div className="flex items-center gap-2 font-semibold">
-                  {r.calories} kcal
-                  {r.score != null && <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">{Number(r.score).toFixed(1)}</span>}
-                  {r.meal_type && <span className="text-[10px] uppercase text-muted-foreground">· {r.meal_type}</span>}
-                </div>
-                <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("pt-BR")}</div>
-              </div>
-              <div className="text-xs text-muted-foreground">P {Number(r.protein).toFixed(0)}g · C {Number(r.carbs).toFixed(0)}g · G {Number(r.fat).toFixed(0)}g</div>
+        {/* Weight */}
+        <div className="card-nested p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-eyebrow flex items-center gap-1.5"><Scale size={13} /> peso</p>
+              <p className="mt-1 font-display text-[28px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
+                {profile?.weight_kg ? `${Number(profile.weight_kg).toFixed(1)}` : "—"}
+                <span className="text-[14px] font-normal" style={{ color: "var(--ink-3)" }}> kg</span>
+              </p>
+              {bmi && <p className="text-caption">IMC {bmi.toFixed(1)}</p>}
             </div>
-          ))}
+            {weightTrend !== 0 && (
+              <div className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-bold"
+                style={{ background: weightTrend < 0 ? "var(--accent)" : "color-mix(in srgb, var(--warning) 18%, transparent)", color: weightTrend < 0 ? "var(--primary)" : "var(--warning)" }}>
+                {weightTrend < 0 ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
+                {Math.abs(weightTrend).toFixed(1)} kg
+              </div>
+            )}
+          </div>
+
+          {weightSeries.length > 1 && <WeightChart data={weightSeries} />}
+
+          <div className="mt-4 flex gap-2">
+            <input
+              type="number" step="0.1" placeholder="Novo peso (kg)" value={newWeight}
+              onChange={(e) => setNewWeight(e.target.value)}
+              className="flex-1 rounded-xl px-4 py-3 text-[14px] outline-none"
+              style={{ background: "var(--surface)", color: "var(--ink-1)", border: "0.5px solid var(--hairline)" }}
+            />
+            <button disabled={!newWeight || addWeight.isPending} onClick={() => addWeight.mutate(Number(newWeight))}
+              className="btn-primary shrink-0 px-5">
+              Registrar
+            </button>
+          </div>
+        </div>
+
+        {/* Recent history */}
+        <div className="card-nested p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-title-lg">Histórico recente</h2>
+            <Link to="/nutrition/history" className="text-[12px] font-semibold" style={{ color: "var(--primary)" }}>
+              Ver tudo →
+            </Link>
+          </div>
+          <div className="mt-4 space-y-2">
+            {rows.length === 0 && <p className="text-body-sm" style={{ color: "var(--ink-3)" }}>Nenhuma análise ainda.</p>}
+            {rows.slice(0, 10).map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-xl p-3.5" style={{ background: "var(--surface)" }}>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-[14px] font-semibold" style={{ color: "var(--ink-1)" }}>
+                    {r.calories} kcal
+                    {r.score != null && <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: "var(--accent)", color: "var(--primary)" }}>{Number(r.score).toFixed(1)}</span>}
+                    {r.meal_type && <span className="text-[10px] uppercase" style={{ color: "var(--ink-3)" }}>· {r.meal_type}</span>}
+                  </div>
+                  <div className="text-caption">{new Date(r.created_at).toLocaleString("pt-BR")}</div>
+                </div>
+                <div className="shrink-0 text-caption">P {Number(r.protein).toFixed(0)} · C {Number(r.carbs).toFixed(0)} · G {Number(r.fat).toFixed(0)}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MacroCell({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="card-nested p-5">
+      <p className="text-eyebrow">{label}</p>
+      <p className="mt-1 font-display text-[24px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
+        {value.toFixed(0)}<span className="text-[13px] font-normal" style={{ color: "var(--ink-3)" }}>g</span>
+      </p>
+    </div>
+  );
+}
+
+/** Smooth SVG area chart for the weight series. */
+function WeightChart({ data }: { data: number[] }) {
+  const series = data.slice(-14);
+  const w = 320;
+  const h = 64;
+  const pad = 4;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const range = max - min || 1;
+  const pts = series.map((v, i) => {
+    const x = pad + (i / Math.max(1, series.length - 1)) * (w - pad * 2);
+    const y = pad + (1 - (v - min) / range) * (h - pad * 2);
+    return [x, y] as const;
+  });
+  const line = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const area = `${line} L${pts[pts.length - 1][0].toFixed(1)},${h} L${pts[0][0].toFixed(1)},${h} Z`;
+
+  return (
+    <div className="mt-4">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-16 w-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wgrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#wgrad)" />
+        <path d={line} fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {pts.map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r={i === pts.length - 1 ? 3 : 1.6} fill="var(--primary)" />
+        ))}
+      </svg>
     </div>
   );
 }
