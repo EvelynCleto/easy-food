@@ -68,46 +68,58 @@ function AuthPage() {
     navigate({ to: "/" });
   }
 
+  const inputCls = "w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary/60 focus:bg-card focus:ring-2 focus:ring-primary/10";
+
   return (
-    <div className="grid min-h-screen md:grid-cols-2">
-      <div className="hidden bg-gradient-to-br from-primary to-[oklch(0.45_0.15_140)] p-12 text-primary-foreground md:flex md:flex-col md:justify-between">
-        <Logo />
-        <div>
-          <h2 className="font-display text-4xl font-bold leading-tight">
-            Refeições saudáveis,<br /> retirada em segundos.
+    <div className="grid min-h-screen md:grid-cols-[1fr_1fr]">
+      {/* Left panel */}
+      <div className="relative hidden overflow-hidden bg-foreground md:flex md:flex-col md:justify-between p-12">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.52_0.16_142/0.25),transparent_60%)]" />
+        <div className="relative flex items-center gap-2.5">
+          <div className="grid h-9 w-9 place-items-center rounded-[10px] bg-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+            </svg>
+          </div>
+          <span className="font-display text-[17px] font-bold tracking-[-0.03em] text-white">EasyFood</span>
+        </div>
+        <div className="relative">
+          <h2 className="font-display text-[2.4rem] font-bold leading-[1.1] tracking-tight text-white">
+            Refeições saudáveis,<br />retirada em segundos.
           </h2>
-          <p className="mt-3 max-w-md text-primary-foreground/90">
-            EasyFood conecta você às máquinas inteligentes de comida saudável mais próximas, com
-            análise nutricional por IA.
+          <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/50">
+            EasyFood conecta você às máquinas inteligentes de comida saudável mais próximas, com análise nutricional por IA.
           </p>
         </div>
-        <p className="text-xs text-primary-foreground/70">© EasyFood</p>
+        <p className="relative text-xs text-white/25">© 2025 EasyFood</p>
       </div>
 
+      {/* Right panel */}
       <div className="flex items-center justify-center bg-background px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 md:hidden">
+        <div className="w-full max-w-[360px]">
+          <div className="mb-10 md:hidden">
             <Logo />
           </div>
-          <h1 className="font-display text-2xl font-bold">
-            {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Recuperar senha"}
+          <h1 className="font-display text-[26px] font-bold tracking-tight text-foreground">
+            {mode === "login" ? "Bem-vinda de volta" : mode === "signup" ? "Criar conta" : "Recuperar senha"}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {mode === "login"
-              ? "Acesse sua conta EasyFood."
+              ? "Entre na sua conta EasyFood."
               : mode === "signup"
-                ? "Comece a pedir refeições saudáveis."
+                ? "Comece sua jornada alimentar."
                 : "Enviaremos um link para seu e-mail."}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-3" aria-label={mode === "signup" ? "Criar conta" : mode === "login" ? "Entrar" : "Recuperar senha"}>
+          <form onSubmit={handleSubmit} className="mt-7 space-y-3" aria-label={mode === "signup" ? "Criar conta" : mode === "login" ? "Entrar" : "Recuperar senha"}>
             {mode === "signup" && (
               <input
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome"
-                className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className={inputCls}
               />
             )}
             <input
@@ -116,7 +128,7 @@ function AuthPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="E-mail"
-              className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className={inputCls}
             />
             {mode !== "reset" && (
               <input
@@ -126,13 +138,13 @@ function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Senha"
                 minLength={6}
-                className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className={inputCls}
               />
             )}
             <button
               type="submit"
               disabled={busy}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[15px] font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
             >
               {busy && <Loader2 size={16} className="animate-spin" />}
               {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Enviar link"}
@@ -141,13 +153,13 @@ function AuthPage() {
 
           {mode !== "reset" && (
             <>
-              <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
                 <div className="h-px flex-1 bg-border" /> ou <div className="h-px flex-1 bg-border" />
               </div>
               <button
                 onClick={handleGoogle}
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-input bg-card py-3 text-sm font-medium transition hover:bg-accent disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-card py-3.5 text-[15px] font-medium text-foreground transition hover:bg-surface active:scale-[0.98] disabled:opacity-50"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z" />
@@ -160,25 +172,22 @@ function AuthPage() {
             </>
           )}
 
-          <div className="mt-6 flex justify-between text-xs">
+          <div className="mt-6 flex justify-between text-[13px]">
             {mode === "login" ? (
               <>
-                <button onClick={() => setMode("reset")} className="text-muted-foreground hover:text-foreground">
+                <button onClick={() => setMode("reset")} className="text-muted-foreground transition hover:text-foreground">
                   Esqueci a senha
                 </button>
-                <button onClick={() => setMode("signup")} className="font-medium text-primary">
+                <button onClick={() => setMode("signup")} className="font-semibold text-primary transition hover:opacity-80">
                   Criar conta
                 </button>
               </>
             ) : (
-              <button onClick={() => setMode("login")} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setMode("login")} className="text-muted-foreground transition hover:text-foreground">
                 ← Voltar ao login
               </button>
             )}
           </div>
-          <p className="mt-8 text-center text-xs text-muted-foreground">
-            <Link to="/">Continuar como visitante</Link>
-          </p>
         </div>
       </div>
     </div>

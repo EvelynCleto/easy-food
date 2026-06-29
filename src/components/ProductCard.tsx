@@ -20,41 +20,45 @@ export function ProductCard({ p, badges }: { p: ProductCardData; badges?: string
     <Link
       to="/product/$id"
       params={{ id: p.id }}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60 transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border/50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5 hover:ring-border"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface">
         {p.image_url ? (
           <img
             src={p.image_url}
             alt={p.name}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
           />
-        ) : null}
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+            <Flame size={32} />
+          </div>
+        )}
         {topBadge ? (
-          <span className="absolute left-2 top-2"><BadgePill label={topBadge} /></span>
+          <span className="absolute left-2.5 top-2.5"><BadgePill label={topBadge} /></span>
         ) : p.promo_price ? (
-          <span className="absolute left-2 top-2 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive-foreground">
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-destructive px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive-foreground shadow-sm">
             Promo
           </span>
         ) : null}
       </div>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="line-clamp-1 text-sm font-semibold">{p.name}</h3>
+      <div className="flex flex-1 flex-col gap-1 p-3.5">
+        <h3 className="line-clamp-1 text-[13px] font-semibold leading-snug">{p.name}</h3>
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-0.5">
-            <Star size={12} className="fill-warning text-warning" /> {num(p.rating, 1)}
+            <Star size={11} className="fill-warning text-warning" /> {num(p.rating, 1)}
           </span>
           {p.calories ? (
             <span className="inline-flex items-center gap-0.5">
-              <Flame size={12} /> {p.calories} kcal
+              <Flame size={11} /> {p.calories} kcal
             </span>
           ) : null}
         </div>
-        <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-base font-bold text-foreground">{brl(price)}</span>
+        <div className="mt-1.5 flex items-baseline gap-2">
+          <span className="text-[15px] font-bold tracking-tight text-foreground">{brl(price)}</span>
           {p.promo_price && (
-            <span className="text-xs text-muted-foreground line-through">{brl(p.price)}</span>
+            <span className="text-[11px] text-muted-foreground line-through">{brl(p.price)}</span>
           )}
         </div>
       </div>
