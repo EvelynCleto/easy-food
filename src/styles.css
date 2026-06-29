@@ -64,9 +64,9 @@
 :root {
   --radius: 16px;
 
-  /* Surfaces */
-  --background:  #FAFAFB;            /* Canvas */
-  --surface:     #F2F3F5;            /* Surface */
+  /* Surfaces — slight warmth, not pure white */
+  --background:  #FAFAF7;            /* Canvas with breath of cream */
+  --surface:     #F2F2EE;            /* Surface warm */
   --card:        #FFFFFF;
   --foreground:  #0A0B0D;            /* Ink */
   --card-foreground: #0A0B0D;
@@ -79,7 +79,7 @@
   --hairline: rgba(10, 11, 13, 0.08);
   --surface-2: #E8EAEE;
 
-  --muted: #F2F3F5;
+  --muted: #F2F2EE;
   --muted-foreground: #5A5E66;
 
   /* Brand */
@@ -104,7 +104,7 @@
   --warning:   #CC7A1B;
 
   --border: rgba(10, 11, 13, 0.08);
-  --input:  #F2F3F5;
+  --input:  #F2F2EE;
   --ring:   #1E8654;
 
   /* Charts */
@@ -438,6 +438,26 @@
 @keyframes pulse-soft {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.85; }
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+}
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-circ, 283); }
+  to   { stroke-dashoffset: var(--ring-target, 0); }
+}
+
+@utility pulse-dot {
+  animation: pulse-dot 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@utility bar-grow {
+  transform-origin: left;
+  animation: bar-grow 1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @utility animate-rise {

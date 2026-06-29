@@ -52,39 +52,52 @@ export function PulseCard(props: Props) {
   ];
 
   return (
-    <div className="card-aurora animate-rise relative overflow-hidden p-6 sm:p-10">
+    <div
+      className="animate-rise relative overflow-hidden rounded-[32px] p-7 sm:p-12"
+      style={{
+        background: "var(--card)",
+        boxShadow:
+          "0 1px 3px rgba(10, 11, 13, 0.05), 0 24px 60px -16px rgba(10, 11, 13, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.65)",
+      }}
+    >
+      {/* Subtle ambient glow top-right */}
+      <div
+        className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-50"
+        style={{ background: "radial-gradient(circle, rgba(45,171,107,0.10) 0%, transparent 70%)" }}
+      />
+
       {/* Top line: date + streak */}
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <div className="relative flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="text-eyebrow">{props.date}</p>
-        {props.streakLine && (
-          <p className="text-caption">{props.streakLine}</p>
-        )}
       </div>
 
       {/* Hero number */}
-      <div className="mt-6 sm:mt-8">
-        <h1 className="text-display-l tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+      <div className="relative mt-7 sm:mt-9">
+        <h1
+          className="text-display-l tabular-nums"
+          style={{ fontVariantNumeric: "tabular-nums", fontSize: "clamp(3.5rem, 8vw + 1rem, 6rem)" }}
+        >
           {fmt(cal)}
         </h1>
-        <p className="mt-1 text-body-sm" style={{ color: "var(--ink-2)" }}>
-          kcal · {pct}% de {fmt(props.caloriesGoal)}
+        <p className="mt-2 text-body" style={{ color: "var(--ink-2)" }}>
+          kcal hoje · <span className="font-semibold" style={{ color: pct >= 90 ? "var(--primary)" : "var(--ink-1)" }}>{pct}%</span> de {fmt(props.caloriesGoal)}
         </p>
       </div>
 
       {/* Progress bar */}
-      <div className="mt-6 h-[6px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+      <div className="relative mt-7 h-[6px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
         <div
-          className="h-full rounded-full transition-all duration-1000 ease-out"
+          className="h-full rounded-full bar-grow"
           style={{
             width: `${pct}%`,
             background: "linear-gradient(90deg, #1E8654 0%, #2DAB6B 100%)",
-            boxShadow: "0 0 12px rgba(45, 171, 107, 0.4)",
+            boxShadow: "0 0 16px rgba(45, 171, 107, 0.45)",
           }}
         />
       </div>
 
       {/* Macros grid */}
-      <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-5 sm:mt-10 sm:grid-cols-4">
+      <div className="relative mt-9 grid grid-cols-2 gap-x-8 gap-y-5 sm:mt-12 sm:grid-cols-4">
         {macros.map((m) => (
           <Macro key={m.label} {...m} />
         ))}

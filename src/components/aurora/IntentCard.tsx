@@ -72,6 +72,12 @@ export function IntentCard({
           )}
         </div>
       )}
+
+      {isAI && (
+        <p className="mt-5 text-[11px] font-medium tracking-[0.06em]" style={{ color: "color-mix(in srgb, var(--ai) 75%, var(--ink-3))" }}>
+          — Coach EasyFood
+        </p>
+      )}
     </div>
   );
 }

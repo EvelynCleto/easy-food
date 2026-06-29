@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { generateText } from "ai";
+import Anthropic from "@anthropic-ai/sdk";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Input = z.object({ imageBase64: z.string().min(20) });
@@ -43,31 +43,51 @@ export const analyzeMeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data, context }): Promise<NutritionResult & { id: string }> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     let parsed: NutritionResult = FALLBACK;
 
     if (apiKey) {
       try {
-        const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-        const gw = createLovableAiGatewayProvider(apiKey);
-        const model = gw("google/gemini-2.5-flash");
-        const { text } = await generateText({
-          model,
-          messages: [
-            {
-              role: "system",
-              content:
-                "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number (0-10, qualidade nutricional global),\"ai_suggestions\":[\"3 dicas curtas e práticas em PT-BR para melhorar essa refeição\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas (calorias em kcal). NÃO use markdown.",
-            },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: "Identifique os alimentos e estime a nutrição." },
-                { type: "image", image: data.imageBase64 },
-              ],
-            },
-          ],
-        });
+        const anthropic = new Anthropic({ apiKey });
+
+const imageBase64 = data.imageBase64.replace(
+  /^data:image\/[a-zA-Z0-9.+-]+;base64,/,
+  ""
+);
+
+const mediaTypeMatch = data.imageBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/);
+const mediaType = mediaTypeMatch?.[1] ?? "image/jpeg";
+
+const response = await anthropic.messages.create({
+  model: "claude-sonnet-4-6",
+  max_tokens: 1200,
+  system:
+    "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number (0-10, qualidade nutricional global),\"ai_suggestions\":[\"3 dicas curtas e práticas em PT-BR para melhorar essa refeição\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas (calorias em kcal). NÃO use markdown.",
+  messages: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: "Identifique os alimentos e estime a nutrição.",
+        },
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+            data: imageBase64,
+          },
+        },
+      ],
+    },
+  ],
+});
+
+const text = response.content
+  .filter((block) => block.type === "text")
+  .map((block) => block.text)
+  .join("\n");
         const cleaned = text.replace(/```json|```/g, "").trim();
         const match = cleaned.match(/\{[\s\S]*\}/);
         if (match) parsed = JSON.parse(match[0]) as NutritionResult;

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { generateText } from "ai";
+import Anthropic from "@anthropic-ai/sdk";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Input = z.object({
@@ -32,7 +32,7 @@ export const generateMealPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data, context }): Promise<MealPlan & { id: string }> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     let plan: MealPlan = fallback(data.goal);
 
     // Load profile + available products
@@ -43,25 +43,28 @@ export const generateMealPlan = createServerFn({ method: "POST" })
 
     if (apiKey) {
       try {
-        const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-        const gw = createLovableAiGatewayProvider(apiKey);
-        const model = gw("google/gemini-2.5-flash");
-        const catalog = (products ?? []).map((p) => p.name).join(", ");
-        const sys = `Você é um nutricionista esportivo. Crie um plano alimentar de 7 dias (segunda a domingo) com 4 refeições por dia (cafe, almoco, lanche, jantar). Use prioritariamente alimentos compatíveis com o catálogo da máquina: ${catalog}. Restrições: ${(profile?.dietary_restrictions ?? []).join(", ") || "nenhuma"}. Alergias: ${(profile?.allergies ?? []).join(", ") || "nenhuma"}. Meta diária: ${profile?.calorie_goal ?? 2000} kcal, ${profile?.protein_goal ?? 120}g proteína. Objetivo: ${data.goal}. Responda APENAS JSON: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"almoco":{...},"lanche":{...},"jantar":{...}}}, ... 7 dias]}`;
-        const { text } = await generateText({
-          model,
-          messages: [{ role: "system", content: sys }, { role: "user", content: "Gere o plano." }],
-        });
-        const cleaned = text.replace(/```json|```/g, "").trim();
-        const match = cleaned.match(/\{[\s\S]*\}/);
-        if (match) {
-          const parsed = JSON.parse(match[0]) as { days: Day[] };
-          if (Array.isArray(parsed.days) && parsed.days.length) {
-            const totalKcal = parsed.days.reduce((s, d) => s + d.meals.cafe.calories + d.meals.almoco.calories + d.meals.lanche.calories + d.meals.jantar.calories, 0);
-            const totalProt = parsed.days.reduce((s, d) => s + d.meals.cafe.protein + d.meals.almoco.protein + d.meals.lanche.protein + d.meals.jantar.protein, 0);
-            plan = { goal: data.goal, days: parsed.days, total_calories: totalKcal, total_protein: totalProt };
-          }
-        }
+const anthropic = new Anthropic({ apiKey });
+
+const catalog = (products ?? []).map((p) => p.name).join(", ");
+
+const sys = `Você é um nutricionista esportivo. Crie um plano alimentar de 7 dias (segunda a domingo) com 4 refeições por dia (cafe, almoco, lanche, jantar). Use prioritariamente alimentos compatíveis com o catálogo da máquina: ${catalog}. Restrições: ${(profile?.dietary_restrictions ?? []).join(", ") || "nenhuma"}. Alergias: ${(profile?.allergies ?? []).join(", ") || "nenhuma"}. Meta diária: ${profile?.calorie_goal ?? 2000} kcal, ${profile?.protein_goal ?? 120}g proteína. Objetivo: ${data.goal}. Responda APENAS JSON: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"almoco":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"lanche":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"jantar":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"}}}, ... 7 dias]}`;
+
+const response = await anthropic.messages.create({
+  model: "claude-sonnet-4-6",
+  max_tokens: 2000,
+  system: sys,
+  messages: [
+    {
+      role: "user",
+      content: "Gere o plano.",
+    },
+  ],
+});
+
+const text = response.content
+  .filter((block) => block.type === "text")
+  .map((block) => block.text)
+  .join("\n");
       } catch (e) {
         console.error("Meal plan AI failed", e);
       }

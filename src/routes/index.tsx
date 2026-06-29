@@ -9,7 +9,8 @@ import { IntentCard } from "@/components/aurora/IntentCard";
 import { MachineTile, type MachineTileData } from "@/components/aurora/MachineTile";
 import { DiscoveryCard } from "@/components/aurora/DiscoveryCard";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
-import { computeIntent, greetingForHour, streakNarrative, todayString } from "@/lib/intent";
+import { computeIntent, streakNarrative, todayString } from "@/lib/intent";
+import { coachGreeting } from "@/lib/coach";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -103,8 +104,13 @@ function HomePage() {
     waterGoal,
   }), [hour, daily, calGoal, proteinGoal, waterGoal]);
 
-  const greeting = greetingForHour(firstName, hour);
   const streakLine = streakNarrative(streak);
+  const coach = coachGreeting({
+    hour, firstName, streak,
+    calories: daily?.calories ?? 0, caloriesGoal: calGoal,
+    protein: daily?.protein ?? 0, proteinGoal,
+    water: daily?.water_ml ?? 0, waterGoal,
+  });
 
   const discoveryCards = useMemo(() => {
     const cards: { eyebrow: string; title: string; image?: string | null; to: string; variant?: "ai" | "default" }[] = [];
@@ -122,22 +128,22 @@ function HomePage() {
 
   return (
     <AppShell>
-      {/* Greeting */}
+      {/* Greeting — Coach voice */}
       <header className="animate-rise mb-8 sm:mb-10">
         <p className="text-eyebrow">{todayString(now)}</p>
         <h1 className="text-display-m mt-3" style={{ color: "var(--ink-1)" }}>
-          {greeting.split(",")[0]}
-          {firstName && (
+          <span style={{ color: "var(--ink-2)" }}>{coach.lead}</span>
+          {coach.name && (
             <>
-              ,<br />
-              <span style={{ color: "var(--ink-1)" }}>{firstName}</span>
+              <br />
+              <span style={{ color: "var(--ink-1)" }}>{coach.name}</span>
             </>
           )}
         </h1>
       </header>
 
-      {/* PULSE CARD */}
-      <section className="mb-10">
+      {/* PULSE CARD — HERO (dominant visual weight) */}
+      <section className="mb-8">
         <PulseCard
           date={`${todayString(now)}${streakLine ? ` · ${streakLine}` : ""}`}
           calories={Math.round(daily?.calories ?? 0)}
@@ -153,8 +159,8 @@ function HomePage() {
         />
       </section>
 
-      {/* INTENT + NEAREST MACHINE */}
-      <section className="mb-14 grid grid-cols-1 gap-4 animate-rise-delayed lg:grid-cols-2">
+      {/* INTENT — IA Coach speaking */}
+      <section className="mb-4 animate-rise-delayed">
         <IntentCard
           eyebrow={intent.eyebrow}
           title={intent.title}
@@ -162,11 +168,17 @@ function HomePage() {
           primaryAction={intent.primaryAction}
           secondaryAction={intent.secondaryAction}
         />
-
-        {nearest && (
-          <MachineTile m={{ ...nearest, distance_km: 0.34 }} />
-        )}
       </section>
+
+      {/* NEAREST MACHINE — with personality */}
+      {nearest && (
+        <section className="mb-14 animate-rise-2">
+          <MachineTile
+            m={{ ...nearest, distance_km: 0.34 }}
+            personality
+          />
+        </section>
+      )}
 
       {/* DISCOVERY */}
       <section className="mb-12 animate-rise-2">
