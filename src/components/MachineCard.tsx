@@ -18,7 +18,7 @@ export function MachineCard({ m }: { m: MachineData }) {
         ? "bg-warning text-foreground"
         : "bg-muted text-muted-foreground";
   return (
-    <div className="min-w-[260px] max-w-[280px] rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60">
+    <div className="min-w-[240px] max-w-[300px] flex-1 rounded-2xl bg-card p-4 ring-1 ring-border/60 sm:min-w-0 sm:max-w-none">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold leading-tight">{m.name}</h3>
         <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", statusColor)}>
