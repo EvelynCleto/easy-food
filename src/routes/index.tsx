@@ -12,6 +12,7 @@ import { DiscoveryCard } from "@/components/aurora/DiscoveryCard";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
 import { computeIntent, streakNarrative, todayString } from "@/lib/intent";
 import { coachGreeting } from "@/lib/coach";
+import { WaterTracker } from "@/components/premium/WaterTracker";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -255,7 +256,12 @@ function HomePage() {
         />
       </section>
 
-      {/* 3. Última análise IA */}
+      {/* 3. Água */}
+      <section className="mb-8">
+        <WaterTracker goalMl={waterGoal} />
+      </section>
+
+      {/* 4. Última análise IA */}
       <section className="mb-8 animate-rise-delayed">
         {lastAnalysis ? (
           <div className="card-aurora p-5">
@@ -307,7 +313,7 @@ function HomePage() {
         )}
       </section>
 
-      {/* 4. IntentCard */}
+      {/* 5. IntentCard */}
       <section className="mb-8 animate-rise-delayed">
         <IntentCard
           eyebrow={intent.eyebrow}
@@ -318,7 +324,7 @@ function HomePage() {
         />
       </section>
 
-      {/* 5. Plano Alimentar IA */}
+      {/* 6. Plano Alimentar IA */}
       <section className="mb-8 animate-rise-2">
         <div
           className="card-aurora overflow-hidden p-5"
@@ -363,7 +369,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* 6. Acesso rápido */}
+      {/* 7. Acesso rápido */}
       <section className="mb-8 animate-rise-2">
         <h2 className="text-headline mb-4">⚡ Acesso rápido</h2>
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -393,14 +399,14 @@ function HomePage() {
         </div>
       </section>
 
-      {/* 7. Nearest Machine */}
+      {/* 8. Nearest Machine */}
       {nearest && (
         <section className="mb-14 animate-rise-2">
           <MachineTile m={{ ...nearest, distance_km: 0.34 }} personality />
         </section>
       )}
 
-      {/* 8. Discovery */}
+      {/* 9. Discovery */}
       <section className="mb-12 animate-rise-2">
         <div className="mb-5 flex items-baseline justify-between">
           <h2 className="text-headline">Vale descobrir</h2>
