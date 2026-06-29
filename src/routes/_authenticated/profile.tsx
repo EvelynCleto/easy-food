@@ -174,7 +174,7 @@ function ProfilePage() {
           <div className="min-w-0 flex-1">
             <p className="text-eyebrow">meta de peso</p>
             <p className="mt-2 font-display text-[32px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
-              {goalW ? <>{goalW.toFixed(1)}<span className="ml-1 text-[15px] font-normal" style={{ color: "var(--ink-3)" }}>kg</span></> : "—"}
+              {goalW ? <>{goalW.toFixed(1)}<span className="ml-1 text-[15px] font-normal" style={{ color: "var(--ink-3)" }}>kg</span></> : <span className="text-[20px]" style={{ color: "var(--ink-3)" }}>Definir meta</span>}
             </p>
             {lost !== 0 && (
               <div className="mt-2 inline-flex items-center gap-1.5 text-caption">

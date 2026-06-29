@@ -131,7 +131,11 @@ function OnboardingPage() {
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm" />
               <div className="grid grid-cols-3 gap-2">
                 {(["feminino", "masculino", "outro"] as Sex[]).map((s) => (
-                  <button key={s} onClick={() => setSex(s)} className={`rounded-xl border p-3 text-sm capitalize transition ${sex === s ? "border-primary bg-primary/10 text-primary" : "border-input"}`}>{s}</button>
+                  <button key={s} onClick={() => setSex(s)}
+                    className={`rounded-xl border-2 p-3 text-sm capitalize font-semibold transition ${sex === s ? "border-primary bg-primary text-white shadow-md" : "border-input text-muted-foreground"}`}
+                  >
+                    {s}
+                  </button>
                 ))}
               </div>
               <input type="number" value={age} onChange={(e) => setAge(e.target.value ? Number(e.target.value) : "")} placeholder="Idade" className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm" />

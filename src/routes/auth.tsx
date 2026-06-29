@@ -127,7 +127,7 @@ function AuthPage() {
               {mode === "login"
                 ? "Acesse sua conta EasyFood."
                 : mode === "signup"
-                  ? "Em segundos. Sem fricção."
+                  ? "Crie sua conta e comece agora."
                   : "Enviaremos um link para o seu e-mail."}
             </p>
 
@@ -139,8 +139,16 @@ function AuthPage() {
               <input className="input-aurora" required type="email" placeholder="E-mail"
                 value={email} onChange={(e) => setEmail(e.target.value)} />
               {mode !== "reset" && (
-                <input className="input-aurora" required type="password" placeholder="Senha"
-                  minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <div>
+                  <input className="input-aurora w-full" required type="password"
+                    placeholder={mode === "signup" ? "Senha (mínimo 6 caracteres)" : "Senha"}
+                    minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  {mode === "signup" && password.length > 0 && password.length < 6 && (
+                    <p className="mt-1.5 text-[12px]" style={{ color: "var(--destructive)" }}>
+                      Senha muito curta — mínimo 6 caracteres
+                    </p>
+                  )}
+                </div>
               )}
 
               <button type="submit" disabled={busy} className="btn-primary mt-6 w-full">

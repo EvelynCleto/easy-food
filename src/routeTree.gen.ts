@@ -30,6 +30,7 @@ import { Route as AuthenticatedNutritionIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedNutritionHistoryRouteImport } from './routes/_authenticated/nutrition.history'
 import { Route as AuthenticatedNutritionDashboardRouteImport } from './routes/_authenticated/nutrition.dashboard'
 import { Route as AuthenticatedMachinesIdRouteImport } from './routes/_authenticated/machines.$id'
+import { Route as AuthenticatedMachinesIndexRouteImport } from './routes/_authenticated/machines.index'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -139,6 +140,12 @@ const AuthenticatedMachinesIdRoute = AuthenticatedMachinesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedMachinesRoute,
 } as any)
+const AuthenticatedMachinesIndexRoute =
+  AuthenticatedMachinesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMachinesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
+  '/machines/': typeof AuthenticatedMachinesIndexRoute
   '/nutrition/': typeof AuthenticatedNutritionIndexRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
+  '/machines/': typeof AuthenticatedMachinesIndexRoute
   '/nutrition/': typeof AuthenticatedNutritionIndexRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/machines/$id': typeof AuthenticatedMachinesIdRoute
+  '/_authenticated/machines/': typeof AuthenticatedMachinesIndexRoute
   '/_authenticated/nutrition/': typeof AuthenticatedNutritionIndexRoute
   '/_authenticated/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/_authenticated/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/profile'
     | '/machines/$id'
+    | '/machines/'
     | '/nutrition/'
     | '/nutrition/dashboard'
     | '/nutrition/history'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/profile'
     | '/machines/$id'
+    | '/machines/'
     | '/nutrition/'
     | '/nutrition/dashboard'
     | '/nutrition/history'
@@ -271,6 +283,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orders'
     | '/_authenticated/profile'
     | '/_authenticated/machines/$id'
+    | '/_authenticated/machines/'
     | '/_authenticated/nutrition/'
     | '/_authenticated/nutrition/dashboard'
     | '/_authenticated/nutrition/history'
@@ -434,15 +447,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMachinesIdRouteImport
       parentRoute: typeof AuthenticatedMachinesRoute
     }
+    '/_authenticated/machines/': {
+      id: '/_authenticated/machines/'
+      path: '/'
+      fullPath: '/machines/'
+      preLoaderRoute: typeof AuthenticatedMachinesIndexRouteImport
+      parentRoute: typeof AuthenticatedMachinesRoute
+    }
   }
 }
 
 interface AuthenticatedMachinesRouteChildren {
   AuthenticatedMachinesIdRoute: typeof AuthenticatedMachinesIdRoute
+  AuthenticatedMachinesIndexRoute: typeof AuthenticatedMachinesIndexRoute
 }
 
 const AuthenticatedMachinesRouteChildren: AuthenticatedMachinesRouteChildren = {
   AuthenticatedMachinesIdRoute: AuthenticatedMachinesIdRoute,
+  AuthenticatedMachinesIndexRoute: AuthenticatedMachinesIndexRoute,
 }
 
 const AuthenticatedMachinesRouteWithChildren =

@@ -45,9 +45,36 @@ export const generateMealPlan = createServerFn({ method: "POST" })
       try {
 const anthropic = new Anthropic({ apiKey });
 
-const catalog = (products ?? []).map((p) => p.name).join(", ");
+const catalog = (products ?? []).map((p) => `${p.name} (${p.calories}kcal, P:${p.protein}g, C:${p.carbs}g, G:${p.fat}g, tags:${(p.tags ?? []).join(",")})`).join(" | ");
 
-const sys = `Você é um nutricionista esportivo. Crie um plano alimentar de 7 dias (segunda a domingo) com 4 refeições por dia (cafe, almoco, lanche, jantar). Use prioritariamente alimentos compatíveis com o catálogo da máquina: ${catalog}. Restrições: ${(profile?.dietary_restrictions ?? []).join(", ") || "nenhuma"}. Alergias: ${(profile?.allergies ?? []).join(", ") || "nenhuma"}. Meta diária: ${profile?.calorie_goal ?? 2000} kcal, ${profile?.protein_goal ?? 120}g proteína. Objetivo: ${data.goal}. Responda APENAS JSON: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"almoco":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"lanche":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"},"jantar":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome ou null","note":"frase curta"}}}, ... 7 dias]}`;
+const goalLabel: Record<string, string> = {
+  emagrecimento: "emagrecer — déficit calórico moderado, alta proteína, baixo carboidrato refinado",
+  manutencao: "manutenção — macros equilibrados para manter peso e composição corporal",
+  ganho_massa: "ganho de massa muscular — superávit calórico, proteína muito alta (2g/kg), carboidratos complexos",
+  saude: "mais saúde — alimentos variados, alta fibra, micronutrientes, baixo sódio e açúcar",
+};
+
+const sys = `Você é um nutricionista esportivo especializado em nutrição de precisão. Crie um plano alimentar personalizado de 7 dias.
+
+PERFIL DO USUÁRIO:
+- Objetivo: ${goalLabel[data.goal] ?? data.goal}
+- Meta calórica diária: ${profile?.calorie_goal ?? 2000} kcal
+- Meta de proteína diária: ${profile?.protein_goal ?? 120}g
+- Peso: ${profile?.weight_kg ?? "não informado"}kg
+- Restrições alimentares: ${(profile?.dietary_restrictions ?? []).join(", ") || "nenhuma"}
+- Alergias: ${(profile?.allergies ?? []).join(", ") || "nenhuma"}
+
+CATÁLOGO EasyFood (USE ESSES PRODUTOS quando possível — campo product_match deve ser o nome exato):
+${catalog}
+
+REGRAS:
+1. Para almoço e lanche, PREFIRA produtos do catálogo acima quando compatíveis com o objetivo
+2. Para café da manhã e jantar, pode sugerir refeições caseiras saudáveis
+3. Varie os pratos ao longo dos 7 dias — não repita o mesmo produto mais de 3 vezes
+4. Cada nota (note) deve ser personalizada ao objetivo do usuário (ex: para emagrecer, mencione o déficit; para ganho de massa, mencione a janela anabólica)
+5. Respeite ESTRITAMENTE as alergias e restrições
+
+Responda APENAS JSON sem markdown: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome exato do catálogo ou null","note":"dica personalizada ao objetivo"},"almoco":{...},"lanche":{...},"jantar":{...}}}, ... todos os 7 dias]}`;
 
 const response = await anthropic.messages.create({
   model: "claude-sonnet-4-6",

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { generateMealPlan, getLatestMealPlan, type MealPlan } from "@/lib/meal-plan.functions";
 
@@ -19,19 +19,46 @@ const GOALS = [
 
 const LABELS = { cafe: "Café da manhã", almoco: "Almoço", lanche: "Lanche", jantar: "Jantar" } as const;
 
+const PROGRESS_MESSAGES = [
+  "Analisando seu perfil...",
+  "Consultando catálogo EasyFood...",
+  "Calculando macros para sua meta...",
+  "Montando cardápio de 7 dias...",
+  "Equilibrando calorias e proteínas...",
+  "Finalizando seu plano personalizado...",
+];
+
+function useProgressMessage(active: boolean) {
+  const [idx, setIdx] = useState(0);
+  const ref = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (active) {
+      setIdx(0);
+      ref.current = setInterval(() => setIdx((i) => Math.min(i + 1, PROGRESS_MESSAGES.length - 1)), 2200);
+    } else {
+      if (ref.current) clearInterval(ref.current);
+    }
+    return () => { if (ref.current) clearInterval(ref.current); };
+  }, [active]);
+  return PROGRESS_MESSAGES[idx];
+}
+
 function MealPlanPage() {
   const get = useServerFn(getLatestMealPlan);
   const gen = useServerFn(generateMealPlan);
   const qc = useQueryClient();
   const [goal, setGoal] = useState<(typeof GOALS)[number]["id"]>("manutencao");
+  const progressMsg = useProgressMessage(false); // will be driven by isPending below
 
   const { data: plan, isLoading } = useQuery({ queryKey: ["meal-plan"], queryFn: () => get() });
 
   const mutate = useMutation({
     mutationFn: (g: typeof goal) => gen({ data: { goal: g } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["meal-plan"] }); toast.success("Plano gerado"); },
-    onError: (e: any) => toast.error(e?.message ?? "Falha"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["meal-plan"] }); toast.success("Plano gerado com sucesso!"); },
+    onError: (e: Error) => toast.error(e?.message ?? "Falha ao gerar plano. Tente novamente."),
   });
+
+  const activeMsg = useProgressMessage(mutate.isPending);
 
   return (
     <div className="animate-rise mx-auto max-w-[920px]">
@@ -61,10 +88,41 @@ function MealPlanPage() {
           })}
         </div>
 
-        <button onClick={() => mutate.mutate(goal)} disabled={mutate.isPending} className="btn-primary mt-7">
-          {mutate.isPending && <Loader2 size={16} className="animate-spin" />}
-          {plan ? "Gerar novo plano" : "Gerar plano"}
+        <button
+          type="button"
+          onClick={() => mutate.mutate(goal)}
+          disabled={mutate.isPending}
+          className="btn-primary mt-7"
+        >
+          {mutate.isPending ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              {activeMsg}
+            </>
+          ) : (
+            <>
+              <Sparkles size={16} />
+              {plan ? "Gerar novo plano" : "Gerar plano"}
+            </>
+          )}
         </button>
+
+        {mutate.isPending && (
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface)" }}>
+              <div
+                className="h-full rounded-full transition-all duration-[2200ms] ease-in-out"
+                style={{
+                  width: `${((PROGRESS_MESSAGES.indexOf(activeMsg) + 1) / PROGRESS_MESSAGES.length) * 100}%`,
+                  background: "var(--ai)",
+                }}
+              />
+            </div>
+            <span className="text-[11px] tabular-nums" style={{ color: "var(--ink-3)" }}>
+              {Math.round(((PROGRESS_MESSAGES.indexOf(activeMsg) + 1) / PROGRESS_MESSAGES.length) * 100)}%
+            </span>
+          </div>
+        )}
       </section>
 
       {isLoading && <div className="mt-10 grid h-32 place-items-center"><Loader2 size={20} className="animate-spin" style={{ color: "var(--ink-3)" }} /></div>}
@@ -88,6 +146,7 @@ function MealPlanPage() {
                   {(Object.keys(LABELS) as (keyof typeof LABELS)[]).map((k, j) => {
                     const m = d.meals[k];
                     if (!m) return null;
+                    const hasMatch = m.product_match && m.product_match !== "null";
                     return (
                       <div key={k} className="grid gap-2 p-5 sm:grid-cols-[140px_1fr_auto] sm:items-baseline sm:gap-6"
                         style={{ borderTop: j > 0 ? "0.5px solid var(--hairline)" : "none" }}>
@@ -95,6 +154,15 @@ function MealPlanPage() {
                         <div>
                           <p className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{m.name}</p>
                           {m.note && <p className="mt-1 text-caption">{m.note}</p>}
+                          {hasMatch && (
+                            <Link
+                              to="/catalog"
+                              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold"
+                              style={{ color: "var(--primary)" }}
+                            >
+                              ◇ Disponível no catálogo →
+                            </Link>
+                          )}
                         </div>
                         <p className="text-caption tabular-nums sm:text-right">
                           {m.calories} kcal · {m.protein}g P
@@ -110,8 +178,14 @@ function MealPlanPage() {
       )}
 
       {!isLoading && !plan && (
-        <div className="mt-10 text-center text-caption">
-          Escolha um objetivo e clique em gerar.
+        <div className="mt-10 flex flex-col items-center gap-4 py-12 text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-3xl" style={{ background: "var(--surface)" }}>
+            <Sparkles size={28} style={{ color: "var(--ai)" }} />
+          </div>
+          <p className="text-headline">Ainda sem plano gerado</p>
+          <p className="text-body-sm" style={{ color: "var(--ink-2)" }}>
+            Escolha um objetivo acima e clique em "Gerar plano" para criar seu cardápio semanal personalizado.
+          </p>
         </div>
       )}
     </div>
