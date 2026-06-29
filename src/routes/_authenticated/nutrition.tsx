@@ -1,11 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, Loader2, RefreshCw, Save, Sparkles, TrendingUp } from "lucide-react";
+import { Camera, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { analyzeMeal, type NutritionResult } from "@/lib/nutrition.functions";
-import { NutritionCoach } from "@/components/premium/NutritionCoach";
 
 export const Route = createFileRoute("/_authenticated/nutrition")({
   component: NutritionPage,
@@ -29,87 +28,94 @@ function NutritionPage() {
         const r = await analyze({ data: { imageBase64: dataUrl } });
         setResult(r);
         qc.invalidateQueries({ queryKey: ["nutri-history"] });
-        toast.success("Refeição analisada!");
+        toast.success("Refeição analisada");
       } catch (e: any) {
         toast.error(e?.message ?? "Falha na análise");
-      } finally {
-        setBusy(false);
-      }
+      } finally { setBusy(false); }
     };
     reader.readAsDataURL(f);
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold">IA Nutricional</h1>
-          <p className="text-sm text-muted-foreground">Tire uma foto da refeição e receba a análise instantânea.</p>
-        </div>
-        <Link to="/nutrition/dashboard" className="inline-flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-semibold ring-1 ring-border hover:bg-accent">
-          <TrendingUp size={14} /> Dashboard
-        </Link>
-      </div>
+    <div className="mx-auto max-w-[760px]">
+      <h1 className="text-display">Análise nutricional</h1>
+      <p className="mt-3 text-body-lg text-muted-foreground">
+        Tire uma foto da sua refeição. Identificamos os alimentos e calculamos os nutrientes.
+      </p>
 
-      <div className="overflow-hidden rounded-3xl bg-card ring-1 ring-border/60">
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/40 to-background">
+      <div className="mt-12">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-surface">
           {preview ? (
             <img src={preview} alt="Refeição" className="h-full w-full object-cover" />
           ) : (
-            <div className="grid h-full place-items-center text-center">
-              <div>
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary"><Sparkles size={28} /></div>
-                <p className="mt-3 text-sm text-muted-foreground">Faça upload ou tire uma foto</p>
-              </div>
+            <div className="grid h-full place-items-center">
+              <Camera size={40} strokeWidth={1.5} className="text-muted-foreground/50" />
             </div>
           )}
           {busy && (
             <div className="absolute inset-0 grid place-items-center bg-background/70 backdrop-blur-sm">
-              <Loader2 size={28} className="animate-spin text-primary" />
+              <Loader2 size={32} className="animate-spin text-primary" />
             </div>
           )}
         </div>
-        <div className="flex gap-2 p-3">
+
+        <div className="mt-5 flex gap-3">
           <input ref={fileInput} type="file" accept="image/*" capture="environment" className="hidden"
             onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-          <button onClick={() => fileInput.current?.click()}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground">
-            <Camera size={16} /> {preview ? "Nova foto" : "Abrir câmera"}
+          <button onClick={() => fileInput.current?.click()} className="btn-primary flex-1">
+            <Camera size={17} /> {preview ? "Nova foto" : "Tirar foto"}
           </button>
           {preview && (
-            <button onClick={() => { setPreview(null); setResult(null); }} className="grid h-12 w-12 place-items-center rounded-xl border border-input">
-              <RefreshCw size={16} />
+            <button onClick={() => { setPreview(null); setResult(null); }}
+              className="grid h-12 w-12 place-items-center rounded-full bg-surface text-foreground transition hover:opacity-80">
+              <RefreshCw size={17} />
             </button>
           )}
         </div>
       </div>
 
       {result && (
-        <div className="space-y-3">
-          <NutritionCoach score={result.score} suggestions={result.ai_suggestions} mealType={result.meal_type} />
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {[["Calorias",`${result.calories}`,"kcal"],["Proteínas",`${result.protein}`,"g"],["Carboidratos",`${result.carbs}`,"g"],["Fibras",`${result.fiber}`,"g"],["Gorduras",`${result.fat}`,"g"]].map(([k,v,u]) => (
-              <div key={k} className="rounded-xl bg-card p-3 text-center ring-1 ring-border/60">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k}</div>
-                <div className="mt-0.5 text-lg font-bold">{v}<span className="text-xs font-normal text-muted-foreground"> {u}</span></div>
+        <div className="mt-16">
+          <h2 className="text-title-1">Resultado</h2>
+
+          <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
+            {[
+              ["Calorias", `${result.calories} kcal`],
+              ["Proteínas", `${result.protein} g`],
+              ["Carboidratos", `${result.carbs} g`],
+              ["Fibras", `${result.fiber} g`],
+              ["Gorduras", `${result.fat} g`],
+            ].map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between py-4">
+                <span className="text-[15px] text-muted-foreground">{k}</span>
+                <span className="text-[15px] font-medium tabular-nums">{v}</span>
               </div>
             ))}
           </div>
-          <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-            <h2 className="text-sm font-semibold">Alimentos identificados</h2>
-            <ul className="mt-2 space-y-1.5 text-sm">
+
+          <div className="mt-16">
+            <h2 className="text-title-1">Alimentos identificados</h2>
+            <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
               {result.foods.map((f, i) => (
-                <li key={i} className="flex justify-between border-b border-border/40 pb-1.5 last:border-0">
-                  <span className="font-medium">{f.name}</span>
-                  <span className="text-muted-foreground">{f.quantity}</span>
-                </li>
+                <div key={i} className="flex justify-between py-3">
+                  <span className="text-[15px] font-medium">{f.name}</span>
+                  <span className="text-[14px] text-muted-foreground">{f.quantity}</span>
+                </div>
               ))}
-            </ul>
-            {result.notes && <p className="mt-3 text-xs italic text-muted-foreground">{result.notes}</p>}
+            </div>
+            {result.notes && <p className="mt-6 text-[14px] italic text-muted-foreground">{result.notes}</p>}
           </div>
-          <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground">
-            <Save size={16} /> Salvo no histórico
-          </button>
+
+          {result.ai_suggestions && result.ai_suggestions.length > 0 && (
+            <div className="mt-16">
+              <h2 className="text-title-1">Sugestões</h2>
+              <ul className="mt-6 space-y-3">
+                {result.ai_suggestions.map((s, i) => (
+                  <li key={i} className="text-body-lg leading-relaxed text-foreground/80">{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { brl } from "@/lib/format";
-import { SmartCartSummary } from "@/components/premium/SmartCartSummary";
 
 export const Route = createFileRoute("/_authenticated/cart")({
   component: CartPage,
@@ -12,64 +11,70 @@ function CartPage() {
   const { items, subtotal, setQty, remove } = useCart();
   const navigate = useNavigate();
   const fee = items.length ? 3.9 : 0;
+  const total = subtotal + fee;
+
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto max-w-[640px] py-20 text-center">
+        <h1 className="text-display">Carrinho</h1>
+        <p className="mt-6 text-body-lg text-muted-foreground">Seu carrinho está vazio.</p>
+        <Link to="/catalog" className="btn-primary mt-10">Explorar pratos</Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-4 font-display text-2xl font-bold">Carrinho</h1>
-      {items.length === 0 ? (
-        <div className="rounded-2xl bg-card p-10 text-center ring-1 ring-border">
-          <p className="text-muted-foreground">Seu carrinho está vazio.</p>
-          <Link to="/" className="mt-4 inline-block text-sm font-semibold text-primary">
-            Explorar produtos →
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <SmartCartSummary />
-          {items.map((it) => (
-            <div key={it.productId} className="flex gap-3 rounded-2xl bg-card p-3 ring-1 ring-border/60">
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
-                {it.image && <img src={it.image} alt={it.name} className="h-full w-full object-cover" />}
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="truncate text-sm font-semibold">{it.name}</h3>
-                  <button onClick={() => remove(it.productId)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 size={16} />
-                  </button>
+    <div className="mx-auto max-w-[760px]">
+      <h1 className="text-display">Carrinho</h1>
+      <p className="text-caption mt-2">{items.length} {items.length === 1 ? "item" : "itens"}</p>
+
+      <div className="mt-12 divide-y divide-border/60 border-y border-border/60">
+        {items.map((it) => (
+          <div key={it.productId} className="flex gap-5 py-6">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-surface">
+              {it.image && <img src={it.image} alt={it.name} className="h-full w-full object-cover" />}
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col justify-between">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="line-clamp-2 text-[15px] font-medium text-foreground">{it.name}</h3>
+                  <p className="mt-1 text-[15px] font-semibold tabular-nums text-foreground">{brl(it.price)}</p>
                 </div>
-                <p className="text-sm font-bold text-primary">{brl(it.price)}</p>
-                <div className="mt-auto flex items-center gap-2">
-                  <button onClick={() => setQty(it.productId, it.quantity - 1)} className="grid h-8 w-8 place-items-center rounded-full border border-input">
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-6 text-center text-sm font-semibold">{it.quantity}</span>
-                  <button onClick={() => setQty(it.productId, it.quantity + 1)} className="grid h-8 w-8 place-items-center rounded-full border border-input">
-                    <Plus size={14} />
-                  </button>
-                </div>
+                <button onClick={() => remove(it.productId)} className="text-muted-foreground transition hover:text-destructive" aria-label="Remover">
+                  <Trash2 size={18} />
+                </button>
               </div>
-            </div>
-          ))}
-          <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{brl(subtotal)}</span>
-            </div>
-            <div className="mt-1 flex justify-between text-sm">
-              <span className="text-muted-foreground">Taxa de serviço</span>
-              <span>{brl(fee)}</span>
-            </div>
-            <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold">
-              <span>Total</span>
-              <span className="text-primary">{brl(subtotal + fee)}</span>
+              <div className="mt-3 inline-flex w-fit items-center gap-3 rounded-full bg-surface px-1.5 py-1.5">
+                <button onClick={() => setQty(it.productId, it.quantity - 1)} className="grid h-7 w-7 place-items-center rounded-full bg-card text-foreground transition hover:opacity-70">
+                  <Minus size={14} />
+                </button>
+                <span className="min-w-[20px] text-center text-[14px] font-semibold tabular-nums">{it.quantity}</span>
+                <button onClick={() => setQty(it.productId, it.quantity + 1)} className="grid h-7 w-7 place-items-center rounded-full bg-card text-foreground transition hover:opacity-70">
+                  <Plus size={14} />
+                </button>
+              </div>
             </div>
           </div>
-          <button onClick={() => navigate({ to: "/checkout" })} className="w-full rounded-xl bg-primary py-4 text-sm font-semibold text-primary-foreground hover:opacity-90">
-            Ir para o checkout
-          </button>
+        ))}
+      </div>
+
+      <div className="mt-10 space-y-3 text-[15px]">
+        <div className="flex justify-between text-muted-foreground">
+          <span>Subtotal</span><span className="tabular-nums">{brl(subtotal)}</span>
         </div>
-      )}
+        <div className="flex justify-between text-muted-foreground">
+          <span>Taxa de serviço</span><span className="tabular-nums">{brl(fee)}</span>
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-baseline justify-between border-t border-border/60 pt-6">
+        <span className="text-title-3">Total</span>
+        <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{brl(total)}</span>
+      </div>
+
+      <button onClick={() => navigate({ to: "/checkout" })} className="btn-primary mt-10 w-full">
+        Ir para o checkout
+      </button>
     </div>
   );
 }

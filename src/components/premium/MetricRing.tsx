@@ -11,13 +11,10 @@ type Props = {
 };
 
 export function MetricRing({
-  value,
-  max,
-  label,
-  unit = "",
+  value, max, label, unit = "",
   color = "var(--color-primary)",
-  size = 108,
-  stroke = 9,
+  size = 128,
+  stroke = 10,
 }: Props) {
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;
@@ -29,17 +26,13 @@ export function MetricRing({
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
           <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
+            cx={size / 2} cy={size / 2} r={radius}
             strokeWidth={stroke}
-            stroke="color-mix(in oklab, var(--color-border) 70%, transparent)"
+            stroke="color-mix(in oklab, var(--color-muted) 70%, transparent)"
             fill="none"
           />
           <motion.circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
+            cx={size / 2} cy={size / 2} r={radius}
             strokeWidth={stroke}
             stroke={color}
             strokeLinecap="round"
@@ -47,19 +40,19 @@ export function MetricRing({
             strokeDasharray={circ}
             initial={{ strokeDashoffset: circ }}
             animate={{ strokeDashoffset: offset }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
-          <span className="font-display text-[22px] font-semibold leading-none tracking-tight">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="font-display text-[28px] font-semibold leading-none tracking-tight">
             {Math.round(value)}
           </span>
-          <span className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-            / {max}{unit}
+          <span className="mt-1 text-[12px] text-muted-foreground">
+            de {max}{unit}
           </span>
         </div>
       </div>
-      <span className="mt-2 text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="mt-3 text-[13px] font-medium text-foreground">{label}</span>
     </div>
   );
 }

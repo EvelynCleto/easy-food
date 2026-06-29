@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard, type ProductCardData } from "@/components/ProductCard";
-import { ProductCardSkeleton } from "@/components/premium/Skeleton";
-import { EmptyState } from "@/components/premium/EmptyState";
-import { SectionHeader } from "@/components/premium/SectionHeader";
-import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { cn } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/catalog")({
@@ -26,54 +22,24 @@ type Filters = {
   sort: Sort;
 };
 
-const GOALS = [
-  "ganho de massa",
-  "emagrecimento",
-  "definição",
-  "saúde geral",
-];
+const GOALS = ["ganho de massa", "emagrecimento", "definição", "saúde geral"];
+const DEFAULT: Filters = { q: "", catId: null, goal: null, maxCal: 1000, minProtein: 0, maxPrice: 100, sort: "popular" };
 
-const DEFAULT: Filters = {
-  q: "",
-  catId: null,
-  goal: null,
-  maxCal: 1000,
-  minProtein: 0,
-  maxPrice: 100,
-  sort: "popular",
-};
-
-type Row = ProductCardData & {
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
-  category_id: string | null;
-  badges: string[] | null;
-  nutrition_goals: string[] | null;
-  sold_count: number | null;
-};
+type Row = ProductCardData & { category_id: string | null; nutrition_goals: string[] | null };
 
 function CatalogPage() {
   const [f, setF] = useState<Filters>(DEFAULT);
   const [open, setOpen] = useState(false);
-  const { ids: recent } = useRecentlyViewed();
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const { data } = await supabase.from("categories").select("id,name").order("sort_order");
-      return data ?? [];
-    },
+    queryFn: async () => (await supabase.from("categories").select("id,name").order("sort_order")).data ?? [],
   });
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["catalog", f],
     queryFn: async () => {
-      let q = supabase
-        .from("products")
-        .select(
-          "id,name,image_url,price,promo_price,calories,protein,carbs,fat,rating,category_id,badges,nutrition_goals,sold_count",
-        );
+      let q = supabase.from("products").select("id,name,image_url,price,promo_price,calories,rating,category_id,nutrition_goals");
       if (f.q) q = q.ilike("name", `%${f.q}%`);
       if (f.catId) q = q.eq("category_id", f.catId);
       if (f.maxCal < 1000) q = q.lte("calories", f.maxCal);
@@ -86,23 +52,8 @@ function CatalogPage() {
         case "price_desc": q = q.order("price", { ascending: false }); break;
         default: q = q.order("sold_count", { ascending: false, nullsFirst: false });
       }
-      const { data, error } = await q.limit(60);
-      if (error) throw error;
+      const { data } = await q.limit(60);
       return (data ?? []) as Row[];
-    },
-  });
-
-  const { data: recentProducts = [] } = useQuery({
-    queryKey: ["recent-products", recent],
-    enabled: recent.length > 0,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("id,name,image_url,price,promo_price,calories,rating")
-        .in("id", recent);
-      // preserve order
-      const map = new Map((data ?? []).map((p) => [p.id, p]));
-      return recent.map((id) => map.get(id)).filter(Boolean) as ProductCardData[];
     },
   });
 
@@ -114,203 +65,132 @@ function CatalogPage() {
       chips.push({ key: "cat", label: c?.name ?? "categoria", reset: () => setF((p) => ({ ...p, catId: null })) });
     }
     if (f.goal) chips.push({ key: "goal", label: f.goal, reset: () => setF((p) => ({ ...p, goal: null })) });
-    if (f.maxCal < 1000) chips.push({ key: "cal", label: `≤ ${f.maxCal} kcal`, reset: () => setF((p) => ({ ...p, maxCal: 1000 })) });
-    if (f.minProtein > 0) chips.push({ key: "p", label: `≥ ${f.minProtein}g proteína`, reset: () => setF((p) => ({ ...p, minProtein: 0 })) });
-    if (f.maxPrice < 100) chips.push({ key: "price", label: `≤ R$ ${f.maxPrice}`, reset: () => setF((p) => ({ ...p, maxPrice: 100 })) });
+    if (f.maxCal < 1000) chips.push({ key: "cal", label: `até ${f.maxCal} kcal`, reset: () => setF((p) => ({ ...p, maxCal: 1000 })) });
+    if (f.minProtein > 0) chips.push({ key: "p", label: `${f.minProtein}g+ proteína`, reset: () => setF((p) => ({ ...p, minProtein: 0 })) });
+    if (f.maxPrice < 100) chips.push({ key: "price", label: `até R$ ${f.maxPrice}`, reset: () => setF((p) => ({ ...p, maxPrice: 100 })) });
     return chips;
   }, [f, categories]);
 
   return (
     <div>
-      <SectionHeader
-        title="Catálogo"
-        subtitle={isLoading ? "Carregando..." : `${products.length} resultado(s)`}
-      />
+      <h1 className="text-display">Catálogo</h1>
+      <p className="text-caption mt-2">
+        {isLoading ? "Carregando..." : `${products.length} pratos disponíveis`}
+      </p>
 
-      <div className="mb-4 flex gap-2">
-        <div className="flex flex-1 items-center gap-2 rounded-2xl bg-card px-4 py-3 shadow-sm ring-1 ring-border/60 focus-within:ring-2 focus-within:ring-primary">
-          <Search size={18} className="text-muted-foreground" />
+      <div className="mt-10 flex gap-3">
+        <div className="relative flex-1">
+          <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={f.q}
             onChange={(e) => setF((p) => ({ ...p, q: e.target.value }))}
             placeholder="Buscar pratos, ingredientes..."
-            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="h-12 w-full rounded-full bg-surface pl-13 pr-5 text-[15px] outline-none placeholder:text-muted-foreground focus:bg-card focus:ring-2 focus:ring-primary/20"
+            style={{ paddingLeft: "3.25rem" }}
           />
         </div>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="press grid h-12 w-12 place-items-center rounded-2xl bg-foreground text-background shadow-sm transition hover:opacity-90"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-surface text-foreground transition hover:bg-surface/70"
           aria-label="Filtros"
         >
-          <SlidersHorizontal size={18} />
+          <SlidersHorizontal size={17} />
         </button>
       </div>
 
-      {/* Categories pills */}
-      <div className="no-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar mt-5 -mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         <button
           onClick={() => setF((p) => ({ ...p, catId: null }))}
           className={cn(
-            "press shrink-0 rounded-full px-4 py-2 text-sm font-medium",
-            !f.catId ? "bg-foreground text-background" : "bg-card ring-1 ring-border",
+            "shrink-0 rounded-full px-4 py-2 text-[14px] font-medium transition",
+            !f.catId ? "bg-foreground text-background" : "bg-surface text-foreground/80 hover:text-foreground",
           )}
-        >
-          Todas
-        </button>
+        >Todas</button>
         {categories.map((c) => (
-          <button
-            key={c.id}
+          <button key={c.id}
             onClick={() => setF((p) => ({ ...p, catId: c.id }))}
             className={cn(
-              "press shrink-0 rounded-full px-4 py-2 text-sm font-medium",
-              f.catId === c.id ? "bg-primary text-primary-foreground" : "bg-card ring-1 ring-border",
+              "shrink-0 rounded-full px-4 py-2 text-[14px] font-medium transition",
+              f.catId === c.id ? "bg-foreground text-background" : "bg-surface text-foreground/80 hover:text-foreground",
             )}
-          >
-            {c.name}
-          </button>
+          >{c.name}</button>
         ))}
       </div>
 
-      {/* Sort */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+      {activeChips.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {activeChips.map((c) => (
-            <button
-              key={c.key}
-              onClick={c.reset}
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary"
-            >
-              {c.label} <X size={11} />
+            <button key={c.key} onClick={c.reset}
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[13px] font-medium text-accent-foreground">
+              {c.label} <X size={12} />
             </button>
           ))}
+          <button onClick={() => setF(DEFAULT)} className="text-[13px] font-medium text-muted-foreground hover:text-foreground">
+            Limpar tudo
+          </button>
         </div>
-        <label className="relative inline-flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-medium ring-1 ring-border">
-          Ordenar:{" "}
-          <select
-            value={f.sort}
-            onChange={(e) => setF((p) => ({ ...p, sort: e.target.value as Sort }))}
-            className="bg-transparent text-xs font-semibold outline-none"
-          >
-            <option value="popular">Popularidade</option>
-            <option value="rating">Avaliação</option>
-            <option value="price_asc">Menor preço</option>
-            <option value="price_desc">Maior preço</option>
-          </select>
-          <ChevronDown size={14} />
-        </label>
-      </div>
+      )}
 
-      {/* Advanced filters drawer */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="card-premium mb-4 overflow-hidden"
+            className="mt-6 overflow-hidden"
           >
-            <div className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-3">
-              <Range label="Calorias máx." value={f.maxCal} min={100} max={1000} step={50} unit="kcal" onChange={(v) => setF((p) => ({ ...p, maxCal: v }))} />
-              <Range label="Proteína mín." value={f.minProtein} min={0} max={60} step={5} unit="g" onChange={(v) => setF((p) => ({ ...p, minProtein: v }))} />
-              <Range label="Preço máx." value={f.maxPrice} min={10} max={100} step={5} unit="R$" prefix onChange={(v) => setF((p) => ({ ...p, maxPrice: v }))} />
-              <div className="sm:col-span-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objetivo nutricional</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => setF((p) => ({ ...p, goal: null }))}
-                    className={cn(
-                      "rounded-full px-3 py-1.5 text-xs font-semibold",
-                      !f.goal ? "bg-foreground text-background" : "bg-surface ring-1 ring-border",
-                    )}
-                  >
+            <div className="rounded-2xl bg-surface p-6">
+              <div className="grid gap-6 sm:grid-cols-3">
+                <Range label="Calorias máximas" value={f.maxCal} min={100} max={1000} step={50} unit="kcal" onChange={(v) => setF((p) => ({ ...p, maxCal: v }))} />
+                <Range label="Proteína mínima" value={f.minProtein} min={0} max={60} step={5} unit="g" onChange={(v) => setF((p) => ({ ...p, minProtein: v }))} />
+                <Range label="Preço máximo" value={f.maxPrice} min={10} max={100} step={5} unit="R$" prefix onChange={(v) => setF((p) => ({ ...p, maxPrice: v }))} />
+              </div>
+              <div className="mt-6">
+                <p className="mb-3 text-[13px] font-medium text-foreground">Objetivo</p>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setF((p) => ({ ...p, goal: null }))}
+                    className={cn("rounded-full px-4 py-1.5 text-[13px] font-medium", !f.goal ? "bg-foreground text-background" : "bg-card text-foreground/80")}>
                     Qualquer
                   </button>
                   {GOALS.map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setF((p) => ({ ...p, goal: g }))}
-                      className={cn(
-                        "rounded-full px-3 py-1.5 text-xs font-semibold capitalize",
-                        f.goal === g ? "bg-primary text-primary-foreground" : "bg-surface ring-1 ring-border",
-                      )}
-                    >
+                    <button key={g} onClick={() => setF((p) => ({ ...p, goal: g }))}
+                      className={cn("rounded-full px-4 py-1.5 text-[13px] font-medium capitalize", f.goal === g ? "bg-foreground text-background" : "bg-card text-foreground/80")}>
                       {g}
                     </button>
                   ))}
                 </div>
               </div>
-              <button
-                onClick={() => setF(DEFAULT)}
-                className="press col-span-full justify-self-end text-xs font-semibold text-primary"
-              >
-                Limpar tudo
-              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Recently viewed */}
-      {recentProducts.length > 0 && !f.q && !f.catId && (
-        <section className="mb-6">
-          <SectionHeader title="Vistos recentemente" />
-          <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
-            {recentProducts.map((p) => (
-              <div key={p.id} className="w-44 shrink-0">
-                <ProductCard p={p} />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+        {products.map((p) => <ProductCard key={p.id} p={p} />)}
+      </div>
 
-      {/* Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
-        </div>
-      ) : products.length === 0 ? (
-        <EmptyState
-          icon={Search}
-          title="Nada por aqui"
-          description="Tente ajustar os filtros ou buscar outro termo."
-          action={
-            <button
-              onClick={() => setF(DEFAULT)}
-              className="press rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              Limpar filtros
-            </button>
-          }
-        />
-      ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((p) => (
-            <ProductCard key={p.id} p={p} badges={p.badges ?? undefined} />
-          ))}
+      {!isLoading && products.length === 0 && (
+        <div className="mt-20 text-center">
+          <p className="text-title-3 text-foreground">Nada encontrado</p>
+          <p className="mt-2 text-body text-muted-foreground">Tente ajustar os filtros.</p>
+          <button onClick={() => setF(DEFAULT)} className="btn-primary mt-6">Limpar filtros</button>
         </div>
       )}
     </div>
   );
 }
 
-function Range({
-  label, value, min, max, step, unit, prefix, onChange,
-}: {
-  label: string; value: number; min: number; max: number; step: number;
-  unit?: string; prefix?: boolean; onChange: (v: number) => void;
+function Range({ label, value, min, max, step, unit, prefix, onChange }: {
+  label: string; value: number; min: number; max: number; step: number; unit?: string; prefix?: boolean; onChange: (v: number) => void;
 }) {
   return (
     <div>
-      <div className="mb-1 flex items-baseline justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="text-sm font-bold tabular-nums">
-          {prefix ? `${unit} ${value}` : `${value} ${unit ?? ""}`}
-        </p>
+      <div className="mb-2 flex items-baseline justify-between">
+        <p className="text-[13px] font-medium text-foreground">{label}</p>
+        <p className="text-[15px] font-semibold tabular-nums">{prefix ? `${unit} ${value}` : `${value} ${unit ?? ""}`}</p>
       </div>
       <input
-        type="range"
-        min={min} max={max} step={step} value={value}
+        type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full accent-primary"
       />

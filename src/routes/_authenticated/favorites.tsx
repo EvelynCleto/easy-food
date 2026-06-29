@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,8 +14,7 @@ function FavoritesPage() {
     queryKey: ["favorites", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("favorites")
+      const { data } = await supabase.from("favorites")
         .select("products(id,name,image_url,price,promo_price,calories,rating)")
         .eq("user_id", user!.id);
       return (data ?? []).map((r: any) => r.products).filter(Boolean);
@@ -24,25 +23,20 @@ function FavoritesPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold">Favoritos</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {isLoading ? "Carregando..." : `${products.length} produto(s) salvos`}
+      <h1 className="text-display">Favoritos</h1>
+      <p className="text-caption mt-2">
+        {isLoading ? "Carregando..." : `${products.length} ${products.length === 1 ? "prato salvo" : "pratos salvos"}`}
       </p>
-      {isLoading ? (
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-muted" />
-          ))}
+
+      {!isLoading && products.length === 0 ? (
+        <div className="mt-20 text-center">
+          <p className="text-title-3">Nada por aqui ainda</p>
+          <p className="mt-2 text-body text-muted-foreground">Salve seus pratos preferidos para encontrar fácil depois.</p>
+          <Link to="/catalog" className="btn-primary mt-8">Explorar catálogo</Link>
         </div>
-      ) : products.length === 0 ? (
-        <p className="mt-6 rounded-2xl bg-card p-10 text-center text-sm text-muted-foreground ring-1 ring-border">
-          Você ainda não favoritou nenhum produto.
-        </p>
       ) : (
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((p: any) => (
-            <ProductCard key={p.id} p={p} />
-          ))}
+        <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+          {products.map((p: any) => <ProductCard key={p.id} p={p} />)}
         </div>
       )}
     </div>

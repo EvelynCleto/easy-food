@@ -1,33 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Camera, Flame, MapPin, Search, SlidersHorizontal, Sparkles, Trophy } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/AppShell";
 import { ProductCard, type ProductCardData } from "@/components/ProductCard";
 import { MachineCard, type MachineData } from "@/components/MachineCard";
 import { MetricRing } from "@/components/premium/MetricRing";
-import { SectionHeader } from "@/components/premium/SectionHeader";
-import { RecommendationCard } from "@/components/premium/RecommendationCard";
-import { EmptyState } from "@/components/premium/EmptyState";
-import {
-  MachineCardSkeleton,
-  ProductCardSkeleton,
-} from "@/components/premium/Skeleton";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
-import { buildRecommendations, greetingFor } from "@/lib/recommendations";
-import { XpBar } from "@/components/premium/XpBar";
+import { greetingFor } from "@/lib/recommendations";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "EasyFood — refeições saudáveis em máquinas inteligentes" },
-      {
-        name: "description",
-        content:
-          "Compre refeições saudáveis em máquinas EasyFood. Fitness, low carb, proteica e vegetariana com retirada em segundos.",
-      },
+      { name: "description", content: "Compre refeições saudáveis em máquinas EasyFood." },
     ],
   }),
   component: HomePage,
@@ -47,45 +35,27 @@ function HomePage() {
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("id,name,slug,icon")
-        .order("sort_order");
-      if (error) throw error;
-      return data;
+      const { data } = await supabase.from("categories").select("id,name,slug").order("sort_order");
+      return data ?? [];
     },
   });
 
-  const { data: machines = [], isLoading: loadingMachines } = useQuery({
+  const { data: machines = [] } = useQuery({
     queryKey: ["machines"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("machines")
-        .select("id,name,address,status,stock_level")
-        .limit(8);
-      if (error) throw error;
-      return data as MachineData[];
+      const { data } = await supabase.from("machines").select("id,name,address,status,stock_level").limit(6);
+      return (data ?? []) as MachineData[];
     },
   });
 
-  const { data: products = [], isLoading: loadingProducts } = useQuery({
+  const { data: products = [] } = useQuery({
     queryKey: ["products", activeCat, query],
     queryFn: async () => {
-      let q = supabase
-        .from("products")
-        .select(
-          "id,name,image_url,price,promo_price,calories,protein,carbs,fat,rating,is_featured,category_id",
-        );
+      let q = supabase.from("products").select("id,name,image_url,price,promo_price,calories,rating,is_featured,category_id");
       if (activeCat) q = q.eq("category_id", activeCat);
       if (query) q = q.ilike("name", `%${query}%`);
-      const { data, error } = await q.limit(20);
-      if (error) throw error;
-      return data as (ProductCardData & {
-        is_featured: boolean;
-        protein: number | null;
-        carbs: number | null;
-        fat: number | null;
-      })[];
+      const { data } = await q.limit(24);
+      return (data ?? []) as (ProductCardData & { is_featured: boolean })[];
     },
   });
 
@@ -93,285 +63,162 @@ function HomePage() {
     queryKey: ["profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name,calorie_goal,protein_goal,water_goal_ml,streak_days,xp,onboarding_completed")
-        .eq("id", user!.id)
-        .maybeSingle();
-      if (error) throw error;
+      const { data } = await supabase.from("profiles")
+        .select("full_name,calorie_goal,protein_goal,water_goal_ml,onboarding_completed")
+        .eq("id", user!.id).maybeSingle();
       return data;
     },
   });
 
   useEffect(() => {
-    if (profile && profile.onboarding_completed === false) {
-      navigate({ to: "/onboarding" });
-    }
+    if (profile && profile.onboarding_completed === false) navigate({ to: "/onboarding" });
   }, [profile, navigate]);
 
   const { data: daily } = useDailyNutrition();
 
   if (!user) return null;
 
-  const featured = products.filter((p) => p.is_featured).slice(0, 6);
-  const aiRecs = buildRecommendations(products);
-
-  const greeting = greetingFor(profile?.full_name ?? user.email);
+  const firstName = (profile?.full_name ?? user.email ?? "").split(/[\s@]/)[0];
   const calGoal = (profile as { calorie_goal?: number } | null)?.calorie_goal ?? 2000;
   const proteinGoal = (profile as { protein_goal?: number } | null)?.protein_goal ?? 120;
   const waterGoal = (profile as { water_goal_ml?: number } | null)?.water_goal_ml ?? 2500;
-  const streak = (profile as { streak_days?: number } | null)?.streak_days ?? 0;
-  const xp = (profile as { xp?: number } | null)?.xp ?? 0;
-  const proteinNow = daily?.protein ?? 0;
-  const proteinLeft = Math.max(0, proteinGoal - proteinNow);
 
   return (
     <AppShell>
-      {/* ── Desktop: 3 colunas. Mobile: 1 coluna ── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px]">
-
-        {/* Coluna principal */}
-        <div>
-          {/* Greeting card */}
-          <section className="card-premium mb-6 overflow-hidden">
-            <div className="flex flex-col gap-5 p-5 sm:p-6 lg:p-8">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    {greeting}
-                  </p>
-                  <h1 className="mt-1.5 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl">
-                    Hoje você está{" "}
-                    <span className="text-primary">no caminho certo</span>
-                  </h1>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/12 px-3 py-1.5 text-xs font-semibold text-warning">
-                      <Trophy size={13} /> {streak} dias seguidos
-                    </span>
-                    <Link
-                      to="/nutrition"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/15"
-                    >
-                      <Camera size={13} /> Analisar refeição
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metric rings */}
-              <div className="grid grid-cols-3 gap-3 sm:gap-6">
-                <MetricRing
-                  value={daily?.calories ?? 0}
-                  max={calGoal}
-                  label="Calorias"
-                  unit=" kcal"
-                />
-                <MetricRing
-                  value={daily?.protein ?? 0}
-                  max={proteinGoal}
-                  label="Proteína"
-                  unit="g"
-                  color="oklch(0.75 0.16 75)"
-                />
-                <MetricRing
-                  value={daily?.water_ml ?? 0}
-                  max={waterGoal}
-                  label="Água"
-                  unit="ml"
-                  color="oklch(0.55 0.15 250)"
-                />
-              </div>
-
-              {proteinLeft > 0 && (
-                <div className="rounded-xl bg-primary/6 px-4 py-3 text-sm text-foreground/80">
-                  Faltam <strong className="text-foreground">{proteinLeft.toFixed(0)}g de proteína</strong> para sua meta.{" "}
-                  <Link to="/catalog" className="font-semibold text-primary hover:underline">
-                    Ver pratos proteicos →
-                  </Link>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Search */}
-          <section className="mb-6">
-            <div className="flex gap-3">
-              <div className="flex flex-1 items-center gap-3 rounded-2xl bg-card px-4 py-3.5 ring-1 ring-border/60 transition focus-within:ring-2 focus-within:ring-primary/40">
-                <Search size={18} className="shrink-0 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar pratos, ingredientes..."
-                  className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-              <Link
-                to="/catalog"
-                aria-label="Filtros avançados"
-                className="press grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-foreground text-background shadow-sm transition hover:opacity-90"
-              >
-                <SlidersHorizontal size={17} />
-              </Link>
-            </div>
-          </section>
-
-          {/* Categories */}
-          <section className="mb-6">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Categorias
-            </p>
-            <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-              <button
-                onClick={() => setActiveCat(null)}
-                className={`press shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
-                  !activeCat
-                    ? "bg-foreground text-background"
-                    : "bg-card text-foreground ring-1 ring-border hover:bg-accent"
-                }`}
-              >
-                Todas
-              </button>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveCat(c.id)}
-                  className={`press shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    activeCat === c.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card text-foreground ring-1 ring-border hover:bg-accent"
-                  }`}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* AI Recommendations */}
-          <section className="mb-6">
-            <SectionHeader
-              title="Recomendado pra você"
-              subtitle="Selecionado pela IA com base no seu perfil"
-            />
-            {loadingProducts ? (
-              <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="w-56 shrink-0 sm:w-64">
-                    <ProductCardSkeleton />
-                  </div>
-                ))}
-              </div>
-            ) : aiRecs.length === 0 ? (
-              <EmptyState
-                icon={Sparkles}
-                title="Sem recomendações ainda"
-                description="Faça seu primeiro pedido e a IA começa a aprender seu gosto."
-              />
-            ) : (
-              <div className="no-scrollbar snap-rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-2 xl:grid-cols-3">
-                {aiRecs.map((r) => (
-                  <RecommendationCard key={r.id} item={r} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Featured products */}
-          {featured.length > 0 && (
-            <section className="mb-6">
-              <SectionHeader title="Em destaque" to="/catalog" />
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
-                {featured.map((p) => (
-                  <ProductCard key={p.id} p={p} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <Link
-              to="/catalog"
-              className="press flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card py-4 text-sm font-semibold text-primary transition hover:bg-accent"
-            >
-              Ver catálogo completo →
-            </Link>
-          </section>
+      {/* HERO */}
+      <section className="mb-16 lg:mb-24">
+        <p className="text-[13px] font-medium text-muted-foreground">
+          {greetingFor(firstName)}
+        </p>
+        <h1 className="text-hero mt-2 text-foreground">
+          Coma melhor.<br />
+          <span className="text-muted-foreground">Viva mais leve.</span>
+        </h1>
+        <p className="mt-6 max-w-xl text-body-lg text-muted-foreground">
+          Refeições saudáveis prontas em máquinas inteligentes perto de você.
+          Análise nutricional com IA. Tudo em segundos.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link to="/catalog" className="btn-primary">Ver pratos</Link>
+          <Link to="/machines" className="btn-secondary">Encontrar máquina</Link>
         </div>
+      </section>
 
-        {/* Coluna lateral (desktop) */}
-        <div className="mt-6 space-y-4 lg:mt-0">
-          {/* XP */}
-          <XpBar xp={xp} />
-
-          {/* Meal plan banner */}
-          <Link to="/meal-plan" className="block">
-            <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[oklch(0.38_0.18_280)] to-[oklch(0.48_0.2_260)] p-5 text-white transition hover:opacity-95">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider opacity-80">
-                    <Sparkles size={11} /> IA · Novo
-                  </div>
-                  <h3 className="mt-1.5 font-display text-lg font-bold leading-snug">
-                    Plano alimentar semanal
-                  </h3>
-                  <p className="mt-1 text-xs leading-relaxed opacity-75">
-                    7 dias de refeições com pratos EasyFood.
-                  </p>
-                </div>
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/15">
-                  <Sparkles size={18} />
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Promo banner */}
-          <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-[oklch(0.42_0.17_142)] p-5 text-primary-foreground">
-            <div className="flex items-center gap-2">
-              <Flame size={13} />
-              <span className="text-[11px] font-semibold uppercase tracking-wider opacity-90">
-                Oferta do dia
-              </span>
-            </div>
-            <h3 className="mt-2.5 font-display text-xl font-bold leading-tight">
-              20% off em pratos fitness
-            </h3>
-            <p className="mt-1 text-sm opacity-85">
-              Cupom <strong>FIT20</strong> no checkout.
-            </p>
+      {/* DAILY PROGRESS */}
+      <section className="mb-16 lg:mb-24">
+        <header className="mb-8 flex items-end justify-between">
+          <div>
+            <h2 className="text-title-1">Seu dia</h2>
+            <p className="text-caption mt-1">Progresso nutricional de hoje</p>
           </div>
-
-          {/* Nearby machines */}
-          <section>
-            <SectionHeader
-              title="Máquinas próximas"
-              subtitle={`${machines.length} disponíveis`}
-            />
-            {loadingMachines ? (
-              <div className="space-y-3">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <MachineCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : machines.length === 0 ? (
-              <EmptyState
-                icon={MapPin}
-                title="Nenhuma máquina"
-                description="Em breve na sua região."
-              />
-            ) : (
-              <div className="no-scrollbar snap-rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-1 sm:overflow-visible sm:px-0 lg:grid-cols-1">
-                {machines.slice(0, 4).map((m) => (
-                  <MachineCard
-                    key={m.id}
-                    m={{ ...m, distance_km: Math.random() * 3 + 0.2 }}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+          <Link to="/nutrition" className="btn-ghost">
+            Analisar refeição →
+          </Link>
+        </header>
+        <div className="grid grid-cols-3 gap-4 sm:gap-8">
+          <MetricRing
+            value={daily?.calories ?? 0} max={calGoal}
+            label="Calorias" unit=" kcal"
+          />
+          <MetricRing
+            value={daily?.protein ?? 0} max={proteinGoal}
+            label="Proteína" unit="g"
+            color="var(--color-warning)"
+          />
+          <MetricRing
+            value={daily?.water_ml ?? 0} max={waterGoal}
+            label="Água" unit="ml"
+            color="var(--color-chart-3)"
+          />
         </div>
-      </div>
+      </section>
+
+      {/* SEARCH */}
+      <section className="mb-12">
+        <div className="relative">
+          <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar pratos, ingredientes..."
+            className="h-14 w-full rounded-2xl bg-surface pl-14 pr-5 text-[17px] text-foreground outline-none transition placeholder:text-muted-foreground focus:bg-card focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section className="mb-16">
+        <h2 className="text-title-2 mb-5">Categorias</h2>
+        <div className="no-scrollbar -mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          <CatPill active={!activeCat} onClick={() => setActiveCat(null)}>Todas</CatPill>
+          {categories.map((c) => (
+            <CatPill key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)}>
+              {c.name}
+            </CatPill>
+          ))}
+        </div>
+      </section>
+
+      {/* PRODUCTS */}
+      <section className="mb-16 lg:mb-24">
+        <header className="mb-8 flex items-end justify-between">
+          <h2 className="text-title-1">Em destaque</h2>
+          <Link to="/catalog" className="btn-ghost">Ver tudo →</Link>
+        </header>
+        <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+          {products.slice(0, 8).map((p) => <ProductCard key={p.id} p={p} />)}
+        </div>
+      </section>
+
+      {/* MACHINES */}
+      <section className="mb-16 lg:mb-24">
+        <header className="mb-6 flex items-end justify-between">
+          <div>
+            <h2 className="text-title-1">Máquinas próximas</h2>
+            <p className="text-caption mt-1">{machines.length} disponíveis</p>
+          </div>
+          <Link to="/machines" className="btn-ghost">Ver mapa →</Link>
+        </header>
+        <div className="divide-y divide-border/60 border-y border-border/60">
+          {machines.slice(0, 5).map((m) => (
+            <MachineCard key={m.id} m={{ ...m, distance_km: Math.random() * 3 + 0.2 }} />
+          ))}
+        </div>
+      </section>
+
+      {/* MEAL PLAN CTA */}
+      <section className="mb-16 overflow-hidden rounded-3xl bg-foreground py-16 text-center text-background lg:py-24">
+        <p className="text-[13px] font-medium uppercase tracking-[0.14em] text-background/60">Inteligência</p>
+        <h2 className="text-display mt-4">
+          Seu plano alimentar,<br />feito por IA.
+        </h2>
+        <p className="mx-auto mt-6 max-w-md px-6 text-body-lg text-background/70">
+          7 dias de refeições escolhidas pra sua meta, com pratos disponíveis nas máquinas.
+        </p>
+        <div className="mt-8">
+          <Link
+            to="/meal-plan"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-background px-8 text-[15px] font-semibold text-foreground transition hover:opacity-90"
+          >
+            Criar plano
+          </Link>
+        </div>
+      </section>
     </AppShell>
+  );
+}
+
+function CatPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 rounded-full px-4 py-2 text-[14px] font-medium transition ${
+        active
+          ? "bg-foreground text-background"
+          : "bg-surface text-foreground/80 hover:bg-surface/70 hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

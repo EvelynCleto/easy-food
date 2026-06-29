@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Loader2, QrCode, Wallet } from "lucide-react";
+import { CreditCard, Loader2, QrCode, Wallet, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,10 +29,7 @@ function CheckoutPage() {
 
   const { data: machines = [] } = useQuery({
     queryKey: ["machines-online"],
-    queryFn: async () => {
-      const { data } = await supabase.from("machines").select("id,name,address,status").eq("status", "online");
-      return data ?? [];
-    },
+    queryFn: async () => (await supabase.from("machines").select("id,name,address,status").eq("status", "online")).data ?? [],
   });
 
   const fee = items.length ? 3.9 : 0;
@@ -41,14 +38,11 @@ function CheckoutPage() {
   async function applyCoupon() {
     if (!coupon) return;
     try {
-      const result = await validateCoupon({ data: { code: coupon, subtotal } });
-      if (!result.ok) { toast.error(result.error); return; }
-      setAppliedDiscount(result.discount);
-      setAppliedCouponId(result.id);
-      toast.success(`Cupom aplicado: -${brl(result.discount)}`);
-    } catch {
-      toast.error("Não foi possível validar o cupom");
-    }
+      const r = await validateCoupon({ data: { code: coupon, subtotal } });
+      if (!r.ok) { toast.error(r.error); return; }
+      setAppliedDiscount(r.discount); setAppliedCouponId(r.id);
+      toast.success(`Cupom aplicado: -${brl(r.discount)}`);
+    } catch { toast.error("Não foi possível validar o cupom"); }
   }
 
   async function placeOrder() {
@@ -63,98 +57,118 @@ function CheckoutPage() {
       status: initialStatus, subtotal, fee, discount: appliedDiscount, total,
       pickup_code: pickupCode, expires_at: expiresAt,
     }).select("id").single();
-    if (error || !order) { toast.error(error?.message ?? "Falha ao criar pedido"); setBusy(false); return; }
+    if (error || !order) { toast.error(error?.message ?? "Falha"); setBusy(false); return; }
     await supabase.from("order_items").insert(items.map((i) => ({
       order_id: order.id, product_id: i.productId, quantity: i.quantity,
       unit_price: i.price, product_name: i.name, product_image: i.image,
     })));
     const provider = getProviderForMethod(method);
-    const result = await provider.create({
-      orderId: order.id, userId: user.id, amount: total, method,
-      description: `EasyFood pedido ${order.id.slice(0, 8)}`,
-    });
+    const result = await provider.create({ orderId: order.id, userId: user.id, amount: total, method, description: `EasyFood ${order.id.slice(0,8)}` });
     await supabase.from("payments").insert({
       order_id: order.id, user_id: user.id, method,
-      status: result.status === "approved" ? "approved" : "pending",
-      amount: total,
+      status: result.status === "approved" ? "approved" : "pending", amount: total,
       pix_code: result.pixCode ?? null,
     });
     await supabase.from("notifications").insert({
       user_id: user.id, type: "order",
       title: result.status === "approved" ? "Pedido confirmado!" : "Pedido aguardando pagamento",
-      body: result.status === "approved"
-        ? `Retire na máquina com o código ${pickupCode}.`
-        : `Pague o PIX em até 30 min. Código de retirada ${pickupCode}.`,
+      body: result.status === "approved" ? `Retire na máquina com o código ${pickupCode}.` : `Pague o PIX em até 30 min. Código ${pickupCode}.`,
     });
     if (result.status === "approved") {
-      await supabase.from("loyalty_events").insert({
-        user_id: user.id, kind: "order", points: 10,
-        meta: { order_id: order.id, amount: total },
-      });
+      await supabase.from("loyalty_events").insert({ user_id: user.id, kind: "order", points: 10, meta: { order_id: order.id, amount: total } });
     }
-    clear();
-    setBusy(false);
+    clear(); setBusy(false);
     toast.success(result.message ?? "Pedido criado!");
     navigate({ to: "/orders/$id", params: { id: order.id } });
   }
 
   if (items.length === 0) {
-    return <p className="rounded-2xl bg-card p-8 text-center text-muted-foreground ring-1 ring-border">Seu carrinho está vazio.</p>;
+    return (
+      <div className="mx-auto max-w-[640px] py-20 text-center">
+        <p className="text-body-lg text-muted-foreground">Carrinho vazio.</p>
+      </div>
+    );
   }
 
+  const methods: { id: Method; label: string; Icon: typeof CreditCard }[] = [
+    { id: "pix", label: "PIX", Icon: QrCode },
+    { id: "credit_card", label: "Crédito", Icon: CreditCard },
+    { id: "debit_card", label: "Débito", Icon: CreditCard },
+    { id: "meal_voucher", label: "Vale Refeição", Icon: Wallet },
+  ];
+
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="font-display text-2xl font-bold">Checkout</h1>
+    <div className="mx-auto max-w-[760px]">
+      <h1 className="text-display">Checkout</h1>
 
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <h2 className="text-sm font-semibold">Escolher máquina</h2>
-        <div className="mt-3 space-y-2">
+      {/* Machine */}
+      <section className="mt-12">
+        <h2 className="text-title-3 mb-4">Escolha a máquina</h2>
+        <div className="divide-y divide-border/60 border-y border-border/60">
           {machines.map((m) => (
-            <label key={m.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition ${machineId === m.id ? "border-primary bg-accent/30" : "border-input"}`}>
-              <input type="radio" name="machine" checked={machineId === m.id} onChange={() => setMachineId(m.id)} className="mt-1 accent-[#55AD2F]" />
-              <div>
-                <div className="font-semibold">{m.name}</div>
-                <div className="text-xs text-muted-foreground">{m.address}</div>
+            <button key={m.id} onClick={() => setMachineId(m.id)}
+              className="flex w-full items-center gap-4 py-4 text-left transition hover:bg-surface/40">
+              <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${machineId === m.id ? "border-primary bg-primary" : "border-border"}`}>
+                {machineId === m.id && <Check size={14} className="text-primary-foreground" strokeWidth={3} />}
               </div>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <h2 className="text-sm font-semibold">Pagamento</h2>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {([["pix","PIX",QrCode],["credit_card","Crédito",CreditCard],["debit_card","Débito",CreditCard],["meal_voucher","VR",Wallet]] as const).map(([id,label,Icon]) => (
-            <button key={id} onClick={() => setMethod(id)} className={`flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-medium transition ${method === id ? "border-primary bg-accent/30 text-primary" : "border-input"}`}>
-              <Icon size={18} />
-              {label}
+              <div className="min-w-0">
+                <div className="text-[15px] font-medium">{m.name}</div>
+                <div className="text-[13px] text-muted-foreground">{m.address}</div>
+              </div>
             </button>
           ))}
         </div>
       </section>
 
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <h2 className="text-sm font-semibold">Cupom</h2>
-        <div className="mt-3 flex gap-2">
-          <input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="Digite o código"
-            className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm uppercase outline-none focus:border-primary" />
-          <button onClick={applyCoupon} className="rounded-xl bg-foreground px-4 py-2 text-sm font-semibold text-background">Aplicar</button>
+      {/* Payment */}
+      <section className="mt-12">
+        <h2 className="text-title-3 mb-4">Forma de pagamento</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {methods.map(({ id, label, Icon }) => (
+            <button key={id} onClick={() => setMethod(id)}
+              className={`flex flex-col items-center gap-2 rounded-2xl py-5 transition ${
+                method === id ? "bg-foreground text-background" : "bg-surface hover:opacity-80"
+              }`}>
+              <Icon size={20} strokeWidth={1.8} />
+              <span className="text-[13px] font-medium">{label}</span>
+            </button>
+          ))}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Experimente: EASY10, FIT20, BEMVINDO</p>
       </section>
 
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-border/60 text-sm">
-        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
-        <div className="mt-1 flex justify-between"><span className="text-muted-foreground">Taxa</span><span>{brl(fee)}</span></div>
+      {/* Coupon */}
+      <section className="mt-12">
+        <h2 className="text-title-3 mb-4">Cupom</h2>
+        <div className="flex gap-2">
+          <input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="Digite o código"
+            className="input-field flex-1 uppercase" />
+          <button onClick={applyCoupon} className="btn-secondary">Aplicar</button>
+        </div>
+      </section>
+
+      {/* Summary */}
+      <section className="mt-12 space-y-3 text-[15px]">
+        <div className="flex justify-between text-muted-foreground">
+          <span>Subtotal</span><span className="tabular-nums">{brl(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Taxa</span><span className="tabular-nums">{brl(fee)}</span>
+        </div>
         {appliedDiscount > 0 && (
-          <div className="mt-1 flex justify-between text-primary"><span>Desconto</span><span>-{brl(appliedDiscount)}</span></div>
+          <div className="flex justify-between text-primary">
+            <span>Desconto</span><span className="tabular-nums">-{brl(appliedDiscount)}</span>
+          </div>
         )}
-        <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold"><span>Total</span><span className="text-primary">{brl(total)}</span></div>
       </section>
 
-      <button onClick={placeOrder} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-60">
+      <div className="mt-6 flex items-baseline justify-between border-t border-border/60 pt-6">
+        <span className="text-title-3">Total</span>
+        <span className="font-display text-3xl font-bold tracking-tight tabular-nums">{brl(total)}</span>
+      </div>
+
+      <button onClick={placeOrder} disabled={busy} className="btn-primary mt-10 w-full">
         {busy && <Loader2 size={16} className="animate-spin" />}
-        Finalizar pagamento — {brl(total)}
+        Pagar {brl(total)}
       </button>
     </div>
   );

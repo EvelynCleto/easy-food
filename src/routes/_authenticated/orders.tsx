@@ -1,19 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { brl } from "@/lib/format";
+import { cn } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   component: OrdersPage,
 });
 
 const FILTERS = [
-  { id: "all", label: "Todos" },
-  { id: "active", label: "Em andamento" },
-  { id: "done", label: "Concluídos" },
+  { id: "all",       label: "Todos" },
+  { id: "active",    label: "Em andamento" },
+  { id: "done",      label: "Concluídos" },
   { id: "cancelled", label: "Cancelados" },
 ] as const;
 
@@ -25,12 +26,7 @@ function OrdersPage() {
   const { data: orders = [] } = useQuery({
     queryKey: ["orders", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from("orders")
-        .select("id,status,total,created_at,pickup_code")
-        .eq("user_id", user!.id).order("created_at", { ascending: false });
-      return data ?? [];
-    },
+    queryFn: async () => (await supabase.from("orders").select("id,status,total,created_at,pickup_code").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
   });
 
   const filtered = orders.filter((o) => {
@@ -42,31 +38,39 @@ function OrdersPage() {
   });
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-2xl font-bold">Meus pedidos</h1>
-      <div className="mt-4 flex items-center gap-2 rounded-xl bg-card px-3 py-2 ring-1 ring-border/60">
-        <Search size={16} className="text-muted-foreground" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar pelo código do pedido" className="w-full bg-transparent text-sm outline-none" />
+    <div className="mx-auto max-w-[760px]">
+      <h1 className="text-display">Pedidos</h1>
+
+      <div className="relative mt-10">
+        <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar pelo código"
+          className="h-12 w-full rounded-full bg-surface pr-5 text-[15px] outline-none placeholder:text-muted-foreground focus:bg-card focus:ring-2 focus:ring-primary/20"
+          style={{ paddingLeft: "3.25rem" }} />
       </div>
-      <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-2">
+
+      <div className="no-scrollbar mt-5 -mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:px-0">
         {FILTERS.map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition ${filter === f.id ? "bg-primary text-primary-foreground" : "bg-card text-foreground ring-1 ring-border"}`}>
+            className={cn("shrink-0 rounded-full px-4 py-2 text-[14px] font-medium transition",
+              filter === f.id ? "bg-foreground text-background" : "bg-surface text-foreground/80 hover:text-foreground")}>
             {f.label}
           </button>
         ))}
       </div>
-      <div className="mt-4 space-y-2">
-        {filtered.length === 0 && <p className="rounded-2xl bg-card p-10 text-center text-sm text-muted-foreground ring-1 ring-border">Nenhum pedido encontrado.</p>}
+
+      <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
+        {filtered.length === 0 && (
+          <div className="py-20 text-center text-body text-muted-foreground">Nenhum pedido encontrado.</div>
+        )}
         {filtered.map((o) => (
-          <Link key={o.id} to="/orders/$id" params={{ id: o.id }}
-            className="flex items-center justify-between rounded-2xl bg-card p-4 ring-1 ring-border/60 transition hover:shadow-sm">
-            <div className="min-w-0">
-              <div className="text-xs text-muted-foreground">#{o.id.slice(0,8)} · {new Date(o.created_at).toLocaleDateString("pt-BR")}</div>
-              <div className="mt-0.5 font-semibold">{statusLabel(o.status)}</div>
-              {o.pickup_code && <div className="mt-0.5 text-xs text-muted-foreground">Código: <span className="font-mono font-bold">{o.pickup_code}</span></div>}
+          <Link key={o.id} to="/orders/$id" params={{ id: o.id }} className="group flex items-center gap-4 py-5 transition">
+            <div className="min-w-0 flex-1">
+              <p className="text-caption">#{o.id.slice(0,8).toUpperCase()} · {new Date(o.created_at).toLocaleDateString("pt-BR")}</p>
+              <p className="mt-1 text-[15px] font-medium">{statusLabel(o.status)}</p>
+              {o.pickup_code && <p className="mt-0.5 font-mono text-[13px] text-muted-foreground">Código {o.pickup_code}</p>}
             </div>
-            <div className="text-right text-sm font-bold text-primary">{brl(o.total)}</div>
+            <span className="font-display text-[17px] font-semibold tabular-nums">{brl(o.total)}</span>
+            <ChevronRight size={18} className="shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5" />
           </Link>
         ))}
       </div>

@@ -1,5 +1,4 @@
-import { MapPin } from "lucide-react";
-import { cn } from "@/lib/format";
+import { ChevronRight } from "lucide-react";
 
 export type MachineData = {
   id: string;
@@ -11,36 +10,24 @@ export type MachineData = {
 };
 
 export function MachineCard({ m }: { m: MachineData }) {
-  const statusColor =
-    m.status === "online"
-      ? "bg-success text-success-foreground"
-      : m.status === "maintenance"
-        ? "bg-warning text-foreground"
-        : "bg-muted text-muted-foreground";
+  const online = m.status === "online";
   return (
-    <div className="min-w-[240px] max-w-[300px] flex-1 rounded-2xl bg-card p-4 ring-1 ring-border/60 sm:min-w-0 sm:max-w-none">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold leading-tight">{m.name}</h3>
-        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase", statusColor)}>
-          {m.status === "online" ? "Aberta" : m.status === "maintenance" ? "Manut." : "Offline"}
-        </span>
-      </div>
-      <p className="mt-2 flex items-start gap-1 text-xs text-muted-foreground">
-        <MapPin size={12} className="mt-0.5 shrink-0" />
-        <span className="line-clamp-2">{m.address}</span>
-      </p>
-      <div className="mt-3 flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">
-          {m.distance_km != null ? `${m.distance_km.toFixed(1)} km` : "Próxima"}
-        </span>
-        <span className="font-medium text-foreground">Estoque {m.stock_level}%</span>
-      </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary transition-all"
-          style={{ width: `${m.stock_level}%` }}
+    <div className="group flex min-w-[260px] cursor-pointer items-center gap-4 py-4 transition">
+      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-surface">
+        <span
+          className={`h-2 w-2 rounded-full ${
+            online ? "bg-primary" : m.status === "maintenance" ? "bg-warning" : "bg-muted-foreground"
+          }`}
         />
       </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-[15px] font-medium text-foreground">{m.name}</h3>
+        <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+          {m.distance_km != null ? `${m.distance_km.toFixed(1)} km · ` : ""}
+          {m.address}
+        </p>
+      </div>
+      <ChevronRight size={18} className="shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5" />
     </div>
   );
 }
