@@ -1,5 +1,6 @@
 import { Droplet, Plus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -7,11 +8,13 @@ import { toast } from "sonner";
 export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  // Local pending amount for immediate UI feedback while DB syncs
+  const [pending, setPending] = useState(0);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const { data: total = 0 } = useQuery({
+  const { data: serverTotal = 0 } = useQuery({
     queryKey: ["water-today", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -25,9 +28,12 @@ export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
     },
   });
 
+  // Display total = DB total + locally added but not yet confirmed
+  const total = serverTotal + pending;
+
   const add = useMutation({
     mutationFn: async (ml: number) => {
-      if (!user) throw new Error("Usuário não autenticado");
+      if (!user) throw new Error("Usuário não autenticado. Faça login novamente.");
       const { error } = await supabase.from("water_logs").insert({
         user_id: user.id,
         amount_ml: ml,
@@ -36,23 +42,20 @@ export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
       if (error) throw new Error(error.message);
       return ml;
     },
-    onMutate: async (ml: number) => {
-      // Optimistic update: increment total immediately
-      await qc.cancelQueries({ queryKey: ["water-today", user?.id] });
-      const previous = qc.getQueryData<number>(["water-today", user?.id]) ?? 0;
-      qc.setQueryData(["water-today", user?.id], previous + ml);
-      return { previous };
+    onMutate: (ml) => {
+      // Immediately show the addition in UI
+      setPending((p) => p + ml);
     },
-    onSuccess: () => {
+    onSuccess: (ml) => {
+      // Server confirmed — remove from pending and sync DB total
+      setPending((p) => p - ml);
       qc.invalidateQueries({ queryKey: ["water-today"] });
       qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
-      toast.success("Hidratação registrada 💧");
+      toast.success(`+${ml}ml registrado 💧`);
     },
-    onError: (e: Error, _ml, ctx) => {
-      // Roll back optimistic update
-      if (ctx?.previous !== undefined) {
-        qc.setQueryData(["water-today", user?.id], ctx.previous);
-      }
+    onError: (e: Error, ml) => {
+      // Server rejected — undo pending addition
+      setPending((p) => p - ml);
       toast.error(`Erro ao registrar água: ${e.message}`);
     },
   });
@@ -78,7 +81,7 @@ export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
             <button
               key={ml}
               onClick={() => add.mutate(ml)}
-              disabled={!user || add.isPending}
+              disabled={!user}
               className="flex items-center gap-1 rounded-full bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold text-sky-600 hover:bg-sky-500/20 disabled:opacity-50"
             >
               <Plus size={10} />{ml}
@@ -87,11 +90,17 @@ export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
         </div>
       </div>
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <div className="mt-2 flex gap-0.5">
         {Array.from({ length: cups }).map((_, i) => (
-          <div key={i} className={`h-1 flex-1 rounded-full ${i < drunk ? "bg-sky-500" : "bg-muted"}`} />
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i < drunk ? "bg-sky-500" : "bg-muted"}`}
+          />
         ))}
       </div>
     </div>
