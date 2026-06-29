@@ -13,19 +13,36 @@ export type MealPlan = { goal: string; days: Day[]; total_calories: number; tota
 
 const DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-function fallback(goal: string): MealPlan {
-  const baseKcal = goal === "emagrecimento" ? 1700 : goal === "ganho_massa" ? 2600 : 2100;
-  const baseProt = goal === "ganho_massa" ? 160 : 120;
-  const days: Day[] = DAYS.map((d) => ({
-    day: d,
-    meals: {
-      cafe: { name: "Tapioca de frango + ovo", calories: 380, protein: 28, carbs: 35, fat: 12 },
-      almoco: { name: "Frango grelhado, arroz integral e brócolis", calories: 620, protein: 48, carbs: 60, fat: 14 },
-      lanche: { name: "Iogurte natural com frutas e granola", calories: 250, protein: 14, carbs: 30, fat: 6 },
-      jantar: { name: "Salmão, batata-doce e salada", calories: 560, protein: 38, carbs: 45, fat: 22 },
-    },
-  }));
-  return { goal, days, total_calories: baseKcal * 7, total_protein: baseProt * 7 };
+type CatalogProduct = { name: string; calories: number | null; protein: number | null; carbs: number | null; fat: number | null; tags?: string[] | null };
+
+// Fallback that uses ONLY real catalog products so the user never sees a
+// suggestion they can't actually buy on a machine. Each meal references the
+// exact product via product_match. If the catalog is empty (edge case), a
+// minimal generic plan is returned without claiming catalog availability.
+function fallbackFromCatalog(goal: string, products: CatalogProduct[] | null | undefined): MealPlan {
+  const list = (products ?? []).filter((p) => p && p.name);
+
+  const toMeal = (p: CatalogProduct): Meal => ({
+    name: p.name,
+    product_match: p.name,
+    calories: Math.round(Number(p.calories ?? 0)),
+    protein: Number(p.protein ?? 0),
+    carbs: Number(p.carbs ?? 0),
+    fat: Number(p.fat ?? 0),
+  });
+
+  const days: Day[] = DAYS.map((d, di) => {
+    if (list.length === 0) {
+      const generic: Meal = { name: "Refeição saudável EasyFood", calories: 450, protein: 30, carbs: 40, fat: 14 };
+      return { day: d, meals: { cafe: generic, almoco: generic, lanche: generic, jantar: generic } };
+    }
+    const at = (offset: number) => toMeal(list[(di * 4 + offset) % list.length]);
+    return { day: d, meals: { cafe: at(0), almoco: at(1), lanche: at(2), jantar: at(3) } };
+  });
+
+  const total_calories = days.reduce((sum, day) => sum + Object.values(day.meals).reduce((s, m) => s + (m?.calories ?? 0), 0), 0);
+  const total_protein = days.reduce((sum, day) => sum + Object.values(day.meals).reduce((s, m) => s + (m?.protein ?? 0), 0), 0);
+  return { goal, days, total_calories, total_protein };
 }
 
 export const generateMealPlan = createServerFn({ method: "POST" })
@@ -33,13 +50,15 @@ export const generateMealPlan = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data, context }): Promise<MealPlan & { id: string }> => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    let plan: MealPlan = fallback(data.goal);
 
     // Load profile + available products
     const [{ data: profile }, { data: products }] = await Promise.all([
       context.supabase.from("profiles").select("calorie_goal,protein_goal,weight_kg,dietary_restrictions,allergies,favorite_foods").eq("id", context.userId).maybeSingle(),
       context.supabase.from("products").select("name,calories,protein,carbs,fat,tags").limit(40),
     ]);
+
+    // Catalog-based fallback — never invents dishes outside the catalog.
+    let plan: MealPlan = fallbackFromCatalog(data.goal, products);
 
     if (apiKey) {
       try {
@@ -68,25 +87,28 @@ CATÁLOGO EasyFood (USE ESSES PRODUTOS quando possível — campo product_match 
 ${catalog}
 
 REGRAS:
-1. Para almoço e lanche, PREFIRA produtos do catálogo acima quando compatíveis com o objetivo
-2. Para café da manhã e jantar, pode sugerir refeições caseiras saudáveis
+1. USE PRIORITARIAMENTE os produtos do catálogo acima em TODAS as refeições — o usuário só pode comprar o que está no catálogo. Quando usar um produto do catálogo, o campo product_match DEVE ser o nome exato dele.
+2. Só sugira uma refeição fora do catálogo se nenhum produto servir para aquele encaixe; nesse caso use uma receita caseira simples e defina product_match como null.
 3. Varie os pratos ao longo dos 7 dias — não repita o mesmo produto mais de 3 vezes
 4. Cada nota (note) deve ser personalizada ao objetivo do usuário (ex: para emagrecer, mencione o déficit; para ganho de massa, mencione a janela anabólica)
 5. Respeite ESTRITAMENTE as alergias e restrições
 
 Responda APENAS JSON sem markdown: {"days":[{"day":"Segunda","meals":{"cafe":{"name":"","calories":n,"protein":n,"carbs":n,"fat":n,"product_match":"nome exato do catálogo ou null","note":"dica personalizada ao objetivo"},"almoco":{...},"lanche":{...},"jantar":{...}}}, ... todos os 7 dias]}`;
 
-const response = await anthropic.messages.create({
-  model: "claude-sonnet-4-6",
-  max_tokens: 2000,
-  system: sys,
-  messages: [
-    {
-      role: "user",
-      content: "Gere o plano.",
-    },
-  ],
-});
+const response = await anthropic.messages.create(
+  {
+    model: "claude-sonnet-4-6",
+    max_tokens: 2000,
+    system: sys,
+    messages: [
+      {
+        role: "user",
+        content: "Gere o plano.",
+      },
+    ],
+  },
+  { timeout: 30_000 },
+);
 
 const text = response.content
   .filter((block): block is Anthropic.TextBlock => block.type === "text")

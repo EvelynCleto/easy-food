@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { brl } from "@/lib/format";
 import { getProviderForMethod, type PaymentMethod } from "@/lib/payments";
 import { validateCoupon } from "@/lib/coupons.functions";
+import { checkOrderAchievements } from "@/lib/achievements";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   component: CheckoutPage,
@@ -77,6 +78,7 @@ function CheckoutPage() {
     if (result.status === "approved") {
       await supabase.from("loyalty_events").insert({ user_id: user.id, kind: "order", points: 10, meta: { order_id: order.id, amount: total } });
     }
+    void checkOrderAchievements();
     clear(); setBusy(false);
     toast.success(result.message ?? "Pedido criado");
     navigate({ to: "/orders/$id", params: { id: order.id } });

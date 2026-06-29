@@ -5,7 +5,16 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Input = z.object({
   imageBase64: z.string().min(20),
+  // small client-generated thumbnail (data URL) persisted for the history list
+  thumbnail: z.string().min(20).max(200_000).optional(),
 });
+
+const GOAL_GUIDANCE: Record<string, string> = {
+  emagrecimento: "objetivo de emagrecimento (déficit calórico, priorizar proteína e saciedade, reduzir carboidrato refinado)",
+  manutencao: "objetivo de manutenção de peso (macros equilibrados)",
+  ganho_massa: "objetivo de ganho de massa muscular (superávit calórico, proteína alta, carboidratos para energia)",
+  saude: "objetivo de mais saúde geral (variedade, fibras, micronutrientes, menos sódio e açúcar)",
+};
 
 export type NutritionResult = {
   foods: { name: string; quantity: string }[];
@@ -89,14 +98,26 @@ export const analyzeMeal = createServerFn({ method: "POST" })
 
     const { mediaType, base64 } = extractBase64Image(data.imageBase64);
 
+    // Personalize suggestions using the user's profile/goal
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("goal,calorie_goal,protein_goal,weight_kg,dietary_restrictions,allergies")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const goalText = GOAL_GUIDANCE[profile?.goal ?? ""] ?? "objetivo de manutenção de peso";
+    const profileContext = `Contexto do usuário (use para personalizar as 3 dicas): ${goalText}. Meta calórica diária: ${profile?.calorie_goal ?? 2000} kcal. Meta de proteína: ${profile?.protein_goal ?? 120}g. Peso: ${profile?.weight_kg ?? "não informado"}kg. Restrições: ${(profile?.dietary_restrictions ?? []).join(", ") || "nenhuma"}. Alergias: ${(profile?.allergies ?? []).join(", ") || "nenhuma"}. As dicas devem ser específicas a este objetivo, não genéricas.`;
+
     const anthropic = new Anthropic({ apiKey });
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1200,
-      system:
-        "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido no formato: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number,\"ai_suggestions\":[\"dica 1\",\"dica 2\",\"dica 3\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas, calorias em kcal. Não use markdown.",
-      messages: [
+    const response = await anthropic.messages.create(
+      {
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        system:
+          "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido no formato: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number,\"ai_suggestions\":[\"dica 1\",\"dica 2\",\"dica 3\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas, calorias em kcal. As dicas (ai_suggestions) devem ser personalizadas ao objetivo do usuário informado. Não use markdown.\n\n" +
+          profileContext,
+        messages: [
         {
           role: "user",
           content: [
@@ -114,8 +135,10 @@ export const analyzeMeal = createServerFn({ method: "POST" })
             },
           ],
         },
-      ],
-    });
+        ],
+      },
+      { timeout: 30_000 },
+    );
 
     const text = getTextFromAnthropicResponse(response);
     const parsed = parseNutritionJson(text);
@@ -134,6 +157,7 @@ export const analyzeMeal = createServerFn({ method: "POST" })
         score: parsed.score ?? null,
         ai_suggestions: parsed.ai_suggestions ?? [],
         meal_type: parsed.meal_type ?? null,
+        image_url: data.thumbnail ?? null,
       })
       .select("id")
       .single();

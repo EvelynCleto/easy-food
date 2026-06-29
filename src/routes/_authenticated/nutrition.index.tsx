@@ -5,11 +5,36 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { analyzeMeal, type NutritionResult } from "@/lib/nutrition.functions";
+import { grantAchievement, checkHealthyWeek } from "@/lib/achievements";
 import { IntentCard } from "@/components/aurora/IntentCard";
 
 export const Route = createFileRoute("/_authenticated/nutrition/")({
   component: NutritionPage,
 });
+
+// Downscale to a small JPEG thumbnail so the history list stays light.
+async function makeThumbnail(dataUrl: string, max = 256): Promise<string | undefined> {
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("img load"));
+      img.src = dataUrl;
+    });
+    const scale = Math.min(1, max / Math.max(img.width, img.height));
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.7);
+  } catch {
+    return undefined;
+  }
+}
 
 function NutritionPage() {
   const [preview, setPreview] = useState<string | null>(null);
@@ -26,11 +51,19 @@ function NutritionPage() {
       setPreview(dataUrl);
       setBusy(true);
       try {
-        const r = await analyze({ data: { imageBase64: dataUrl } });
+        const thumbnail = await makeThumbnail(dataUrl);
+        const r = await analyze({ data: { imageBase64: dataUrl, thumbnail } });
         setResult(r);
         qc.invalidateQueries({ queryKey: ["nutri-history"] });
         qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
         qc.invalidateQueries({ queryKey: ["last-analysis"] });
+        const [firstMeal, healthyWeek] = await Promise.all([
+          grantAchievement("first_meal"),
+          checkHealthyWeek(),
+        ]);
+        if (firstMeal || healthyWeek) {
+          qc.invalidateQueries({ queryKey: ["achievements"] });
+        }
         toast.success("Refeição analisada");
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Falha na análise";

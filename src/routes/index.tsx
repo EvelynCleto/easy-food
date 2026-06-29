@@ -13,6 +13,7 @@ import { DiscoveryCard } from "@/components/aurora/DiscoveryCard";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
 import { computeIntent, streakNarrative, todayString } from "@/lib/intent";
 import { coachGreeting } from "@/lib/coach";
+import { grantAchievement, syncStreak } from "@/lib/achievements";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -191,6 +192,29 @@ function HomePage() {
     },
     onError: (e: Error) => toast.error(`Erro: ${e.message}`),
   });
+
+  // Update the consecutive-day streak (and streak achievements) once per app open.
+  useEffect(() => {
+    if (!user) return;
+    syncStreak().then((s) => {
+      if (s != null) {
+        qc.invalidateQueries({ queryKey: ["profile"] });
+        qc.invalidateQueries({ queryKey: ["achievements"] });
+      }
+    });
+  }, [user, qc]);
+
+  // Grant daily-goal achievements when the user crosses their water / protein goals.
+  useEffect(() => {
+    if (!user || !daily) return;
+    const checks: Promise<boolean>[] = [];
+    if (daily.water_ml >= waterGoal) checks.push(grantAchievement("water_goal"));
+    if (daily.protein >= proteinGoal) checks.push(grantAchievement("protein_goal"));
+    if (checks.length === 0) return;
+    Promise.all(checks).then((res) => {
+      if (res.some(Boolean)) qc.invalidateQueries({ queryKey: ["achievements"] });
+    });
+  }, [user, daily, waterGoal, proteinGoal, qc]);
 
   const rawIntent = useMemo(
     () =>
