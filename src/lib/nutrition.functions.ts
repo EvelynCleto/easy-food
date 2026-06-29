@@ -92,7 +92,7 @@ export const analyzeMeal = createServerFn({ method: "POST" })
     const anthropic = new Anthropic({ apiKey });
 
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-latest",
+      model: "claude-sonnet-4-6",
       max_tokens: 1200,
       system:
         "Você é um Nutricionista Coach. Analise a imagem da refeição e responda APENAS JSON válido no formato: {\"foods\":[{\"name\":\"...\",\"quantity\":\"...\"}],\"calories\":number,\"protein\":number,\"carbs\":number,\"fiber\":number,\"fat\":number,\"score\":number,\"ai_suggestions\":[\"dica 1\",\"dica 2\",\"dica 3\"],\"meal_type\":\"café da manhã|almoço|lanche|jantar\",\"notes\":\"frase curta\"}. Valores em gramas, calorias em kcal. Não use markdown.",
