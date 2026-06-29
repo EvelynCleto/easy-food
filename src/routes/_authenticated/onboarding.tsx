@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Dumbbell, Heart, Salad, Scale, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ const ALLERGIES = ["Amendoim", "Castanhas", "Soja", "Ovos", "Frutos do mar", "Cr
 function OnboardingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
 
@@ -78,6 +80,8 @@ function OnboardingPage() {
     if (typeof weight === "number") {
       await supabase.from("weight_logs").insert({ user_id: user.id, weight_kg: weight });
     }
+    // Invalidate profile cache so the onboarding guard in Home sees onboarding_completed: true
+    await qc.invalidateQueries({ queryKey: ["profile"] });
     toast.success("Tudo pronto! Bora começar 🚀");
     navigate({ to: "/" });
   }

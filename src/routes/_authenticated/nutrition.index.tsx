@@ -218,11 +218,14 @@ function ScoreBlock({ score, mealType }: { score: number; mealType?: string }) {
         </div>
       </div>
       <div className="min-w-0">
-        <p className="text-eyebrow">nota nutricional</p>
+        <p className="text-eyebrow">nota nutricional · escala 0–10</p>
         <h2 className="text-headline mt-2">{label}</h2>
         {mealType && (
           <p className="mt-1 text-body-sm capitalize" style={{ color: "var(--ink-2)" }}>{mealType}</p>
         )}
+        <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
+          Considera balanço de macros, densidade nutricional e adequação calórica.
+        </p>
       </div>
     </div>
   );

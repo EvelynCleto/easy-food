@@ -33,14 +33,34 @@ function AuthPage() {
     try {
       if (mode === "login") {
         const { error } = await signIn(email, password);
-        if (error) toast.error(error); else toast.success("Bem-vinda de volta");
+        if (error) {
+          // Map common Supabase error messages to friendly Portuguese
+          const msg =
+            error.includes("Invalid login credentials") ? "E-mail ou senha incorretos." :
+            error.includes("Email not confirmed") ? "Confirme seu e-mail antes de entrar." :
+            error.includes("Too many requests") ? "Muitas tentativas. Aguarde alguns minutos." :
+            error;
+          toast.error(msg);
+        } else {
+          toast.success("Bem-vinda de volta!");
+        }
       } else if (mode === "signup") {
         const { error } = await signUp(email, password, name);
-        if (error) toast.error(error); else toast.success("Conta criada");
+        if (error) {
+          const msg =
+            error.includes("already registered") || error.includes("User already registered") ? "Este e-mail já está em uso." :
+            error.includes("Password should be") ? "A senha deve ter pelo menos 6 caracteres." :
+            error.includes("rate limit") ? "Muitas tentativas. Aguarde alguns minutos." :
+            error;
+          toast.error(msg);
+        } else {
+          toast.success("Conta criada! Verifique seu e-mail para confirmar o cadastro.");
+          setMode("login");
+        }
       } else {
         const { error } = await resetPassword(email);
         if (error) toast.error(error);
-        else { toast.success("Link enviado para o seu e-mail"); setMode("login"); }
+        else { toast.success("Link de recuperação enviado para " + email); setMode("login"); }
       }
     } finally { setBusy(false); }
   }
@@ -82,10 +102,11 @@ function AuthPage() {
               Análise nutricional por IA, planos personalizados e refeições prontas em máquinas inteligentes.
             </p>
 
-            <div className="mt-10 grid max-w-md grid-cols-3 gap-6">
-              <Stat n="50k+" l="usuárias" />
-              <Stat n="4.9" l="avaliação" />
-              <Stat n="120+" l="máquinas" />
+            <div className="mt-10 max-w-md">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                <span className="text-[12px] font-medium text-white/60">Acesso antecipado · Early Access</span>
+              </div>
             </div>
           </div>
 
@@ -170,11 +191,3 @@ function AuthPage() {
   );
 }
 
-function Stat({ n, l }: { n: string; l: string }) {
-  return (
-    <div>
-      <div className="font-display text-[22px] font-semibold tabular-nums text-white">{n}</div>
-      <div className="mt-1 text-[11px] uppercase tracking-[0.1em] text-white/40">{l}</div>
-    </div>
-  );
-}

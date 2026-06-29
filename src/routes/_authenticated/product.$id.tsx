@@ -81,7 +81,7 @@ function ProductPage() {
       </button>
 
       {/* HERO */}
-      <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+      <div className="grid gap-8 md:grid-cols-2 md:gap-12">
         <div className="relative">
           <div className="card-nested aspect-[4/5] overflow-hidden p-4">
             <div className="h-full w-full overflow-hidden rounded-[18px]" style={{ background: "var(--surface)" }}>

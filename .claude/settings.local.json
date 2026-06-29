@@ -13,7 +13,8 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\evely\\\\Downloads\\\\Easy Fuel\" -Recurse -Depth 3 | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName | Sort-Object)",
       "Bash(npx tsc *)",
       "Bash(npx @tanstack/router-cli generate)",
-      "Bash(npx tsr *)"
+      "Bash(npx tsr *)",
+      "Bash(xargs grep -l \"achievement\\\\|gamif\\\\|xp\\\\|badge\\\\|level\")"
     ]
   }
 }

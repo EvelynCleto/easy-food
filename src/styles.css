@@ -511,6 +511,9 @@
   filter: saturate(0.92) brightness(1.02) contrast(0.96);
 }
 
+/* Prevent horizontal overflow globally */
+html, body { overflow-x: hidden; max-width: 100vw; }
+
 /* Responsive nav switching */
 @media (min-width: 1024px) {
   .nav-desktop { display: flex !important; }

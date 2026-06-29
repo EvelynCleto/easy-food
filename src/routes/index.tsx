@@ -89,7 +89,8 @@ function HomePage() {
   });
 
   useEffect(() => {
-    if (profile && (profile as { onboarding_completed?: boolean }).onboarding_completed === false) {
+    // Only redirect if explicitly false — null/undefined means new user who hasn't done onboarding yet
+    if (profile && (profile as { onboarding_completed?: boolean | null }).onboarding_completed === false) {
       navigate({ to: "/onboarding" });
     }
   }, [profile, navigate]);
@@ -399,7 +400,7 @@ function HomePage() {
       {/* 7. Acesso rápido */}
       <section className="mb-8 animate-rise-2">
         <h2 className="text-headline mb-4">⚡ Acesso rápido</h2>
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {[
             { icon: <Utensils size={20} />, label: "Analisar", to: "/nutrition/" },
             { icon: <BookOpen size={20} />, label: "Histórico", to: "/nutrition/history" },

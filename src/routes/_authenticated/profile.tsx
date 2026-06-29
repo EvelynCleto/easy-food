@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-  Calendar, ChevronRight, CreditCard, Heart, HelpCircle, LogOut,
-  MapPin, Receipt, Sparkles, Tag, User as UserIcon, TrendingDown,
+  Calendar, ChevronRight, Heart, Lock, LogOut,
+  Receipt, User as UserIcon, TrendingDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,16 +55,11 @@ function ProfilePage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile"] }); setEditingGoal(false); toast.success("Meta atualizada"); },
   });
 
-  const items: { icon: typeof UserIcon; label: string; to?: "/orders" | "/favorites" | "/meal-plan" | "/onboarding" }[] = [
+  const items: { icon: typeof UserIcon; label: string; to: "/orders" | "/favorites" | "/meal-plan" | "/onboarding" }[] = [
     { icon: Calendar, label: "Plano semanal", to: "/meal-plan" },
     { icon: Receipt, label: "Pedidos", to: "/orders" },
     { icon: Heart, label: "Favoritos", to: "/favorites" },
     { icon: UserIcon, label: "Editar perfil", to: "/onboarding" },
-    { icon: MapPin, label: "Endereços" },
-    { icon: CreditCard, label: "Métodos de pagamento" },
-    { icon: Tag, label: "Cupons" },
-    { icon: Sparkles, label: "Preferências alimentares" },
-    { icon: HelpCircle, label: "Ajuda" },
   ];
 
   const currentW = profile?.weight_kg ? Number(profile.weight_kg) : null;
@@ -140,19 +135,27 @@ function ProfilePage() {
             {achievements.slice(0, 5).map((a, i) => (
               <div key={a.id} className="flex items-center gap-4 px-6 py-4" style={{ borderTop: i > 0 ? "0.5px solid var(--hairline)" : "none" }}>
                 <div
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[14px] font-semibold"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
                   style={{
                     background: a.unlocked ? "var(--accent)" : "var(--surface)",
                     color: a.unlocked ? "var(--primary)" : "var(--ink-3)",
                   }}
                 >
-                  ✓
+                  {a.unlocked
+                    ? <span className="text-[14px] font-bold">✓</span>
+                    : <Lock size={13} strokeWidth={1.8} />
+                  }
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14.5px] font-semibold" style={{ color: a.unlocked ? "var(--ink-1)" : "var(--ink-3)" }}>
                     {a.title}
                   </p>
                   <p className="truncate text-caption">{a.description}</p>
+                  {!a.unlocked && (
+                    <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-3)" }}>
+                      +{a.xp_reward} XP ao desbloquear
+                    </p>
+                  )}
                 </div>
                 {a.unlocked && a.unlocked_at && (
                   <p className="text-caption shrink-0">
@@ -205,26 +208,20 @@ function ProfilePage() {
       {/* MENU */}
       <section className="mt-6">
         <div className="card-nested overflow-hidden">
-          {items.map((it, i) => {
-            const inner = (
-              <>
-                <span className="flex items-center gap-4">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: "var(--surface)" }}>
-                    <it.icon size={15} strokeWidth={1.7} style={{ color: "var(--ink-2)" }} />
-                  </span>
-                  <span className="text-[14.5px] font-medium" style={{ color: "var(--ink-1)" }}>{it.label}</span>
+          {items.map((it, i) => (
+            <Link key={i} to={it.to}
+              className="flex w-full items-center justify-between px-5 py-4 transition hover:opacity-80"
+              style={i > 0 ? { borderTop: "0.5px solid var(--hairline)" } : {}}
+            >
+              <span className="flex items-center gap-4">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: "var(--surface)" }}>
+                  <it.icon size={15} strokeWidth={1.7} style={{ color: "var(--ink-2)" }} />
                 </span>
-                <ChevronRight size={16} style={{ color: "var(--ink-3)" }} />
-              </>
-            );
-            const cls = "flex w-full items-center justify-between px-5 py-4 transition hover:opacity-80";
-            const sep = i > 0 ? { borderTop: "0.5px solid var(--hairline)" } : {};
-            return it.to ? (
-              <Link key={i} to={it.to} className={cls} style={sep}>{inner}</Link>
-            ) : (
-              <button key={i} className={cls} style={sep}>{inner}</button>
-            );
-          })}
+                <span className="text-[14.5px] font-medium" style={{ color: "var(--ink-1)" }}>{it.label}</span>
+              </span>
+              <ChevronRight size={16} style={{ color: "var(--ink-3)" }} />
+            </Link>
+          ))}
         </div>
       </section>
 

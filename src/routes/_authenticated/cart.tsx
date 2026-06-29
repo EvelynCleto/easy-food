@@ -40,7 +40,7 @@ function CartPage() {
         </p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-8 md:grid-cols-[1fr_320px]">
         {/* Items */}
         <div className="space-y-3">
           {items.map((it) => (
