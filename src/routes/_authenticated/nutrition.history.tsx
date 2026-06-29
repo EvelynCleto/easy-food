@@ -33,16 +33,17 @@ const MEAL_EMOJI: Record<string, string> = {
 function NutritionHistoryPage() {
   const { user } = useAuth();
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: rows = [], isLoading, error } = useQuery({
     queryKey: ["nutri-history", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("nutritional_analysis")
         .select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(100);
+      if (error) throw new Error(error.message);
       return (data ?? []) as Analysis[];
     },
   });
@@ -71,7 +72,13 @@ function NutritionHistoryPage() {
         </div>
       )}
 
-      {!isLoading && rows.length === 0 && (
+      {error && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          Erro ao carregar histórico: {(error as Error).message}
+        </div>
+      )}
+
+      {!isLoading && !error && rows.length === 0 && (
         <div className="flex flex-col items-center gap-6 py-20 text-center">
           <div
             className="grid h-20 w-20 place-items-center rounded-3xl"

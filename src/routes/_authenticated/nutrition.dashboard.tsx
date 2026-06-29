@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Scale, TrendingDown, TrendingUp } from "lucide-react";
@@ -66,7 +66,8 @@ function Dashboard() {
     queryKey: ["nutri-history", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase.from("nutritional_analysis").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(60);
+      const { data, error } = await supabase.from("nutritional_analysis").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(60);
+      if (error) throw new Error(error.message);
       return data ?? [];
     },
   });
@@ -76,7 +77,8 @@ function Dashboard() {
     enabled: !!user,
     queryFn: async () => {
       const start = new Date(); start.setHours(0, 0, 0, 0);
-      const { data } = await supabase.from("water_logs").select("amount_ml").eq("user_id", user!.id).gte("logged_at", start.toISOString());
+      const { data, error } = await supabase.from("water_logs").select("amount_ml").eq("user_id", user!.id).gte("logged_at", start.toISOString());
+      if (error) throw new Error(error.message);
       return (data ?? []).reduce((s, r) => s + (r.amount_ml ?? 0), 0);
     },
   });
@@ -226,7 +228,12 @@ function Dashboard() {
       </div>
 
       <div className="rounded-2xl bg-card p-4 ring-1 ring-border/60">
-        <h2 className="text-sm font-semibold">Histórico recente</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Histórico recente</h2>
+          <Link to="/nutrition/history" className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
+            Ver tudo →
+          </Link>
+        </div>
         <div className="mt-3 space-y-2">
           {rows.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma análise ainda.</p>}
           {rows.slice(0, 10).map((r) => (

@@ -7,36 +7,53 @@ import { toast } from "sonner";
 export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
   const { data: total = 0 } = useQuery({
     queryKey: ["water-today", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("water_logs")
         .select("amount_ml")
         .eq("user_id", user!.id)
-        .gte("logged_at", today.toISOString());
+        .gte("logged_at", todayStart.toISOString());
+      if (error) throw new Error(error.message);
       return (data ?? []).reduce((s, r) => s + (r.amount_ml ?? 0), 0);
     },
   });
 
   const add = useMutation({
     mutationFn: async (ml: number) => {
-      if (!user) return;
+      if (!user) throw new Error("Usuário não autenticado");
       const { error } = await supabase.from("water_logs").insert({
         user_id: user.id,
         amount_ml: ml,
         logged_at: new Date().toISOString(),
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message);
+      return ml;
+    },
+    onMutate: async (ml: number) => {
+      // Optimistic update: increment total immediately
+      await qc.cancelQueries({ queryKey: ["water-today", user?.id] });
+      const previous = qc.getQueryData<number>(["water-today", user?.id]) ?? 0;
+      qc.setQueryData(["water-today", user?.id], previous + ml);
+      return { previous };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["water-today"] });
       qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
       toast.success("Hidratação registrada 💧");
+    },
+    onError: (e: Error, _ml, ctx) => {
+      // Roll back optimistic update
+      if (ctx?.previous !== undefined) {
+        qc.setQueryData(["water-today", user?.id], ctx.previous);
+      }
+      toast.error(`Erro ao registrar água: ${e.message}`);
     },
   });
 
@@ -58,7 +75,12 @@ export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
         </div>
         <div className="flex gap-1">
           {[200, 300, 500].map((ml) => (
-            <button key={ml} onClick={() => add.mutate(ml)} className="flex items-center gap-1 rounded-full bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold text-sky-600 hover:bg-sky-500/20">
+            <button
+              key={ml}
+              onClick={() => add.mutate(ml)}
+              disabled={!user || add.isPending}
+              className="flex items-center gap-1 rounded-full bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold text-sky-600 hover:bg-sky-500/20 disabled:opacity-50"
+            >
               <Plus size={10} />{ml}
             </button>
           ))}
