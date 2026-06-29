@@ -10,7 +10,7 @@ import { cn } from "@/lib/format";
 const navItems = [
   { to: "/",          label: "Início"   },
   { to: "/catalog",   label: "Catálogo" },
-  { to: "/nutrition", label: "Nutri"    },
+  { to: "/nutrition/", label: "Nutri"    },
   { to: "/machines",  label: "Máquinas" },
   { to: "/profile",   label: "Perfil"   },
 ] as const;
@@ -18,7 +18,7 @@ const navItems = [
 const navMobile = [
   { to: "/",          icon: Home,     label: "Início"   },
   { to: "/catalog",   icon: Compass,  label: "Catálogo" },
-  { to: "/nutrition", icon: Sparkles, label: "Nutri"    },
+  { to: "/nutrition/", icon: Sparkles, label: "Nutri"    },
   { to: "/profile",   icon: UserIcon, label: "Perfil"   },
 ] as const;
 

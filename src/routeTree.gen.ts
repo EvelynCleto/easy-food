@@ -26,6 +26,7 @@ import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCartRouteImport } from './routes/_authenticated/cart'
 import { Route as AuthenticatedProductIdRouteImport } from './routes/_authenticated/product.$id'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders.$id'
+import { Route as AuthenticatedNutritionIndexRouteImport } from './routes/_authenticated/nutrition.index'
 import { Route as AuthenticatedNutritionHistoryRouteImport } from './routes/_authenticated/nutrition.history'
 import { Route as AuthenticatedNutritionDashboardRouteImport } from './routes/_authenticated/nutrition.dashboard'
 import { Route as AuthenticatedMachinesIdRouteImport } from './routes/_authenticated/machines.$id'
@@ -115,6 +116,12 @@ const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedOrdersRoute,
 } as any)
+const AuthenticatedNutritionIndexRoute =
+  AuthenticatedNutritionIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedNutritionRoute,
+  } as any)
 const AuthenticatedNutritionHistoryRoute =
   AuthenticatedNutritionHistoryRouteImport.update({
     id: '/history',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
+  '/nutrition/': typeof AuthenticatedNutritionIndexRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
+  '/nutrition/': typeof AuthenticatedNutritionIndexRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/machines/$id': typeof AuthenticatedMachinesIdRoute
+  '/_authenticated/nutrition/': typeof AuthenticatedNutritionIndexRoute
   '/_authenticated/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/_authenticated/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/profile'
     | '/machines/$id'
+    | '/nutrition/'
     | '/nutrition/dashboard'
     | '/nutrition/history'
     | '/orders/$id'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/profile'
     | '/machines/$id'
+    | '/nutrition/'
     | '/nutrition/dashboard'
     | '/nutrition/history'
     | '/orders/$id'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orders'
     | '/_authenticated/profile'
     | '/_authenticated/machines/$id'
+    | '/_authenticated/nutrition/'
     | '/_authenticated/nutrition/dashboard'
     | '/_authenticated/nutrition/history'
     | '/_authenticated/orders/$id'
@@ -393,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
       parentRoute: typeof AuthenticatedOrdersRoute
     }
+    '/_authenticated/nutrition/': {
+      id: '/_authenticated/nutrition/'
+      path: '/'
+      fullPath: '/nutrition/'
+      preLoaderRoute: typeof AuthenticatedNutritionIndexRouteImport
+      parentRoute: typeof AuthenticatedNutritionRoute
+    }
     '/_authenticated/nutrition/history': {
       id: '/_authenticated/nutrition/history'
       path: '/history'
@@ -431,12 +451,14 @@ const AuthenticatedMachinesRouteWithChildren =
   )
 
 interface AuthenticatedNutritionRouteChildren {
+  AuthenticatedNutritionIndexRoute: typeof AuthenticatedNutritionIndexRoute
   AuthenticatedNutritionDashboardRoute: typeof AuthenticatedNutritionDashboardRoute
   AuthenticatedNutritionHistoryRoute: typeof AuthenticatedNutritionHistoryRoute
 }
 
 const AuthenticatedNutritionRouteChildren: AuthenticatedNutritionRouteChildren =
   {
+    AuthenticatedNutritionIndexRoute: AuthenticatedNutritionIndexRoute,
     AuthenticatedNutritionDashboardRoute: AuthenticatedNutritionDashboardRoute,
     AuthenticatedNutritionHistoryRoute: AuthenticatedNutritionHistoryRoute,
   }

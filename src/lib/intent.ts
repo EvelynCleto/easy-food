@@ -48,7 +48,7 @@ export function computeIntent(c: Ctx): Intent {
       eyebrow: "Lembrete suave",
       title: "Hidrate-se",
       description: `Você bebeu ${(c.water/1000).toFixed(1)} L hoje, faltam ${(waterLeft/1000).toFixed(1)} L para a meta.`,
-      primaryAction: { label: "Marcar 250 ml", to: "/nutrition" },
+      primaryAction: { label: "Marcar 250 ml", to: "/nutrition/" },
     };
   }
 

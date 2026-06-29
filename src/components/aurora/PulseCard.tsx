@@ -105,7 +105,7 @@ export function PulseCard(props: Props) {
 
       {/* Quick analyze button */}
       <Link
-        to="/nutrition"
+        to="/nutrition/"
         className="press absolute bottom-5 right-5 grid h-12 w-12 place-items-center rounded-full shadow-sm transition sm:bottom-8 sm:right-8"
         style={{ background: "var(--primary)", color: "var(--primary-foreground)", boxShadow: "0 4px 14px -2px var(--primary-glow)" }}
         aria-label="Analisar refeição"

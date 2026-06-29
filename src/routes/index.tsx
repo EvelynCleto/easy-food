@@ -300,7 +300,7 @@ function HomePage() {
                 Nenhuma análise ainda
               </p>
             </div>
-            <Link to="/nutrition" className="btn-primary shrink-0 text-sm">
+            <Link to="/nutrition/" className="btn-primary shrink-0 text-sm">
               Analisar agora
             </Link>
           </div>
@@ -368,7 +368,7 @@ function HomePage() {
         <h2 className="text-headline mb-4">⚡ Acesso rápido</h2>
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
           {[
-            { icon: <Utensils size={20} />, label: "Analisar", to: "/nutrition" },
+            { icon: <Utensils size={20} />, label: "Analisar", to: "/nutrition/" },
             { icon: <BookOpen size={20} />, label: "Histórico", to: "/nutrition/history" },
             { icon: "🥗", label: "Plano", to: "/meal-plan", isEmoji: true },
             { icon: <ShoppingBag size={20} />, label: "Catálogo", to: "/catalog" },

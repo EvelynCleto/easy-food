@@ -9,7 +9,11 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\evely\\\\Downloads\\\\Easy Fuel\" -Recurse)",
       "Bash(Select-Object FullName)",
       "PowerShell(head -50)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\evely\\\\Downloads\\\\Easy Fuel\" -Recurse -Depth 3 | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "Bash(npx tsc *)",
+      "Bash(npx @tanstack/router-cli generate)",
+      "Bash(npx tsr *)"
     ]
   }
 }

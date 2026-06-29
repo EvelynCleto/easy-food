@@ -52,7 +52,7 @@ function NutritionHistoryPage() {
     <div className="animate-rise mx-auto max-w-[720px]">
       <header className="mb-10 flex items-center gap-4">
         <Link
-          to="/nutrition"
+          to="/nutrition/"
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
           style={{ background: "var(--surface)" }}
         >
@@ -92,7 +92,7 @@ function NutritionHistoryPage() {
               Você ainda não analisou nenhuma refeição.
             </p>
           </div>
-          <Link to="/nutrition" className="btn-primary">
+          <Link to="/nutrition/" className="btn-primary">
             <Camera size={16} /> Analisar primeira refeição
           </Link>
         </div>
