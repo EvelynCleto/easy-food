@@ -29,6 +29,8 @@ function NutritionPage() {
         const r = await analyze({ data: { imageBase64: dataUrl } });
         setResult(r);
         qc.invalidateQueries({ queryKey: ["nutri-history"] });
+        qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
+        qc.invalidateQueries({ queryKey: ["last-analysis"] });
         toast.success("Refeição analisada");
       } catch (e: any) {
         toast.error(e?.message ?? "Falha na análise");
@@ -47,7 +49,7 @@ function NutritionPage() {
             Tire uma foto. A IA identifica os alimentos e calcula nutrientes.
           </p>
         </div>
-        <Link to="/nutrition/dashboard" className="btn-secondary hidden h-10 px-5 sm:inline-flex">
+        <Link to="/nutrition/history" className="btn-secondary hidden h-10 px-5 sm:inline-flex">
           <TrendingUp size={15} /> Histórico
         </Link>
       </header>
@@ -171,7 +173,7 @@ function NutritionPage() {
             eyebrow="próximo passo"
             title="Mantenha o ritmo da semana"
             description="Veja como sua nutrição está evoluindo ao longo dos dias."
-            primaryAction={{ label: "Ver histórico", to: "/nutrition/dashboard" }}
+            primaryAction={{ label: "Ver histórico", to: "/nutrition/history" }}
           />
         </div>
       )}

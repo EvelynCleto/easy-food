@@ -26,6 +26,7 @@ import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCartRouteImport } from './routes/_authenticated/cart'
 import { Route as AuthenticatedProductIdRouteImport } from './routes/_authenticated/product.$id'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders.$id'
+import { Route as AuthenticatedNutritionHistoryRouteImport } from './routes/_authenticated/nutrition.history'
 import { Route as AuthenticatedNutritionDashboardRouteImport } from './routes/_authenticated/nutrition.dashboard'
 import { Route as AuthenticatedMachinesIdRouteImport } from './routes/_authenticated/machines.$id'
 
@@ -114,6 +115,12 @@ const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedOrdersRoute,
 } as any)
+const AuthenticatedNutritionHistoryRoute =
+  AuthenticatedNutritionHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedNutritionRoute,
+  } as any)
 const AuthenticatedNutritionDashboardRoute =
   AuthenticatedNutritionDashboardRouteImport.update({
     id: '/dashboard',
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
+  '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/product/$id': typeof AuthenticatedProductIdRoute
 }
@@ -163,6 +171,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
+  '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/product/$id': typeof AuthenticatedProductIdRoute
 }
@@ -185,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/machines/$id': typeof AuthenticatedMachinesIdRoute
   '/_authenticated/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
+  '/_authenticated/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/_authenticated/product/$id': typeof AuthenticatedProductIdRoute
 }
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/machines/$id'
     | '/nutrition/dashboard'
+    | '/nutrition/history'
     | '/orders/$id'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/machines/$id'
     | '/nutrition/dashboard'
+    | '/nutrition/history'
     | '/orders/$id'
     | '/product/$id'
   id:
@@ -248,6 +260,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/machines/$id'
     | '/_authenticated/nutrition/dashboard'
+    | '/_authenticated/nutrition/history'
     | '/_authenticated/orders/$id'
     | '/_authenticated/product/$id'
   fileRoutesById: FileRoutesById
@@ -380,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
       parentRoute: typeof AuthenticatedOrdersRoute
     }
+    '/_authenticated/nutrition/history': {
+      id: '/_authenticated/nutrition/history'
+      path: '/history'
+      fullPath: '/nutrition/history'
+      preLoaderRoute: typeof AuthenticatedNutritionHistoryRouteImport
+      parentRoute: typeof AuthenticatedNutritionRoute
+    }
     '/_authenticated/nutrition/dashboard': {
       id: '/_authenticated/nutrition/dashboard'
       path: '/dashboard'
@@ -412,11 +432,13 @@ const AuthenticatedMachinesRouteWithChildren =
 
 interface AuthenticatedNutritionRouteChildren {
   AuthenticatedNutritionDashboardRoute: typeof AuthenticatedNutritionDashboardRoute
+  AuthenticatedNutritionHistoryRoute: typeof AuthenticatedNutritionHistoryRoute
 }
 
 const AuthenticatedNutritionRouteChildren: AuthenticatedNutritionRouteChildren =
   {
     AuthenticatedNutritionDashboardRoute: AuthenticatedNutritionDashboardRoute,
+    AuthenticatedNutritionHistoryRoute: AuthenticatedNutritionHistoryRoute,
   }
 
 const AuthenticatedNutritionRouteWithChildren =
@@ -477,13 +499,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

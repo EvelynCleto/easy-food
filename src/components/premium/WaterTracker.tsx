@@ -26,11 +26,16 @@ export function WaterTracker({ goalMl = 2500 }: { goalMl?: number }) {
   const add = useMutation({
     mutationFn: async (ml: number) => {
       if (!user) return;
-      const { error } = await supabase.from("water_logs").insert({ user_id: user.id, amount_ml: ml });
+      const { error } = await supabase.from("water_logs").insert({
+        user_id: user.id,
+        amount_ml: ml,
+        logged_at: new Date().toISOString(),
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["water-today"] });
+      qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
       toast.success("Hidratação registrada 💧");
     },
   });

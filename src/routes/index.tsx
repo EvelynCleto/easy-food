@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { BookOpen, ChevronRight, ShoppingBag, Utensils, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/AppShell";
@@ -22,6 +23,43 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+type LastAnalysis = {
+  id: string;
+  meal_type: string | null;
+  calories: number | null;
+  protein: number | null;
+  score: number | null;
+  created_at: string;
+};
+
+type MealPlanMeta = {
+  id: string;
+  goal: string;
+  created_at: string;
+};
+
+const MEAL_EMOJI: Record<string, string> = {
+  "café da manhã": "☀️",
+  almoço: "🍽",
+  lanche: "🥪",
+  jantar: "🌙",
+};
+
+const GOAL_LABEL: Record<string, string> = {
+  emagrecimento: "Emagrecimento",
+  manutencao: "Manutenção",
+  ganho_massa: "Ganho de massa",
+  saude: "Saúde",
+};
+
+function timeAgo(dateStr: string): string {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "agora mesmo";
+  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`;
+  return `há ${Math.floor(diff / 86400)} dias`;
+}
+
 function HomePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -31,7 +69,6 @@ function HomePage() {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
 
-  // Update hour at most once per minute
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
@@ -40,13 +77,18 @@ function HomePage() {
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     enabled: !!user,
-    queryFn: async () => (await supabase.from("profiles")
-      .select("full_name,calorie_goal,protein_goal,water_goal_ml,streak_days,onboarding_completed")
-      .eq("id", user!.id).maybeSingle()).data,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("profiles")
+          .select("full_name,calorie_goal,protein_goal,water_goal_ml,streak_days,onboarding_completed")
+          .eq("id", user!.id)
+          .maybeSingle()
+      ).data,
   });
 
   useEffect(() => {
-    if (profile && (profile as any).onboarding_completed === false) {
+    if (profile && (profile as { onboarding_completed?: boolean }).onboarding_completed === false) {
       navigate({ to: "/onboarding" });
     }
   }, [profile, navigate]);
@@ -80,46 +122,100 @@ function HomePage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories-light"],
-    queryFn: async () => (await supabase.from("categories").select("id,name,slug").order("sort_order")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("categories").select("id,name,slug").order("sort_order")).data ?? [],
   });
 
-  const firstName = ((profile as any)?.full_name ?? user?.email ?? "").split(/[\s@]/)[0];
-  const calGoal = (profile as any)?.calorie_goal ?? 2000;
-  const proteinGoal = (profile as any)?.protein_goal ?? 120;
-  const waterGoal = (profile as any)?.water_goal_ml ?? 2500;
-  const streak = (profile as any)?.streak_days ?? 0;
+  const { data: lastAnalysis } = useQuery({
+    queryKey: ["last-analysis", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("nutritional_analysis")
+        .select("id,meal_type,calories,protein,score,created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data as LastAnalysis | null;
+    },
+  });
+
+  const { data: mealPlanMeta } = useQuery({
+    queryKey: ["meal-plan-meta", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("meal_plans")
+        .select("id,goal,created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data as MealPlanMeta | null;
+    },
+  });
+
+  const firstName = (
+    (profile as { full_name?: string } | null)?.full_name ??
+    user?.email ??
+    ""
+  ).split(/[\s@]/)[0];
+  const calGoal = (profile as { calorie_goal?: number } | null)?.calorie_goal ?? 2000;
+  const proteinGoal = (profile as { protein_goal?: number } | null)?.protein_goal ?? 120;
+  const waterGoal = (profile as { water_goal_ml?: number } | null)?.water_goal_ml ?? 2500;
+  const streak = (profile as { streak_days?: number } | null)?.streak_days ?? 0;
   const hour = now.getHours();
 
-  // Derived goals
   const carbsGoal = Math.round((calGoal * 0.45) / 4);
-  const fatGoal = Math.round((calGoal * 0.30) / 9);
+  const fatGoal = Math.round((calGoal * 0.3) / 9);
 
-  const intent = useMemo(() => computeIntent({
+  const intent = useMemo(
+    () =>
+      computeIntent({
+        hour,
+        calories: daily?.calories ?? 0,
+        caloriesGoal: calGoal,
+        protein: daily?.protein ?? 0,
+        proteinGoal,
+        water: daily?.water_ml ?? 0,
+        waterGoal,
+      }),
+    [hour, daily, calGoal, proteinGoal, waterGoal],
+  );
+
+  const streakLine = streakNarrative(streak);
+  const coach = coachGreeting({
     hour,
+    firstName,
+    streak,
     calories: daily?.calories ?? 0,
     caloriesGoal: calGoal,
     protein: daily?.protein ?? 0,
     proteinGoal,
     water: daily?.water_ml ?? 0,
     waterGoal,
-  }), [hour, daily, calGoal, proteinGoal, waterGoal]);
-
-  const streakLine = streakNarrative(streak);
-  const coach = coachGreeting({
-    hour, firstName, streak,
-    calories: daily?.calories ?? 0, caloriesGoal: calGoal,
-    protein: daily?.protein ?? 0, proteinGoal,
-    water: daily?.water_ml ?? 0, waterGoal,
   });
 
   const discoveryCards = useMemo(() => {
-    const cards: { eyebrow: string; title: string; image?: string | null; to: string; variant?: "ai" | "default" }[] = [];
-    cards.push({ eyebrow: "esta semana",  title: "Mais saudáveis",     image: featured[0]?.image_url, to: "/catalog" });
-    cards.push({ eyebrow: "para você",    title: "Alta proteína",      image: featured[1]?.image_url, to: "/catalog",   variant: "ai" });
-    cards.push({ eyebrow: "rotina",       title: "Plano semanal IA",   image: featured[2]?.image_url, to: "/meal-plan", variant: "ai" });
+    const cards: {
+      eyebrow: string;
+      title: string;
+      image?: string | null;
+      to: string;
+      variant?: "ai" | "default";
+    }[] = [];
+    cards.push({ eyebrow: "esta semana", title: "Mais saudáveis", image: featured[0]?.image_url, to: "/catalog" });
+    cards.push({ eyebrow: "para você", title: "Alta proteína", image: featured[1]?.image_url, to: "/catalog", variant: "ai" });
+    cards.push({ eyebrow: "rotina", title: "Plano semanal IA", image: featured[2]?.image_url, to: "/meal-plan", variant: "ai" });
     if (categories.length > 0) {
       const first = categories[0];
-      cards.push({ eyebrow: first.name.toLowerCase(), title: `Pratos ${first.name}`, image: featured[3]?.image_url, to: "/catalog" });
+      cards.push({
+        eyebrow: first.name.toLowerCase(),
+        title: `Pratos ${first.name}`,
+        image: featured[3]?.image_url,
+        to: "/catalog",
+      });
     }
     return cards;
   }, [featured, categories]);
@@ -128,7 +224,7 @@ function HomePage() {
 
   return (
     <AppShell>
-      {/* Greeting — Coach voice */}
+      {/* 1. Saudação */}
       <header className="animate-rise mb-8 sm:mb-10">
         <p className="text-eyebrow">{todayString(now)}</p>
         <h1 className="text-display-m mt-3" style={{ color: "var(--ink-1)" }}>
@@ -142,7 +238,7 @@ function HomePage() {
         </h1>
       </header>
 
-      {/* PULSE CARD — HERO (dominant visual weight) */}
+      {/* 2. PulseCard */}
       <section className="mb-8">
         <PulseCard
           date={`${todayString(now)}${streakLine ? ` · ${streakLine}` : ""}`}
@@ -159,8 +255,60 @@ function HomePage() {
         />
       </section>
 
-      {/* INTENT — IA Coach speaking */}
-      <section className="mb-4 animate-rise-delayed">
+      {/* 3. Última análise IA */}
+      <section className="mb-8 animate-rise-delayed">
+        {lastAnalysis ? (
+          <div className="card-aurora p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-eyebrow">última análise IA</p>
+              <Link to="/nutrition/history" className="text-[11px] font-semibold" style={{ color: "var(--primary)" }}>
+                Ver histórico →
+              </Link>
+            </div>
+            <div className="mt-3 flex items-center gap-4">
+              <div
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl"
+                style={{ background: "var(--surface)" }}
+              >
+                {MEAL_EMOJI[lastAnalysis.meal_type?.toLowerCase() ?? ""] ?? "🍽"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  {lastAnalysis.meal_type && (
+                    <span className="text-sm font-semibold capitalize">{lastAnalysis.meal_type}</span>
+                  )}
+                  {lastAnalysis.score != null && (
+                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
+                      Nota {Number(lastAnalysis.score).toFixed(1)}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{lastAnalysis.calories ?? 0} kcal</span>
+                  <span>{Number(lastAnalysis.protein ?? 0).toFixed(0)}g proteína</span>
+                  <span>{timeAgo(lastAnalysis.created_at)}</span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+            </div>
+          </div>
+        ) : (
+          <div className="card-aurora flex items-center justify-between p-5">
+            <div>
+              <p className="text-eyebrow">análise IA</p>
+              <p className="mt-1 text-sm font-semibold" style={{ color: "var(--ink-1)" }}>
+                Nenhuma análise ainda
+              </p>
+            </div>
+            <Link to="/nutrition" className="btn-primary shrink-0 text-sm">
+              Analisar agora
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* 4. IntentCard */}
+      <section className="mb-8 animate-rise-delayed">
         <IntentCard
           eyebrow={intent.eyebrow}
           title={intent.title}
@@ -170,17 +318,89 @@ function HomePage() {
         />
       </section>
 
-      {/* NEAREST MACHINE — with personality */}
+      {/* 5. Plano Alimentar IA */}
+      <section className="mb-8 animate-rise-2">
+        <div
+          className="card-aurora overflow-hidden p-5"
+          style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--ai) 8%, var(--card)), var(--card))" }}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl"
+                style={{ background: "color-mix(in srgb, var(--ai) 12%, var(--surface))" }}
+              >
+                🥗
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--ai)" }}>
+                  ◇ IA
+                </p>
+                <p className="text-[15px] font-bold" style={{ color: "var(--ink-1)" }}>
+                  Plano Alimentar
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/meal-plan"
+              className="shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold transition"
+              style={{ background: "var(--ai)", color: "#fff" }}
+            >
+              {mealPlanMeta ? "Ver plano" : "Criar plano"}
+            </Link>
+          </div>
+          {mealPlanMeta ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Objetivo: <strong style={{ color: "var(--ink-1)" }}>{GOAL_LABEL[mealPlanMeta.goal] ?? mealPlanMeta.goal}</strong>
+              {" · "}Última atualização{" "}
+              {new Date(mealPlanMeta.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+            </p>
+          ) : (
+            <p className="mt-3 text-xs" style={{ color: "var(--ink-2)" }}>
+              A IA monta um plano alimentar personalizado para sua meta.
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* 6. Acesso rápido */}
+      <section className="mb-8 animate-rise-2">
+        <h2 className="text-headline mb-4">⚡ Acesso rápido</h2>
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          {[
+            { icon: <Utensils size={20} />, label: "Analisar", to: "/nutrition" },
+            { icon: <BookOpen size={20} />, label: "Histórico", to: "/nutrition/history" },
+            { icon: "🥗", label: "Plano", to: "/meal-plan", isEmoji: true },
+            { icon: <ShoppingBag size={20} />, label: "Catálogo", to: "/catalog" },
+          ].map(({ icon, label, to, isEmoji }) => (
+            <Link
+              key={to}
+              to={to}
+              className="flex flex-col items-center gap-2 rounded-2xl py-4 transition hover:opacity-80 active:scale-95"
+              style={{ background: "var(--surface)" }}
+            >
+              <div
+                className="grid h-10 w-10 place-items-center rounded-xl"
+                style={{ background: "var(--card)", color: "var(--primary)" }}
+              >
+                {isEmoji ? <span className="text-xl">{icon as string}</span> : icon}
+              </div>
+              <span className="text-[11px] font-semibold" style={{ color: "var(--ink-2)" }}>
+                {label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 7. Nearest Machine */}
       {nearest && (
         <section className="mb-14 animate-rise-2">
-          <MachineTile
-            m={{ ...nearest, distance_km: 0.34 }}
-            personality
-          />
+          <MachineTile m={{ ...nearest, distance_km: 0.34 }} personality />
         </section>
       )}
 
-      {/* DISCOVERY */}
+      {/* 8. Discovery */}
       <section className="mb-12 animate-rise-2">
         <div className="mb-5 flex items-baseline justify-between">
           <h2 className="text-headline">Vale descobrir</h2>

@@ -62,9 +62,24 @@ const response = await anthropic.messages.create({
 });
 
 const text = response.content
-  .filter((block) => block.type === "text")
+  .filter((block): block is Anthropic.TextBlock => block.type === "text")
   .map((block) => block.text)
   .join("\n");
+
+        const cleaned = text.replace(/```json|```/g, "").trim();
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]) as { days?: Day[] };
+          if (Array.isArray(parsed.days) && parsed.days.length > 0) {
+            const total_calories = parsed.days.reduce(
+              (sum, day) => sum + Object.values(day.meals).reduce((s, m) => s + (m?.calories ?? 0), 0), 0
+            );
+            const total_protein = parsed.days.reduce(
+              (sum, day) => sum + Object.values(day.meals).reduce((s, m) => s + (m?.protein ?? 0), 0), 0
+            );
+            plan = { goal: data.goal, days: parsed.days, total_calories, total_protein };
+          }
+        }
       } catch (e) {
         console.error("Meal plan AI failed", e);
       }
