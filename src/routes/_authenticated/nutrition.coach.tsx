@@ -59,11 +59,22 @@ function CoachPage() {
     setPending(true);
     try {
       const { reply } = await chat({ data: { messages: next.slice(-12) } });
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages((m) => [...m, { role: "assistant", content: "Tive um problema pra responder agora. Tenta de novo 🙏" }]);
-    } finally {
       setPending(false);
+      // Reveal the answer progressively (streaming feel) word by word
+      const words = reply.split(" ");
+      setMessages((m) => [...m, { role: "assistant", content: "" }]);
+      for (let i = 0; i < words.length; i++) {
+        const partial = words.slice(0, i + 1).join(" ");
+        setMessages((m) => {
+          const copy = [...m];
+          copy[copy.length - 1] = { role: "assistant", content: partial };
+          return copy;
+        });
+        await new Promise((r) => setTimeout(r, 22));
+      }
+    } catch {
+      setPending(false);
+      setMessages((m) => [...m, { role: "assistant", content: "Tive um problema pra responder agora. Tenta de novo 🙏" }]);
     }
   }
 

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,14 @@ type Row = ProductCardData & { category_id: string | null; protein?: number | nu
 function CatalogPage() {
   const { user } = useAuth();
   const [f, setF] = useState<Filters>(DEFAULT);
+  const [qInput, setQInput] = useState("");
   const [open, setOpen] = useState(false);
+
+  // Debounce the search field so we don't refetch on every keystroke
+  useEffect(() => {
+    const id = setTimeout(() => setF((p) => (p.q === qInput ? p : { ...p, q: qInput })), 250);
+    return () => clearTimeout(id);
+  }, [qInput]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -81,7 +88,7 @@ function CatalogPage() {
 
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; reset: () => void }[] = [];
-    if (f.q) chips.push({ key: "q", label: `"${f.q}"`, reset: () => setF((p) => ({ ...p, q: "" })) });
+    if (f.q) chips.push({ key: "q", label: `"${f.q}"`, reset: () => { setQInput(""); setF((p) => ({ ...p, q: "" })); } });
     if (f.catId) {
       const c = categories.find((c) => c.id === f.catId);
       chips.push({ key: "cat", label: c?.name ?? "categoria", reset: () => setF((p) => ({ ...p, catId: null })) });
@@ -116,9 +123,10 @@ function CatalogPage() {
         <div className="relative flex-1">
           <Search size={17} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-3)" }} />
           <input
-            value={f.q}
-            onChange={(e) => setF((p) => ({ ...p, q: e.target.value }))}
+            value={qInput}
+            onChange={(e) => setQInput(e.target.value)}
             placeholder="Buscar pratos, ingredientes..."
+            aria-label="Buscar pratos"
             className="input-aurora pr-5"
             style={{ paddingLeft: "3rem", height: "48px" }}
           />
@@ -184,7 +192,7 @@ function CatalogPage() {
               {c.label} <X size={12} strokeWidth={2.4} />
             </button>
           ))}
-          <button onClick={() => setF(DEFAULT)} className="text-[12.5px] font-semibold transition hover:opacity-70" style={{ color: "var(--primary)" }}>
+          <button onClick={() => { setQInput(""); setF(DEFAULT); }} className="text-[12.5px] font-semibold transition hover:opacity-70" style={{ color: "var(--primary)" }}>
             Limpar tudo
           </button>
         </div>
@@ -244,7 +252,7 @@ function CatalogPage() {
           <div>
             <p className="text-headline">Nada encontrado</p>
             <p className="mt-2 text-body-sm" style={{ color: "var(--ink-2)" }}>Tente ajustar os filtros</p>
-            <button onClick={() => setF(DEFAULT)} className="btn-primary mt-6">Limpar filtros</button>
+            <button onClick={() => { setQInput(""); setF(DEFAULT); }} className="btn-primary mt-6">Limpar filtros</button>
           </div>
         </div>
       ) : (

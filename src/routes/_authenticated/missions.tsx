@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usedCoachToday } from "@/lib/engagement";
 import { StreakFlame } from "@/components/premium/StreakFlame";
+import { levelFromXp } from "@/components/premium/XpBar";
+import { celebrate, celebrateLevelUp } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/_authenticated/missions")({
   component: MissionsPage,
@@ -84,7 +86,15 @@ function MissionsPage() {
       const next = { ...claimed, [`${m.id}:${m.period}`]: true };
       setClaimed(next); saveClaimed(next);
       qc.invalidateQueries({ queryKey: ["profile"] });
-      toast.success(`+${m.reward} XP! 🎉`);
+      const before = Number(profile?.xp ?? 0);
+      const leveledUp = levelFromXp(before).level !== levelFromXp(before + m.reward).level;
+      if (leveledUp) {
+        celebrateLevelUp();
+        toast.success(`Você subiu para o nível ${levelFromXp(before + m.reward).level}! 🎉`);
+      } else {
+        celebrate();
+        toast.success(`+${m.reward} XP!`);
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });

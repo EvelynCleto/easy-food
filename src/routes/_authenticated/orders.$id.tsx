@@ -77,9 +77,11 @@ function OrderDetail() {
           <div className="mt-4">
             <PixQrCode value={payment.pix_code!} />
           </div>
-          <button onClick={simulatePaid} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
-            Já paguei (simular confirmação)
-          </button>
+          {import.meta.env.DEV && (
+            <button onClick={simulatePaid} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+              Já paguei (simular confirmação)
+            </button>
+          )}
         </div>
       ) : (
         <div className="rounded-3xl bg-gradient-to-br from-primary to-[oklch(0.5_0.16_140)] p-6 text-primary-foreground">

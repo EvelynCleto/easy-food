@@ -89,6 +89,21 @@ function OnboardingPage() {
   function next() { setStep((s) => Math.min(s + 1, steps.length - 1)); }
   function back() { setStep((s) => Math.max(s - 1, 0)); }
 
+  // Same Mifflin-St Jeor math as finish(), for the "Pronto" preview
+  function previewGoals() {
+    const w = Number(weight), h = Number(height), a = Number(age);
+    if (!w || !h || !a || !activity || !goal) return null;
+    const bmrBase = 10 * w + 6.25 * h - 5 * a;
+    const bmr = sex === "feminino" ? bmrBase - 161 : bmrBase + 5;
+    const factor = { sedentario: 1.2, leve: 1.375, moderado: 1.55, intenso: 1.725 }[activity];
+    let kcal = Math.round(bmr * factor);
+    if (goal === "emagrecimento") kcal -= 400;
+    if (goal === "ganho_massa") kcal += 350;
+    const protein = Math.round(w * (goal === "ganho_massa" ? 2 : 1.6));
+    return { kcal, protein };
+  }
+  const preview = previewGoals();
+
   function validateAndNext() {
     if (step === 0) {
       if (!name.trim()) return toast.error("Informe seu nome");
@@ -218,7 +233,7 @@ function OnboardingPage() {
                 <div className="mb-2 text-xs font-semibold text-muted-foreground">Alergias</div>
                 <div className="flex flex-wrap gap-2">
                   {ALLERGIES.map((r) => (
-                    <button key={r} onClick={() => toggle(allergies, r, setAllergies)} className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${allergies.includes(r) ? "bg-rose-500 text-white" : "bg-muted text-muted-foreground"}`}>{r}</button>
+                    <button key={r} onClick={() => toggle(allergies, r, setAllergies)} className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${allergies.includes(r) ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"}`}>{r}</button>
                   ))}
                 </div>
               </div>
@@ -228,14 +243,16 @@ function OnboardingPage() {
           {step === 5 && (
             <div className="space-y-4 text-center">
               <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary/10 text-primary"><Sparkles size={28} /></div>
-              <h2 className="font-display text-2xl font-bold">Tudo certo, {name || "atleta"}!</h2>
-              <p className="text-sm text-muted-foreground">Calculamos suas metas com base em Mifflin-St Jeor. Você pode ajustar a qualquer momento no perfil.</p>
+              <h2 className="font-display text-2xl font-bold">Pronto{name ? `, ${name}` : ""}!</h2>
+              <p className="text-sm text-muted-foreground">Calculamos suas metas com base em Mifflin-St Jeor. Você ajusta quando quiser no perfil.</p>
               <div className="grid grid-cols-3 gap-2 text-left">
-                {typeof weight === "number" && typeof height === "number" && (
-                  <div className="rounded-xl bg-muted/50 p-3"><div className="text-[10px] uppercase text-muted-foreground">IMC</div><div className="font-bold">{(Number(weight) / Math.pow(Number(height) / 100, 2)).toFixed(1)}</div></div>
+                <div className="rounded-2xl bg-primary/10 p-3"><div className="text-[10px] uppercase" style={{ color: "var(--primary)" }}>Calorias/dia</div><div className="font-display text-lg font-bold tabular-nums">{preview ? preview.kcal.toLocaleString("pt-BR") : "—"}</div></div>
+                <div className="rounded-2xl bg-primary/10 p-3"><div className="text-[10px] uppercase" style={{ color: "var(--primary)" }}>Proteína/dia</div><div className="font-display text-lg font-bold tabular-nums">{preview ? `${preview.protein}g` : "—"}</div></div>
+                {typeof weight === "number" && typeof height === "number" ? (
+                  <div className="rounded-2xl p-3" style={{ background: "var(--surface)" }}><div className="text-[10px] uppercase" style={{ color: "var(--ink-3)" }}>IMC</div><div className="font-display text-lg font-bold tabular-nums">{(Number(weight) / Math.pow(Number(height) / 100, 2)).toFixed(1)}</div></div>
+                ) : (
+                  <div className="rounded-2xl p-3" style={{ background: "var(--surface)" }}><div className="text-[10px] uppercase" style={{ color: "var(--ink-3)" }}>XP</div><div className="font-display text-lg font-bold tabular-nums">+50</div></div>
                 )}
-                <div className="rounded-xl bg-primary/10 p-3"><div className="text-[10px] uppercase text-primary">Meta diária</div><div className="font-bold">Otimizada</div></div>
-                <div className="rounded-xl bg-amber-500/10 p-3"><div className="text-[10px] uppercase text-amber-600">XP</div><div className="font-bold">+50</div></div>
               </div>
             </div>
           )}

@@ -24,42 +24,51 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
   useEffect(() => { if (!loading && user) navigate({ to: "/" }); }, [user, loading, navigate]);
 
+  function emailLooksValid(v: string) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v); }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setInlineError(null);
+
+    // Client-side guards with inline feedback (no waiting on the network)
+    if (!emailLooksValid(email)) { setInlineError("Digite um e-mail válido."); return; }
+    if (mode !== "reset" && password.length < 6) { setInlineError("A senha precisa de pelo menos 6 caracteres."); return; }
+    if (mode === "signup" && !name.trim()) { setInlineError("Como podemos te chamar?"); return; }
+
     setBusy(true);
     try {
       if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) {
-          // Map common Supabase error messages to friendly Portuguese
-          const msg =
+          setInlineError(
             error.includes("Invalid login credentials") ? "E-mail ou senha incorretos." :
             error.includes("Email not confirmed") ? "Confirme seu e-mail antes de entrar." :
             error.includes("Too many requests") ? "Muitas tentativas. Aguarde alguns minutos." :
-            error;
-          toast.error(msg);
+            error,
+          );
         } else {
-          toast.success("Bem-vinda de volta!");
+          toast.success("Que bom te ver de novo 👋");
         }
       } else if (mode === "signup") {
         const { error } = await signUp(email, password, name);
         if (error) {
-          const msg =
+          setInlineError(
             error.includes("already registered") || error.includes("User already registered") ? "Este e-mail já está em uso." :
             error.includes("Password should be") ? "A senha deve ter pelo menos 6 caracteres." :
             error.includes("rate limit") ? "Muitas tentativas. Aguarde alguns minutos." :
-            error;
-          toast.error(msg);
+            error,
+          );
         } else {
           toast.success("Conta criada! Verifique seu e-mail para confirmar o cadastro.");
           setMode("login");
         }
       } else {
         const { error } = await resetPassword(email);
-        if (error) toast.error(error);
+        if (error) setInlineError(error);
         else { toast.success("Link de recuperação enviado para " + email); setMode("login"); }
       }
     } finally { setBusy(false); }
@@ -131,7 +140,7 @@ function AuthPage() {
                   : "Enviaremos um link para o seu e-mail."}
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-10 space-y-3">
+            <form onSubmit={handleSubmit} noValidate className="mt-10 space-y-3">
               {mode === "signup" && (
                 <input className="input-aurora" required type="text" placeholder="Nome"
                   value={name} onChange={(e) => setName(e.target.value)} />
@@ -149,6 +158,16 @@ function AuthPage() {
                     </p>
                   )}
                 </div>
+              )}
+
+              {inlineError && (
+                <p
+                  role="alert"
+                  className="rounded-xl px-4 py-3 text-[13px] font-medium"
+                  style={{ background: "color-mix(in srgb, var(--destructive) 12%, transparent)", color: "var(--destructive)" }}
+                >
+                  {inlineError}
+                </p>
               )}
 
               <button type="submit" disabled={busy} className="btn-primary mt-6 w-full">

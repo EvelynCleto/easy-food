@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { streakNarrative } from "@/lib/intent";
 import { makeThumbnail, fileToDataUrl } from "@/lib/image";
+import { levelFromXp } from "@/components/premium/XpBar";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -55,6 +56,7 @@ function ProfilePage() {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile"] }); setEditingGoal(false); toast.success("Meta atualizada"); },
+    onError: (e: Error) => toast.error(e?.message ?? "Não foi possível salvar a meta."),
   });
 
   const uploadAvatar = useMutation({
@@ -88,8 +90,8 @@ function ProfilePage() {
   const firstLetter = (profile?.full_name ?? user?.email ?? "?")[0]?.toUpperCase();
   const streak = profile?.streak_days ?? 0;
   const xp = profile?.xp ?? 0;
-  const level = Math.floor(xp / 100) + 1;
-  const xpInLevel = xp % 100;
+  const { level, currentXp, nextLevelXp } = levelFromXp(xp);
+  const xpInLevel = currentXp;
   const streakLine = streakNarrative(streak);
 
   return (
@@ -150,9 +152,9 @@ function ProfilePage() {
           <div className="card-nested p-6">
             <p className="text-eyebrow">nível</p>
             <p className="mt-2 font-display text-[32px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>{level}</p>
-            <p className="text-body-sm" style={{ color: "var(--ink-2)" }}>{xpInLevel} / 100 XP</p>
+            <p className="text-body-sm" style={{ color: "var(--ink-2)" }}>{xpInLevel} / {nextLevelXp} XP</p>
             <div className="mt-4 h-[5px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${xpInLevel}%`, background: "var(--primary)" }} />
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(100, (xpInLevel / nextLevelXp) * 100)}%`, background: "var(--primary)" }} />
             </div>
           </div>
 

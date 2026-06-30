@@ -31,15 +31,17 @@ function ResetPage() {
     <div className="grid min-h-screen place-items-center bg-background px-6">
       <div className="w-full max-w-sm">
         <Logo />
-        <h1 className="mt-6 font-display text-2xl font-bold">Nova senha</h1>
+        <h1 className="text-headline mt-6">Nova senha</h1>
+        <p className="mt-2 text-body-sm" style={{ color: "var(--ink-2)" }}>Escolha uma senha de pelo menos 6 caracteres.</p>
         <form onSubmit={submit} className="mt-6 space-y-3">
+          <label className="sr-only" htmlFor="new-password">Nova senha</label>
           <input
-            required minLength={6} type="password"
+            id="new-password" required minLength={6} type="password"
             value={password} onChange={(e) => setPassword(e.target.value)}
             placeholder="Nova senha"
-            className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="input-aurora"
           />
-          <button disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+          <button disabled={busy} className="btn-primary w-full">
             {busy && <Loader2 size={16} className="animate-spin" />} Salvar
           </button>
         </form>

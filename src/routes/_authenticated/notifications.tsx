@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { BellOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -42,8 +43,11 @@ function NotificationsPage() {
       </header>
 
       {notes.length === 0 ? (
-        <div className="card-flat grid h-60 place-items-center">
-          <p className="text-caption">Sem notificações</p>
+        <div className="card-flat flex h-60 flex-col items-center justify-center gap-3 text-center">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl" style={{ background: "var(--card)" }}>
+            <BellOff size={24} style={{ color: "var(--ink-3)" }} />
+          </div>
+          <p className="text-body-sm font-semibold" style={{ color: "var(--ink-1)" }}>Tudo em dia por aqui ✓</p>
         </div>
       ) : (
         <div className="space-y-10">

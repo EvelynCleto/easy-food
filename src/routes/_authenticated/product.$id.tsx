@@ -60,8 +60,12 @@ function ProductPage() {
   const price = Number(product.promo_price ?? product.price);
 
   function addToCart() {
-    cart.add({ productId: product!.id, name: product!.name, price, image: product!.image_url });
-    toast.success("Adicionado ao carrinho");
+    try {
+      cart.add({ productId: product!.id, name: product!.name, price, image: product!.image_url });
+      toast.success("Adicionado ao carrinho");
+    } catch {
+      toast.error("Não foi possível adicionar ao carrinho. Tente de novo.");
+    }
   }
 
   const macros: { label: string; value: string; unit: string }[] = [

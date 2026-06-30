@@ -1,9 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { celebrate } from "@/lib/celebrate";
 
 /**
- * Grants an achievement to the current user by its `code` (idempotent).
- * Safe to call optimistically after a triggering event — duplicates are
- * ignored and any failure is swallowed so it never blocks the main flow.
+ * Grants an achievement by its `code`. Idempotent: returns false if the user
+ * already had it. On a NEW unlock it awards the achievement's XP to the
+ * profile and fires a celebration (confetti + haptic + toast).
  */
 export async function grantAchievement(code: string): Promise<boolean> {
   try {
@@ -14,18 +16,35 @@ export async function grantAchievement(code: string): Promise<boolean> {
 
     const { data: ach } = await supabase
       .from("achievements")
-      .select("id")
+      .select("id,title,xp_reward")
       .eq("code", code)
       .maybeSingle();
     if (!ach) return false;
 
+    // Already unlocked? then it's a no-op (no double XP / celebration).
+    const { data: existing } = await supabase
+      .from("user_achievements")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("achievement_id", ach.id)
+      .maybeSingle();
+    if (existing) return false;
+
     const { error } = await supabase
       .from("user_achievements")
-      .upsert(
-        { user_id: user.id, achievement_id: ach.id },
-        { onConflict: "user_id,achievement_id", ignoreDuplicates: true },
-      );
-    return !error;
+      .insert({ user_id: user.id, achievement_id: ach.id });
+    if (error) return false;
+
+    // Award the XP so achievements actually feed progression.
+    const reward = Number(ach.xp_reward ?? 0);
+    if (reward > 0) {
+      const { data: prof } = await supabase.from("profiles").select("xp").eq("id", user.id).maybeSingle();
+      await supabase.from("profiles").update({ xp: Number(prof?.xp ?? 0) + reward }).eq("id", user.id);
+    }
+
+    celebrate();
+    toast.success(`Conquista desbloqueada: ${ach.title}${reward > 0 ? ` · +${reward} XP` : ""} 🏆`);
+    return true;
   } catch {
     return false;
   }

@@ -74,8 +74,8 @@
   --popover-foreground: #0A0B0D;
 
   --ink-1: #1F2126;
-  --ink-2: #5A5E66;
-  --ink-3: #9094A0;
+  --ink-2: #50545C;
+  --ink-3: #6B7280;            /* AA-compliant tertiary (~4.6:1 on white) */
   --hairline: rgba(10, 11, 13, 0.08);
   --surface-2: #E8EAEE;
 
@@ -138,8 +138,8 @@
   --popover-foreground: #F5F6F8;
 
   --ink-1: #E1E3E8;
-  --ink-2: #9094A0;
-  --ink-3: #5A5E66;
+  --ink-2: #A7ACB8;
+  --ink-3: #868C99;            /* lifted for AA on dark surfaces */
   --hairline: rgba(255, 255, 255, 0.07);
   --surface-2: #252830;
 
@@ -206,6 +206,14 @@
   }
 
   button, a { -webkit-tap-highlight-color: transparent; }
+
+  /* Visible keyboard focus everywhere; suppressed for pointer interactions */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
 
   .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
 

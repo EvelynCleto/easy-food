@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Receipt, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { brl } from "@/lib/format";
@@ -65,7 +65,16 @@ function OrdersPage() {
 
       <div className="mt-8 card-nested overflow-hidden">
         {filtered.length === 0 ? (
-          <div className="py-16 text-center text-caption">Nenhum pedido encontrado</div>
+          <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-3xl" style={{ background: "var(--surface)" }}>
+              <Receipt size={26} style={{ color: "var(--ink-3)" }} />
+            </div>
+            <div>
+              <p className="text-headline">Nenhum pedido ainda</p>
+              <p className="mt-1 text-body-sm" style={{ color: "var(--ink-2)" }}>Seu primeiro pedido aparece aqui.</p>
+            </div>
+            <Link to="/catalog" className="btn-primary">Ver o catálogo</Link>
+          </div>
         ) : (
           filtered.map((o, i) => (
             <Link key={o.id} to="/orders/$id" params={{ id: o.id }}
