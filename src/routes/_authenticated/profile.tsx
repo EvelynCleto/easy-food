@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
-  Activity, Calendar, Camera, ChevronRight, Heart, Loader2, Lock, LogOut,
-  Receipt, User as UserIcon, TrendingDown,
+  Activity, Calendar, Camera, ChevronRight, Crown, Heart, Loader2, Lock, LogOut,
+  Receipt, Target, User as UserIcon, TrendingDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,7 +70,9 @@ function ProfilePage() {
     onError: (e: Error) => toast.error(e?.message ?? "Falha ao enviar foto"),
   });
 
-  const items: { icon: typeof UserIcon; label: string; to: "/orders" | "/favorites" | "/meal-plan" | "/onboarding" | "/nutrition/dashboard" }[] = [
+  const items: { icon: typeof UserIcon; label: string; to: "/orders" | "/favorites" | "/meal-plan" | "/onboarding" | "/nutrition/dashboard" | "/missions" | "/subscribe" }[] = [
+    { icon: Target, label: "Missões", to: "/missions" },
+    { icon: Crown, label: "Assinatura EasyFood", to: "/subscribe" },
     { icon: Activity, label: "Saúde & progresso", to: "/nutrition/dashboard" },
     { icon: Calendar, label: "Plano semanal", to: "/meal-plan" },
     { icon: Receipt, label: "Pedidos", to: "/orders" },

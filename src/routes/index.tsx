@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronRight, ShoppingBag, Utensils, Zap } from "lucide-react";
+import { ChevronRight, ShoppingBag, Sparkles, Utensils, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -359,7 +359,7 @@ function HomePage() {
                 Nenhuma análise ainda
               </p>
             </div>
-            <Link to="/nutrition/" className="btn-primary shrink-0 text-sm">
+            <Link to="/nutrition" className="btn-primary shrink-0 text-sm">
               Analisar agora
             </Link>
           </div>
@@ -428,7 +428,7 @@ function HomePage() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {[
             { icon: <Utensils size={20} />, label: "Analisar", to: "/nutrition/" },
-            { icon: <BookOpen size={20} />, label: "Histórico", to: "/nutrition/history" },
+            { icon: <Sparkles size={20} />, label: "Coach IA", to: "/nutrition/coach" },
             { icon: "🥗", label: "Plano", to: "/meal-plan", isEmoji: true },
             { icon: <ShoppingBag size={20} />, label: "Catálogo", to: "/catalog" },
           ].map(({ icon, label, to, isEmoji }) => (

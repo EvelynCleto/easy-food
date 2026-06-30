@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, RefreshCw, TrendingUp, Upload } from "lucide-react";
+import { Camera, Loader2, RefreshCw, Sparkles, TrendingUp, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -80,9 +80,14 @@ function NutritionPage() {
             Tire uma foto. A IA identifica os alimentos e calcula nutrientes.
           </p>
         </div>
-        <Link to="/nutrition/history" className="btn-secondary hidden h-10 px-5 sm:inline-flex">
-          <TrendingUp size={15} /> Histórico
-        </Link>
+        <div className="hidden gap-2 sm:flex">
+          <Link to="/nutrition/coach" className="btn-secondary h-10 px-5">
+            <Sparkles size={15} /> Coach IA
+          </Link>
+          <Link to="/nutrition/history" className="btn-secondary h-10 px-5">
+            <TrendingUp size={15} /> Histórico
+          </Link>
+        </div>
       </header>
 
       <section>

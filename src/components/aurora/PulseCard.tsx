@@ -127,7 +127,7 @@ export function PulseCard(props: Props) {
 
       {/* Quick analyze button */}
       <Link
-        to="/nutrition/"
+        to="/nutrition"
         className="press relative mt-7 flex items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-semibold transition"
         style={{ background: "var(--ink-1)", color: "var(--card)" }}
       >

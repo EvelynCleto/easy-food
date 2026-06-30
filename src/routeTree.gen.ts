@@ -13,24 +13,27 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSubscribeRouteImport } from './routes/_authenticated/subscribe'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNutritionRouteImport } from './routes/_authenticated/nutrition'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedMissionsRouteImport } from './routes/_authenticated/missions'
 import { Route as AuthenticatedMealPlanRouteImport } from './routes/_authenticated/meal-plan'
 import { Route as AuthenticatedMachinesRouteImport } from './routes/_authenticated/machines'
 import { Route as AuthenticatedFavoritesRouteImport } from './routes/_authenticated/favorites'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCartRouteImport } from './routes/_authenticated/cart'
+import { Route as AuthenticatedNutritionIndexRouteImport } from './routes/_authenticated/nutrition.index'
+import { Route as AuthenticatedMachinesIndexRouteImport } from './routes/_authenticated/machines.index'
 import { Route as AuthenticatedProductIdRouteImport } from './routes/_authenticated/product.$id'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders.$id'
-import { Route as AuthenticatedNutritionIndexRouteImport } from './routes/_authenticated/nutrition.index'
 import { Route as AuthenticatedNutritionHistoryRouteImport } from './routes/_authenticated/nutrition.history'
 import { Route as AuthenticatedNutritionDashboardRouteImport } from './routes/_authenticated/nutrition.dashboard'
+import { Route as AuthenticatedNutritionCoachRouteImport } from './routes/_authenticated/nutrition.coach'
 import { Route as AuthenticatedMachinesIdRouteImport } from './routes/_authenticated/machines.$id'
-import { Route as AuthenticatedMachinesIndexRouteImport } from './routes/_authenticated/machines.index'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -50,6 +53,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSubscribeRoute = AuthenticatedSubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
@@ -77,6 +85,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMissionsRoute = AuthenticatedMissionsRouteImport.update({
+  id: '/missions',
+  path: '/missions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMealPlanRoute = AuthenticatedMealPlanRouteImport.update({
   id: '/meal-plan',
   path: '/meal-plan',
@@ -107,6 +120,18 @@ const AuthenticatedCartRoute = AuthenticatedCartRouteImport.update({
   path: '/cart',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNutritionIndexRoute =
+  AuthenticatedNutritionIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedNutritionRoute,
+  } as any)
+const AuthenticatedMachinesIndexRoute =
+  AuthenticatedMachinesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMachinesRoute,
+  } as any)
 const AuthenticatedProductIdRoute = AuthenticatedProductIdRouteImport.update({
   id: '/product/$id',
   path: '/product/$id',
@@ -117,12 +142,6 @@ const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedOrdersRoute,
 } as any)
-const AuthenticatedNutritionIndexRoute =
-  AuthenticatedNutritionIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedNutritionRoute,
-  } as any)
 const AuthenticatedNutritionHistoryRoute =
   AuthenticatedNutritionHistoryRouteImport.update({
     id: '/history',
@@ -135,17 +154,17 @@ const AuthenticatedNutritionDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedNutritionRoute,
   } as any)
+const AuthenticatedNutritionCoachRoute =
+  AuthenticatedNutritionCoachRouteImport.update({
+    id: '/coach',
+    path: '/coach',
+    getParentRoute: () => AuthenticatedNutritionRoute,
+  } as any)
 const AuthenticatedMachinesIdRoute = AuthenticatedMachinesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AuthenticatedMachinesRoute,
 } as any)
-const AuthenticatedMachinesIndexRoute =
-  AuthenticatedMachinesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedMachinesRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -157,18 +176,21 @@ export interface FileRoutesByFullPath {
   '/favorites': typeof AuthenticatedFavoritesRoute
   '/machines': typeof AuthenticatedMachinesRouteWithChildren
   '/meal-plan': typeof AuthenticatedMealPlanRoute
+  '/missions': typeof AuthenticatedMissionsRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/nutrition': typeof AuthenticatedNutritionRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
+  '/subscribe': typeof AuthenticatedSubscribeRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
-  '/machines/': typeof AuthenticatedMachinesIndexRoute
-  '/nutrition/': typeof AuthenticatedNutritionIndexRoute
+  '/nutrition/coach': typeof AuthenticatedNutritionCoachRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/product/$id': typeof AuthenticatedProductIdRoute
+  '/machines/': typeof AuthenticatedMachinesIndexRoute
+  '/nutrition/': typeof AuthenticatedNutritionIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -178,20 +200,21 @@ export interface FileRoutesByTo {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/favorites': typeof AuthenticatedFavoritesRoute
-  '/machines': typeof AuthenticatedMachinesRouteWithChildren
   '/meal-plan': typeof AuthenticatedMealPlanRoute
+  '/missions': typeof AuthenticatedMissionsRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
-  '/nutrition': typeof AuthenticatedNutritionRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
+  '/subscribe': typeof AuthenticatedSubscribeRoute
   '/machines/$id': typeof AuthenticatedMachinesIdRoute
-  '/machines/': typeof AuthenticatedMachinesIndexRoute
-  '/nutrition/': typeof AuthenticatedNutritionIndexRoute
+  '/nutrition/coach': typeof AuthenticatedNutritionCoachRoute
   '/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/product/$id': typeof AuthenticatedProductIdRoute
+  '/machines': typeof AuthenticatedMachinesIndexRoute
+  '/nutrition': typeof AuthenticatedNutritionIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -205,18 +228,21 @@ export interface FileRoutesById {
   '/_authenticated/favorites': typeof AuthenticatedFavoritesRoute
   '/_authenticated/machines': typeof AuthenticatedMachinesRouteWithChildren
   '/_authenticated/meal-plan': typeof AuthenticatedMealPlanRoute
+  '/_authenticated/missions': typeof AuthenticatedMissionsRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/nutrition': typeof AuthenticatedNutritionRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/subscribe': typeof AuthenticatedSubscribeRoute
   '/_authenticated/machines/$id': typeof AuthenticatedMachinesIdRoute
-  '/_authenticated/machines/': typeof AuthenticatedMachinesIndexRoute
-  '/_authenticated/nutrition/': typeof AuthenticatedNutritionIndexRoute
+  '/_authenticated/nutrition/coach': typeof AuthenticatedNutritionCoachRoute
   '/_authenticated/nutrition/dashboard': typeof AuthenticatedNutritionDashboardRoute
   '/_authenticated/nutrition/history': typeof AuthenticatedNutritionHistoryRoute
   '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/_authenticated/product/$id': typeof AuthenticatedProductIdRoute
+  '/_authenticated/machines/': typeof AuthenticatedMachinesIndexRoute
+  '/_authenticated/nutrition/': typeof AuthenticatedNutritionIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -230,18 +256,21 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/machines'
     | '/meal-plan'
+    | '/missions'
     | '/notifications'
     | '/nutrition'
     | '/onboarding'
     | '/orders'
     | '/profile'
+    | '/subscribe'
     | '/machines/$id'
-    | '/machines/'
-    | '/nutrition/'
+    | '/nutrition/coach'
     | '/nutrition/dashboard'
     | '/nutrition/history'
     | '/orders/$id'
     | '/product/$id'
+    | '/machines/'
+    | '/nutrition/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -251,20 +280,21 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/favorites'
-    | '/machines'
     | '/meal-plan'
+    | '/missions'
     | '/notifications'
-    | '/nutrition'
     | '/onboarding'
     | '/orders'
     | '/profile'
+    | '/subscribe'
     | '/machines/$id'
-    | '/machines/'
-    | '/nutrition/'
+    | '/nutrition/coach'
     | '/nutrition/dashboard'
     | '/nutrition/history'
     | '/orders/$id'
     | '/product/$id'
+    | '/machines'
+    | '/nutrition'
   id:
     | '__root__'
     | '/'
@@ -277,18 +307,21 @@ export interface FileRouteTypes {
     | '/_authenticated/favorites'
     | '/_authenticated/machines'
     | '/_authenticated/meal-plan'
+    | '/_authenticated/missions'
     | '/_authenticated/notifications'
     | '/_authenticated/nutrition'
     | '/_authenticated/onboarding'
     | '/_authenticated/orders'
     | '/_authenticated/profile'
+    | '/_authenticated/subscribe'
     | '/_authenticated/machines/$id'
-    | '/_authenticated/machines/'
-    | '/_authenticated/nutrition/'
+    | '/_authenticated/nutrition/coach'
     | '/_authenticated/nutrition/dashboard'
     | '/_authenticated/nutrition/history'
     | '/_authenticated/orders/$id'
     | '/_authenticated/product/$id'
+    | '/_authenticated/machines/'
+    | '/_authenticated/nutrition/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/subscribe': {
+      id: '/_authenticated/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof AuthenticatedSubscribeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -361,6 +401,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/missions': {
+      id: '/_authenticated/missions'
+      path: '/missions'
+      fullPath: '/missions'
+      preLoaderRoute: typeof AuthenticatedMissionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/meal-plan': {
@@ -405,6 +452,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCartRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/nutrition/': {
+      id: '/_authenticated/nutrition/'
+      path: '/'
+      fullPath: '/nutrition/'
+      preLoaderRoute: typeof AuthenticatedNutritionIndexRouteImport
+      parentRoute: typeof AuthenticatedNutritionRoute
+    }
+    '/_authenticated/machines/': {
+      id: '/_authenticated/machines/'
+      path: '/'
+      fullPath: '/machines/'
+      preLoaderRoute: typeof AuthenticatedMachinesIndexRouteImport
+      parentRoute: typeof AuthenticatedMachinesRoute
+    }
     '/_authenticated/product/$id': {
       id: '/_authenticated/product/$id'
       path: '/product/$id'
@@ -418,13 +479,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/orders/$id'
       preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
       parentRoute: typeof AuthenticatedOrdersRoute
-    }
-    '/_authenticated/nutrition/': {
-      id: '/_authenticated/nutrition/'
-      path: '/'
-      fullPath: '/nutrition/'
-      preLoaderRoute: typeof AuthenticatedNutritionIndexRouteImport
-      parentRoute: typeof AuthenticatedNutritionRoute
     }
     '/_authenticated/nutrition/history': {
       id: '/_authenticated/nutrition/history'
@@ -440,18 +494,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNutritionDashboardRouteImport
       parentRoute: typeof AuthenticatedNutritionRoute
     }
+    '/_authenticated/nutrition/coach': {
+      id: '/_authenticated/nutrition/coach'
+      path: '/coach'
+      fullPath: '/nutrition/coach'
+      preLoaderRoute: typeof AuthenticatedNutritionCoachRouteImport
+      parentRoute: typeof AuthenticatedNutritionRoute
+    }
     '/_authenticated/machines/$id': {
       id: '/_authenticated/machines/$id'
       path: '/$id'
       fullPath: '/machines/$id'
       preLoaderRoute: typeof AuthenticatedMachinesIdRouteImport
-      parentRoute: typeof AuthenticatedMachinesRoute
-    }
-    '/_authenticated/machines/': {
-      id: '/_authenticated/machines/'
-      path: '/'
-      fullPath: '/machines/'
-      preLoaderRoute: typeof AuthenticatedMachinesIndexRouteImport
       parentRoute: typeof AuthenticatedMachinesRoute
     }
   }
@@ -473,16 +527,18 @@ const AuthenticatedMachinesRouteWithChildren =
   )
 
 interface AuthenticatedNutritionRouteChildren {
-  AuthenticatedNutritionIndexRoute: typeof AuthenticatedNutritionIndexRoute
+  AuthenticatedNutritionCoachRoute: typeof AuthenticatedNutritionCoachRoute
   AuthenticatedNutritionDashboardRoute: typeof AuthenticatedNutritionDashboardRoute
   AuthenticatedNutritionHistoryRoute: typeof AuthenticatedNutritionHistoryRoute
+  AuthenticatedNutritionIndexRoute: typeof AuthenticatedNutritionIndexRoute
 }
 
 const AuthenticatedNutritionRouteChildren: AuthenticatedNutritionRouteChildren =
   {
-    AuthenticatedNutritionIndexRoute: AuthenticatedNutritionIndexRoute,
+    AuthenticatedNutritionCoachRoute: AuthenticatedNutritionCoachRoute,
     AuthenticatedNutritionDashboardRoute: AuthenticatedNutritionDashboardRoute,
     AuthenticatedNutritionHistoryRoute: AuthenticatedNutritionHistoryRoute,
+    AuthenticatedNutritionIndexRoute: AuthenticatedNutritionIndexRoute,
   }
 
 const AuthenticatedNutritionRouteWithChildren =
@@ -508,11 +564,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFavoritesRoute: typeof AuthenticatedFavoritesRoute
   AuthenticatedMachinesRoute: typeof AuthenticatedMachinesRouteWithChildren
   AuthenticatedMealPlanRoute: typeof AuthenticatedMealPlanRoute
+  AuthenticatedMissionsRoute: typeof AuthenticatedMissionsRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedNutritionRoute: typeof AuthenticatedNutritionRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSubscribeRoute: typeof AuthenticatedSubscribeRoute
   AuthenticatedProductIdRoute: typeof AuthenticatedProductIdRoute
 }
 
@@ -523,11 +581,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFavoritesRoute: AuthenticatedFavoritesRoute,
   AuthenticatedMachinesRoute: AuthenticatedMachinesRouteWithChildren,
   AuthenticatedMealPlanRoute: AuthenticatedMealPlanRoute,
+  AuthenticatedMissionsRoute: AuthenticatedMissionsRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedNutritionRoute: AuthenticatedNutritionRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSubscribeRoute: AuthenticatedSubscribeRoute,
   AuthenticatedProductIdRoute: AuthenticatedProductIdRoute,
 }
 
@@ -543,3 +603,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
