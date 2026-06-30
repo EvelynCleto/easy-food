@@ -50,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={item.to}
                 to={item.to}
                 preload="intent"
-                className="notranslate group relative flex items-center rounded-[10px] px-3 py-2 transition"
+                className="notranslate group relative flex min-h-[44px] items-center rounded-[10px] px-3 py-2.5 transition"
                 style={{
                   color: active ? "var(--ink-1)" : "var(--ink-2)",
                   background: "transparent",

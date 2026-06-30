@@ -28,10 +28,10 @@ export function PulseCard(props: Props) {
   const calLeft = Math.max(0, props.caloriesGoal - props.calories);
   const waterPct = Math.min(100, Math.round((props.water / Math.max(props.waterGoal, 1)) * 100));
 
-  const macros: { label: string; value: number; goal: number; unit: string }[] = [
-    { label: "Proteína", value: props.protein,    goal: props.proteinGoal, unit: "g"  },
-    { label: "Carbo",    value: props.carbs,      goal: props.carbsGoal,   unit: "g"  },
-    { label: "Gordura",  value: props.fat,        goal: props.fatGoal,     unit: "g"  },
+  const macros: { label: string; value: number; goal: number; unit: string; color: string }[] = [
+    { label: "Proteína", value: props.protein, goal: props.proteinGoal, unit: "g", color: "var(--macro-protein)" },
+    { label: "Carbo",    value: props.carbs,   goal: props.carbsGoal,   unit: "g", color: "var(--macro-carbs)" },
+    { label: "Gordura",  value: props.fat,     goal: props.fatGoal,     unit: "g", color: "var(--macro-fat)" },
   ];
 
   return (
@@ -90,39 +90,37 @@ export function PulseCard(props: Props) {
         ))}
       </div>
 
-      {/* Water — live value + quick add */}
+      {/* Water — dedicated hydration card */}
       <div className="relative mt-7 rounded-2xl p-4 sm:mt-9" style={{ background: "var(--surface)" }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[12px] font-medium uppercase tracking-[0.08em]" style={{ color: "var(--ink-3)" }}>
-              💧 Água
-            </p>
-            <p className="mt-1 font-display text-[20px] font-semibold tabular-nums" style={{ color: waterPct >= 100 ? "var(--primary)" : "var(--ink-1)" }}>
-              {(props.water / 1000).toFixed(1)}
-              <span className="text-[13px] font-normal" style={{ color: "var(--ink-3)" }}> / {(props.waterGoal / 1000).toFixed(1)} L</span>
-            </p>
+        <div className="flex items-baseline justify-between">
+          <p className="text-[12px] font-medium uppercase tracking-[0.08em]" style={{ color: "var(--ink-3)" }}>
+            💧 Hidratação
+          </p>
+          <p className="font-display text-[15px] font-semibold tabular-nums" style={{ color: waterPct >= 100 ? "var(--macro-water)" : "var(--ink-1)" }}>
+            {(props.water / 1000).toFixed(1)}
+            <span className="text-[12px] font-normal" style={{ color: "var(--ink-3)" }}> / {(props.waterGoal / 1000).toFixed(1)} L · {waterPct}%</span>
+          </p>
+        </div>
+        <div className="mt-3 h-[8px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+          <div className="h-full rounded-full" style={{ width: `${waterPct}%`, background: "var(--macro-water)", transition: "width 600ms cubic-bezier(0.34, 1.56, 0.64, 1)" }} />
+        </div>
+        {props.onAddWater && (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {[200, 300, 500].map((ml) => (
+              <button
+                key={ml}
+                type="button"
+                onClick={() => props.onAddWater?.(ml)}
+                className="press flex items-center justify-center gap-1 rounded-xl py-2.5 text-[13px] font-semibold transition"
+                style={{ background: "var(--card)", color: "var(--macro-water)", border: "1px solid var(--hairline)" }}
+                aria-label={`Adicionar ${ml}ml de água`}
+              >
+                <Plus size={13} strokeWidth={2.6} />
+                {ml}ml
+              </button>
+            ))}
           </div>
-          {props.onAddWater && (
-            <div className="flex items-center gap-2">
-              {[250, 500].map((ml) => (
-                <button
-                  key={ml}
-                  type="button"
-                  onClick={() => props.onAddWater?.(ml)}
-                  className="press flex items-center gap-1 rounded-full px-3 py-2 text-[13px] font-semibold transition"
-                  style={{ background: "var(--card)", color: "var(--ink-1)" }}
-                  aria-label={`Adicionar ${ml}ml de água`}
-                >
-                  <Plus size={14} strokeWidth={2.4} style={{ color: "var(--primary)" }} />
-                  {ml}ml
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="mt-3 h-[4px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
-          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${waterPct}%`, background: "var(--primary)" }} />
-        </div>
+        )}
       </div>
 
       {/* Quick analyze button */}
@@ -138,22 +136,21 @@ export function PulseCard(props: Props) {
   );
 }
 
-function Macro({ label, value, goal, unit }: { label: string; value: number; goal: number; unit: string }) {
+function Macro({ label, value, goal, unit, color }: { label: string; value: number; goal: number; unit: string; color: string }) {
   const pct = Math.min(100, Math.round((value / Math.max(goal, 1)) * 100));
-  const done = pct >= 100;
   return (
     <div>
       <p className="text-[12px] font-medium uppercase tracking-[0.08em]" style={{ color: "var(--ink-3)" }}>
         {label}
       </p>
-      <p className="mt-1 font-display text-[20px] font-semibold tabular-nums" style={{ color: done ? "var(--primary)" : "var(--ink-1)" }}>
+      <p className="mt-1 font-display text-[20px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
         {unit === "L" ? value.toFixed(1) : Math.round(value)}
         <span className="ml-0.5 text-[13px] font-normal" style={{ color: "var(--ink-3)" }}>{unit}</span>
       </p>
-      <div className="mt-2 h-[3px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+      <div className="mt-2 h-[5px] w-full overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
-          style={{ width: `${pct}%`, background: done ? "var(--primary)" : "var(--ink-2)" }}
+          style={{ width: `${pct}%`, background: color }}
         />
       </div>
     </div>

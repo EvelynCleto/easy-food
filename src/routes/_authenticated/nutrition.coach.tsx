@@ -161,6 +161,22 @@ function CoachPage() {
         )}
       </div>
 
+      {/* Persistent quick-action chips */}
+      {messages.length > 0 && !pending && (
+        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-2 pt-1">
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => send(s)}
+              className="press shrink-0 rounded-full px-3.5 py-2 text-[12.5px] font-medium transition"
+              style={{ background: "var(--surface)", color: "var(--ink-1)", border: "0.5px solid var(--hairline)" }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-end gap-2 pt-2">
         <textarea
           value={input}

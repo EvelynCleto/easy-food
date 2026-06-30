@@ -17,6 +17,7 @@ import { useDailyNutrition } from "@/hooks/useDailyNutrition";
 import { computeIntent, greetingForHour, streakNarrative, todayString } from "@/lib/intent";
 import { coachGreeting } from "@/lib/coach";
 import { grantAchievement, syncStreak } from "@/lib/achievements";
+import { celebrate, haptic } from "@/lib/celebrate";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -194,9 +195,16 @@ function HomePage() {
       return ml;
     },
     onSuccess: (ml) => {
+      const prev = daily?.water_ml ?? 0;
       qc.invalidateQueries({ queryKey: ["water-today"] });
       qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
-      toast.success(`+${ml}ml registrado 💧`);
+      haptic(10);
+      if (prev < waterGoal && prev + ml >= waterGoal) {
+        celebrate();
+        toast.success("Meta de hidratação batida! 💧");
+      } else {
+        toast.success(`+${ml}ml registrado 💧`);
+      }
     },
     onError: (e: Error) => toast.error(`Erro: ${e.message}`),
   });
@@ -511,10 +519,17 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="no-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-          {discoveryCards.map((d, i) => (
-            <DiscoveryCard key={i} {...d} />
-          ))}
+        <div className="relative">
+          <div className="no-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+            {discoveryCards.map((d, i) => (
+              <DiscoveryCard key={i} {...d} />
+            ))}
+          </div>
+          {/* fade hint that there's more to scroll (mobile only) */}
+          <div
+            className="pointer-events-none absolute right-0 top-0 bottom-2 w-12 sm:hidden"
+            style={{ background: "linear-gradient(90deg, transparent, var(--background))" }}
+          />
         </div>
       </section>
     </AppShell>

@@ -1,9 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
+import { ProductCard, type ProductCardData } from "@/components/ProductCard";
 import { brl } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/cart")({
+  head: () => ({ meta: [{ title: "Seu pedido — EasyFood" }] }),
   component: CartPage,
 });
 
@@ -13,19 +17,38 @@ function CartPage() {
   const fee = items.length ? 3.9 : 0;
   const total = subtotal + fee;
 
+  const { data: suggestions = [] } = useQuery({
+    queryKey: ["cart-suggestions"],
+    queryFn: async () =>
+      ((await supabase
+        .from("products")
+        .select("id,name,image_url,price,promo_price,calories,protein,rating")
+        .order("sold_count", { ascending: false, nullsFirst: false })
+        .limit(4)).data ?? []) as ProductCardData[],
+  });
+
   if (items.length === 0) {
     return (
-      <div className="animate-rise mx-auto max-w-[520px] py-12 text-center sm:py-20">
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ background: "var(--surface)" }}>
-          <ShoppingBag size={26} strokeWidth={1.6} style={{ color: "var(--ink-2)" }} />
+      <div className="animate-rise mx-auto max-w-[680px] py-12 sm:py-16">
+        <div className="text-center">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ background: "var(--surface)" }}>
+            <ShoppingBag size={26} strokeWidth={1.6} style={{ color: "var(--ink-2)" }} />
+          </div>
+          <h1 className="text-display-m mt-8">Ainda sem nada aqui</h1>
+          <p className="mt-3 text-body" style={{ color: "var(--ink-2)" }}>
+            Separei uns pratos que combinam com você hoje.
+          </p>
         </div>
-        <h1 className="text-display-m mt-8">Carrinho vazio</h1>
-        <p className="mt-3 text-body" style={{ color: "var(--ink-2)" }}>
-          Explore o catálogo para começar.
-        </p>
-        <Link to="/catalog" className="btn-primary mt-8 inline-flex">
-          Explorar pratos <ArrowRight size={15} />
-        </Link>
+        {suggestions.length > 0 && (
+          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
+            {suggestions.map((p) => <ProductCard key={p.id} p={p} />)}
+          </div>
+        )}
+        <div className="mt-10 text-center">
+          <Link to="/catalog" className="btn-primary inline-flex">
+            Ver catálogo completo <ArrowRight size={15} />
+          </Link>
+        </div>
       </div>
     );
   }
