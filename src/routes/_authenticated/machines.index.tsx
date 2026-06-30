@@ -71,7 +71,7 @@ function MachineScrollCard({
         {m.image_url ? (
           <img src={m.image_url} alt={m.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl">🥗</div>
+          <div className="w-full h-full flex items-center justify-center text-4xl">🏧</div>
         )}
       </div>
       <div className="p-3">
@@ -183,7 +183,7 @@ function MachinesPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar máquinas…"
+            placeholder="Buscar endereço ou região"
             className="w-full rounded-xl py-3 pl-10 pr-4 text-[14px] outline-none"
             style={{ background: "var(--card)", border: "0.5px solid var(--hairline)", color: "var(--ink-1)" }}
           />
@@ -241,7 +241,7 @@ function MachinesPage() {
                   <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{ background: "var(--surface)" }}>
                     {m.image_url
                       ? <img src={m.image_url} alt="" className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-2xl">🥗</div>
+                      : <div className="w-full h-full flex items-center justify-center text-2xl">🏧</div>
                     }
                   </div>
                   <div className="flex-1 min-w-0">

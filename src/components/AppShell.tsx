@@ -170,7 +170,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="flex h-14 items-center justify-between px-5">
           <Link to="/"><Logo /></Link>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-2">
+            <Link to="/profile" className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition hover:opacity-80" style={{ background: "var(--surface)" }}>
+              <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-bold" style={{ background: "var(--primary-soft)", color: "var(--primary)" }}>
+                {firstName[0]?.toUpperCase() ?? "U"}
+              </div>
+              <span className="max-w-[80px] truncate text-[12px] font-semibold" style={{ color: "var(--ink-1)" }}>{firstName}</span>
+            </Link>
             <Link to="/notifications" aria-label="Notificações" className="btn-icon">
               <Bell size={17} strokeWidth={1.6} />
             </Link>

@@ -227,7 +227,7 @@ function ProfilePage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <StatCard icon="🔥" value={String(streak)} label="dias de jornada" caption="Parabéns!" />
               <StatCard icon="🍽" value={String(mealsLogged)} label="refeições registradas" caption="Ótimo!" />
-              <StatCard icon="⬜" value={String(mealsScanned)} label="refeições escaneadas" caption="Continue assim!" />
+              <StatCard icon="📷" value={String(mealsScanned)} label="refeições escaneadas" caption="Continue assim!" />
               <StatCard icon="💧" value={`${hydrationAvg}%`} label="hidratação média" caption="Boa hidratação!" />
             </div>
           </div>

@@ -7,6 +7,7 @@ import {
   Download,
   Flame,
   MoreHorizontal,
+  Search,
   Sparkles,
   UtensilsCrossed,
   Camera,
@@ -213,6 +214,16 @@ function NutritionHistoryPage() {
           Acompanhe suas refeições e escolhas diárias.
         </p>
       </header>
+
+      {/* Search */}
+      <div className="relative mb-5">
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-3)" }} />
+        <input
+          placeholder="Buscar refeições, máquinas..."
+          className="w-full rounded-xl py-3 pl-10 pr-4 text-[14px] outline-none"
+          style={{ background: "var(--card)", border: "0.5px solid var(--hairline)", color: "var(--ink-1)" }}
+        />
+      </div>
 
       {/* Filter tabs */}
       <div className="mb-8 flex flex-wrap gap-2">

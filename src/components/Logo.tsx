@@ -14,8 +14,9 @@ export function Logo({ compact = false }: { compact?: boolean }) {
         </svg>
       </div>
       {!compact && (
-        <span className="font-display text-[17px] font-semibold tracking-[-0.028em]" style={{ color: "var(--ink-1)" }}>
-          EasyFood
+        <span className="text-[17px] tracking-[-0.028em]" style={{ color: "var(--ink-1)" }}>
+          <span style={{ fontWeight: 700 }}>easy</span>
+          <span style={{ fontWeight: 400 }}> food</span>
         </span>
       )}
     </div>
