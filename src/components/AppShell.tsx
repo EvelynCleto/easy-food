@@ -3,13 +3,14 @@ import {
   BarChart2,
   Bell,
   ClipboardList,
-  Compass,
+  Clock,
   Crown,
   Home,
   MapPin,
   ScanLine,
   ShoppingBag,
   ChevronDown,
+  UserCircle,
 } from "lucide-react";
 import { type ReactNode } from "react";
 import { Logo } from "./Logo";
@@ -20,12 +21,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn, brl } from "@/lib/format";
 
 const navItems = [
-  { to: "/",           label: "Início",   icon: Home        },
-  { to: "/catalog",    label: "Explorar", icon: Compass     },
-  { to: "/machines",   label: "Máquinas", icon: MapPin      },
-  { to: "/nutrition",  label: "Escanear", icon: ScanLine    },
-  { to: "/meal-plan",  label: "Plano",    icon: ClipboardList },
-  { to: "/profile",    label: "Evolução", icon: BarChart2   },
+  { to: "/",                    label: "Início",    icon: Home          },
+  { to: "/machines",            label: "Máquinas",  icon: MapPin        },
+  { to: "/nutrition",           label: "Escanear",  icon: ScanLine      },
+  { to: "/meal-plan",           label: "Plano",     icon: ClipboardList },
+  { to: "/nutrition/dashboard", label: "Evolução",  icon: BarChart2     },
+  { to: "/nutrition/history",   label: "Histórico", icon: Clock         },
+  { to: "/profile",             label: "Perfil",    icon: UserCircle    },
 ] as const;
 
 const navMobile = [
