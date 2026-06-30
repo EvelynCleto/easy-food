@@ -7,7 +7,9 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  Crown,
   Droplets,
+  FileText,
   Home,
   MapPin,
   Plus,
@@ -15,8 +17,6 @@ import {
   Search,
   Sparkles,
   BarChart3,
-  FileText,
-  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,32 +41,32 @@ export const Route = createFileRoute("/")({
 
 function ProgressRing({ pct }: { pct: number }) {
   const value = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 72;
-  const r = 57;
+  const r = 43;
   const c = 2 * Math.PI * r;
   const dash = (value / 100) * c;
 
   return (
-    <svg width="146" height="146" viewBox="0 0 146 146">
-      <circle cx="73" cy="73" r={r} fill="none" stroke="#E7EAE3" strokeWidth="10" />
+    <svg width="112" height="112" viewBox="0 0 112 112" className="ef-ring">
+      <circle cx="56" cy="56" r={r} fill="none" stroke="#E6E9E2" strokeWidth="8" />
       <circle
-        cx="73"
-        cy="73"
+        cx="56"
+        cy="56"
         r={r}
         fill="none"
-        stroke="#5F9446"
-        strokeWidth="10"
+        stroke="#6A9E4E"
+        strokeWidth="8"
         strokeLinecap="round"
         strokeDasharray={`${dash} ${c}`}
         strokeDashoffset={c / 4}
       />
       <text
-        x="73"
-        y="77"
+        x="56"
+        y="61"
         textAnchor="middle"
-        fontSize="31"
+        fontSize="24"
         fontWeight="500"
         fontFamily="Inter, system-ui, sans-serif"
-        fill="#0B2419"
+        fill="#0A2418"
       >
         {value}%
       </text>
@@ -76,9 +76,8 @@ function ProgressRing({ pct }: { pct: number }) {
 
 function Logo() {
   return (
-    <div className="ef-logo">
+    <div className="ef-logo" aria-label="EasyFood">
       <span>easy</span>
-      <span className="leaf">❧</span>
       <span>food</span>
     </div>
   );
@@ -106,7 +105,7 @@ function Sidebar() {
               to={item.to}
               className={`ef-nav-item ${index === 0 ? "active" : ""}`}
             >
-              <Icon size={21} strokeWidth={1.75} />
+              <Icon size={19} strokeWidth={1.65} />
               <span>{item.label}</span>
             </Link>
           );
@@ -115,20 +114,20 @@ function Sidebar() {
 
       <div className="ef-premium">
         <div className="ef-premium-icon">
-          <Crown size={15} strokeWidth={1.9} />
+          <Crown size={14} strokeWidth={1.9} />
         </div>
         <strong>Seja Premium</strong>
         <p>Mais benefícios e inteligência para sua jornada.</p>
         <Link to="/premium" className="ef-premium-button">
           Ver planos
-          <ChevronRight size={14} />
+          <ChevronRight size={13} />
         </Link>
       </div>
 
       <div className="ef-user">
         <div className="ef-user-photo" />
         <span>Maria Silva</span>
-        <ChevronDown size={15} />
+        <ChevronDown size={14} />
       </div>
     </aside>
   );
@@ -137,53 +136,43 @@ function Sidebar() {
 function LeafArt() {
   return (
     <div className="ef-leaf-art" aria-hidden>
-      <div className="ef-leaf-blur" />
-      <svg viewBox="0 0 480 460" fill="none">
+      <div className="ef-leaf-glow" />
+      <svg viewBox="0 0 430 420" fill="none">
         <path
-          d="M236 445C232 350 210 262 168 174C143 119 108 70 56 25"
-          stroke="#74B58D"
-          strokeWidth="5"
+          d="M210 407C207 322 188 244 153 166C131 116 99 68 52 25"
+          stroke="#79B88D"
+          strokeWidth="4"
           strokeLinecap="round"
-          opacity=".48"
+          opacity=".5"
         />
-        <path d="M171 180C104 164 55 110 30 38C102 54 154 98 171 180Z" fill="#72BD9B" opacity=".43" />
-        <path d="M199 258C133 249 85 212 54 150C124 159 180 196 199 258Z" fill="#72BD9B" opacity=".34" />
-        <path d="M217 331C165 322 126 290 101 240C157 247 202 278 217 331Z" fill="#72BD9B" opacity=".24" />
-        <path d="M162 161C226 90 302 59 421 61C362 145 268 185 162 161Z" fill="#72BD9B" opacity=".38" />
-        <path d="M196 240C261 181 335 157 444 175C376 254 285 274 196 240Z" fill="#72BD9B" opacity=".31" />
+        <path d="M154 170C96 156 54 109 32 44C95 58 140 98 154 170Z" fill="#77C89C" opacity=".40" />
+        <path d="M178 240C119 232 78 198 51 145C113 153 162 187 178 240Z" fill="#77C89C" opacity=".31" />
+        <path d="M194 307C148 299 113 270 91 225C142 231 182 259 194 307Z" fill="#77C89C" opacity=".23" />
+        <path d="M146 150C202 89 267 61 371 63C319 135 238 172 146 150Z" fill="#77C89C" opacity=".35" />
+        <path d="M176 222C233 170 298 150 392 166C332 235 254 252 176 222Z" fill="#77C89C" opacity=".28" />
       </svg>
     </div>
   );
 }
 
-function MapCardArt() {
+function MapArt() {
   return (
-    <div className="ef-map-art">
-      <svg viewBox="0 0 430 145" preserveAspectRatio="none">
-        <rect width="430" height="145" rx="22" fill="#183520" />
-        {Array.from({ length: 8 }).map((_, index) => (
-          <path
-            key={`h-${index}`}
-            d={`M0 ${index * 23 + 12}H430`}
-            stroke="#31583A"
-            strokeWidth="1.25"
-          />
+    <div className="ef-map-art" aria-hidden>
+      <svg viewBox="0 0 360 118" preserveAspectRatio="none">
+        <rect width="360" height="118" rx="20" fill="#17351F" />
+        {Array.from({ length: 7 }).map((_, i) => (
+          <path key={`h-${i}`} d={`M0 ${i * 20 + 9}H360`} stroke="#335A3D" strokeWidth="1" />
         ))}
-        {Array.from({ length: 11 }).map((_, index) => (
-          <path
-            key={`v-${index}`}
-            d={`M${index * 43 + 18} 0V145`}
-            stroke="#31583A"
-            strokeWidth="1.25"
-          />
+        {Array.from({ length: 10 }).map((_, i) => (
+          <path key={`v-${i}`} d={`M${i * 38 + 14} 0V118`} stroke="#335A3D" strokeWidth="1" />
         ))}
-        <rect x="122" width="37" height="145" fill="#233F29" />
-        <rect y="48" width="430" height="16" fill="#233F29" />
-        <circle cx="141" cy="61" r="35" fill="#6FC653" opacity=".14" />
-        <circle cx="141" cy="61" r="22" fill="#6FC653" opacity=".22" />
-        <circle cx="141" cy="61" r="11" fill="#63C84F" />
-        <circle cx="141" cy="61" r="5" fill="white" />
-        <path d="M141 72V87" stroke="#2DAB6B" strokeWidth="4" strokeLinecap="round" />
+        <rect x="108" width="31" height="118" fill="#24432B" />
+        <rect y="40" width="360" height="14" fill="#24432B" />
+        <circle cx="124" cy="51" r="29" fill="#6FC653" opacity=".13" />
+        <circle cx="124" cy="51" r="18" fill="#6FC653" opacity=".23" />
+        <circle cx="124" cy="51" r="10" fill="#63C84F" />
+        <circle cx="124" cy="51" r="5" fill="white" />
+        <path d="M124 62V76" stroke="#2DAB6B" strokeWidth="4" strokeLinecap="round" />
       </svg>
     </div>
   );
@@ -191,11 +180,11 @@ function MapCardArt() {
 
 function Landscape() {
   return (
-    <svg className="ef-landscape" viewBox="0 0 760 92" preserveAspectRatio="none" aria-hidden>
-      <path d="M0 92C108 39 178 61 265 38C365 12 445 45 543 24C620 8 686 21 760 0V92H0Z" fill="#7F9276" opacity=".25" />
-      <path d="M0 92C124 62 210 75 326 56C455 35 560 59 760 34V92H0Z" fill="#344235" opacity=".28" />
-      <circle cx="650" cy="20" r="4" fill="#0B2419" opacity=".7" />
-      <path d="M650 25V46M650 34L641 45M650 34L659 45M650 46L642 62M650 46L659 63" stroke="#0B2419" strokeWidth="2" strokeLinecap="round" opacity=".7" />
+    <svg className="ef-landscape" viewBox="0 0 760 78" preserveAspectRatio="none" aria-hidden>
+      <path d="M0 78C108 33 178 52 265 32C365 10 445 38 543 20C620 7 686 18 760 0V78H0Z" fill="#7F9276" opacity=".22" />
+      <path d="M0 78C124 52 210 63 326 47C455 29 560 50 760 29V78H0Z" fill="#344235" opacity=".25" />
+      <circle cx="650" cy="18" r="3.5" fill="#0B2419" opacity=".65" />
+      <path d="M650 23V40M650 31L642 40M650 31L658 40M650 40L643 54M650 40L658 55" stroke="#0B2419" strokeWidth="1.7" strokeLinecap="round" opacity=".65" />
     </svg>
   );
 }
@@ -205,7 +194,7 @@ function FoodImage({ src, alt }: { src?: string | null; alt: string }) {
 
   return (
     <div className="ef-food-fallback">
-      <div className="plate">
+      <div className="ef-plate">
         <span>🍗</span>
         <span>🥦</span>
         <span>🍚</span>
@@ -362,158 +351,166 @@ function HomePage() {
   return (
     <div className="ef-page">
       <style>{`
+        html,
+        body,
+        #root {
+          width: 100%;
+          min-width: 0;
+          height: 100%;
+          overflow: hidden !important;
+          background: #fbfaf7 !important;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
         :root {
           --ef-bg: #fbfaf7;
-          --ef-ink: #0b2419;
-          --ef-muted: rgba(11, 36, 25, .54);
-          --ef-soft: #f1f3ec;
-          --ef-green: #5f9446;
+          --ef-ink: #0a2418;
+          --ef-muted: rgba(10,36,24,.54);
+          --ef-card: rgba(255,255,255,.82);
+          --ef-line: rgba(10,36,24,.085);
+          --ef-green: #6A9E4E;
           --ef-dark: #0d2118;
-          --ef-line: rgba(11, 36, 25, .085);
-          --ef-shadow: 0 28px 80px rgba(11, 36, 25, .075);
+          --ef-shadow: 0 22px 54px rgba(10,36,24,.07);
         }
 
         .ef-page {
-          min-height: 100vh;
-          width: 100%;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
           background: var(--ef-bg);
           color: var(--ef-ink);
           display: grid;
-          grid-template-columns: 230px minmax(0, 1fr);
+          grid-template-columns: 184px minmax(0, 1fr);
           font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         .ef-sidebar {
-          min-height: 100vh;
-          background: rgba(255,255,255,.72);
-          border-right: 1px solid rgba(11,36,25,.055);
-          box-shadow: 14px 0 40px rgba(11,36,25,.035);
-          border-radius: 0 36px 36px 0;
-          padding: 45px 26px 34px;
+          width: 184px;
+          height: 100vh;
+          background: rgba(255,255,255,.76);
+          border-right: 1px solid rgba(10,36,24,.055);
+          box-shadow: 12px 0 34px rgba(10,36,24,.035);
+          border-radius: 0 34px 34px 0;
+          padding: 36px 24px 26px;
           display: flex;
           flex-direction: column;
-          position: sticky;
-          top: 0;
           z-index: 20;
         }
 
         .ef-logo {
-          font-size: 31px;
+          width: 78px;
+          margin-left: 24px;
+          font-size: 25px;
           font-weight: 800;
-          line-height: .82;
+          line-height: .78;
           letter-spacing: -.065em;
-          color: #0b2419;
-          width: 86px;
-          margin-left: 27px;
+          color: #0a2418;
           display: grid;
-        }
-
-        .ef-logo .leaf {
-          color: #7fb356;
-          font-size: 18px;
-          line-height: 0;
-          margin-left: 0;
-          transform: translate(1px, -2px);
         }
 
         .ef-nav {
-          margin-top: 68px;
+          margin-top: 55px;
           display: grid;
-          gap: 17px;
+          gap: 15px;
         }
 
         .ef-nav-item {
-          height: 58px;
-          border-radius: 14px;
+          height: 48px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
-          gap: 18px;
-          padding: 0 24px;
-          color: rgba(11,36,25,.62);
+          gap: 14px;
+          padding: 0 17px;
+          color: rgba(10,36,24,.58);
           text-decoration: none;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 500;
           letter-spacing: -.015em;
         }
 
         .ef-nav-item.active {
           background: #eef3e8;
-          color: #0b2419;
+          color: #0a2418;
         }
 
         .ef-premium {
           margin-top: auto;
-          border: 1px solid rgba(11,36,25,.08);
-          background: rgba(255,255,255,.66);
-          border-radius: 18px;
-          padding: 21px 18px 18px;
-          box-shadow: 0 18px 44px rgba(11,36,25,.045);
+          height: 186px;
+          border: 1px solid rgba(10,36,24,.08);
+          background: rgba(255,255,255,.68);
+          border-radius: 16px;
+          padding: 18px 16px 15px;
+          box-shadow: 0 16px 38px rgba(10,36,24,.045);
         }
 
         .ef-premium-icon {
-          width: 34px;
-          height: 34px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           background: #e7f1da;
-          color: #5f9446;
+          color: #6A9E4E;
           display: grid;
           place-items: center;
-          margin-bottom: 13px;
+          margin-bottom: 12px;
         }
 
         .ef-premium strong {
           display: block;
-          font-size: 15px;
-          color: #0b2419;
-          margin-bottom: 9px;
+          font-size: 13px;
+          color: #0a2418;
+          margin-bottom: 8px;
         }
 
         .ef-premium p {
-          color: rgba(11,36,25,.52);
-          font-size: 14px;
-          line-height: 1.45;
-          margin: 0 0 20px;
+          color: rgba(10,36,24,.50);
+          font-size: 12px;
+          line-height: 1.38;
+          margin: 0 0 15px;
         }
 
         .ef-premium-button {
-          height: 44px;
-          border-radius: 13px;
+          height: 36px;
+          border-radius: 11px;
           background: #f1f3ec;
-          padding: 0 16px;
+          padding: 0 13px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          color: #0b2419;
+          color: #0a2418;
           text-decoration: none;
-          font-size: 14px;
+          font-size: 12px;
           font-weight: 500;
         }
 
         .ef-user {
-          margin-top: 29px;
-          height: 52px;
+          margin-top: 24px;
+          height: 36px;
           display: flex;
           align-items: center;
-          gap: 13px;
-          color: rgba(11,36,25,.62);
-          font-size: 14px;
+          gap: 10px;
+          color: rgba(10,36,24,.62);
+          font-size: 12px;
         }
 
         .ef-user-photo {
-          width: 36px;
-          height: 36px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           background:
-            radial-gradient(circle at 50% 37%, #f2c5a7 0 18%, transparent 19%),
-            radial-gradient(circle at 50% 76%, #7d3d23 0 26%, transparent 27%),
+            radial-gradient(circle at 50% 34%, #f2c5a7 0 18%, transparent 19%),
+            radial-gradient(circle at 50% 77%, #7d3d23 0 26%, transparent 27%),
             linear-gradient(135deg, #ead2bd, #c88d65);
-          box-shadow: inset 0 0 0 1px rgba(11,36,25,.08);
+          box-shadow: inset 0 0 0 1px rgba(10,36,24,.08);
         }
 
         .ef-main {
           position: relative;
+          height: 100vh;
           overflow: hidden;
-          padding: 48px 96px 64px 118px;
+          padding: 41px 76px 40px 92px;
         }
 
         .ef-topbar {
@@ -521,22 +518,23 @@ function HomePage() {
           z-index: 5;
           display: flex;
           justify-content: flex-end;
-          gap: 29px;
+          gap: 28px;
           align-items: center;
-          margin-bottom: 51px;
+          height: 56px;
+          margin-bottom: 38px;
         }
 
         .ef-search {
-          width: 400px;
-          height: 59px;
-          border-radius: 20px;
-          background: rgba(255,255,255,.78);
+          width: 340px;
+          height: 48px;
+          border-radius: 18px;
+          background: rgba(255,255,255,.80);
           border: 1px solid var(--ef-line);
           display: flex;
           align-items: center;
-          gap: 15px;
-          padding: 0 24px;
-          box-shadow: 0 18px 50px rgba(11,36,25,.045);
+          gap: 13px;
+          padding: 0 20px;
+          box-shadow: 0 16px 42px rgba(10,36,24,.04);
         }
 
         .ef-search input {
@@ -545,33 +543,33 @@ function HomePage() {
           background: transparent;
           width: 100%;
           height: 100%;
-          font-size: 15px;
+          font-size: 13px;
           color: var(--ef-ink);
         }
 
         .ef-search input::placeholder {
-          color: rgba(11,36,25,.42);
+          color: rgba(10,36,24,.42);
         }
 
         .ef-bell {
-          width: 59px;
-          height: 59px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
-          background: rgba(255,255,255,.78);
+          background: rgba(255,255,255,.80);
           border: 1px solid var(--ef-line);
           display: grid;
           place-items: center;
           position: relative;
           color: var(--ef-ink);
-          box-shadow: 0 18px 50px rgba(11,36,25,.045);
+          box-shadow: 0 16px 42px rgba(10,36,24,.04);
         }
 
         .ef-bell-dot {
           position: absolute;
-          right: 14px;
-          top: 13px;
-          width: 9px;
-          height: 9px;
+          right: 12px;
+          top: 10px;
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
           background: #70ad4c;
         }
@@ -580,53 +578,47 @@ function HomePage() {
           position: relative;
           z-index: 5;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 520px;
-          gap: 76px;
+          grid-template-columns: minmax(0, 1fr) 420px;
+          gap: 78px;
           align-items: start;
         }
 
         .ef-greeting {
-          color: rgba(11,36,25,.52);
-          font-size: 22px;
+          color: rgba(10,36,24,.52);
+          font-size: 18px;
           font-weight: 400;
           letter-spacing: -.02em;
-          margin: 0;
+          margin: 7px 0 0;
         }
 
         .ef-title {
-          margin: 27px 0 0;
+          margin: 25px 0 0;
           font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-          font-size: 78px;
-          line-height: .98;
+          font-size: 56px;
+          line-height: .99;
           font-weight: 500;
-          letter-spacing: -.055em;
-          color: #0b2419;
-          max-width: 650px;
+          letter-spacing: -.052em;
+          color: #0a2418;
+          max-width: 550px;
         }
 
         .ef-subtitle {
-          margin: 42px 0 0;
+          margin: 31px 0 0;
           max-width: 390px;
-          color: rgba(11,36,25,.48);
-          font-size: 18px;
-          line-height: 1.5;
+          color: rgba(10,36,24,.48);
+          font-size: 16px;
+          line-height: 1.48;
           letter-spacing: -.02em;
-        }
-
-        .ef-hero-stage {
-          height: 292px;
-          position: relative;
-          margin-top: 73px;
         }
 
         .ef-leaf-art {
           position: absolute;
-          left: 45%;
-          top: 179px;
-          width: 430px;
-          height: 420px;
+          left: 49.8%;
+          top: 178px;
+          width: 360px;
+          height: 348px;
           z-index: 0;
-          opacity: .95;
+          opacity: .88;
         }
 
         .ef-leaf-art svg {
@@ -636,164 +628,173 @@ function HomePage() {
           transform: rotate(-11deg);
         }
 
-        .ef-leaf-blur {
+        .ef-leaf-glow {
           position: absolute;
-          inset: 22px;
+          inset: 16px;
           border-radius: 999px;
           background: radial-gradient(circle, rgba(91,151,85,.12), transparent 68%);
           filter: blur(22px);
         }
 
         .ef-progress-card {
-          width: 417px;
-          height: 224px;
-          border-radius: 29px;
+          width: 350px;
+          height: 155px;
+          border-radius: 24px;
           background: rgba(255,255,255,.82);
           border: 1px solid var(--ef-line);
           box-shadow: var(--ef-shadow);
           backdrop-filter: blur(18px);
           display: flex;
           align-items: center;
-          padding: 0 32px;
-          gap: 28px;
+          padding: 0 26px;
+          gap: 23px;
+          margin-top: 69px;
           position: relative;
           z-index: 2;
         }
 
         .ef-progress-copy small {
           display: block;
-          color: rgba(11,36,25,.42);
-          font-size: 13px;
+          color: rgba(10,36,24,.42);
+          font-size: 12px;
           font-weight: 500;
-          margin-bottom: 18px;
+          margin-bottom: 13px;
         }
 
         .ef-progress-copy strong {
           display: block;
           font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-          color: #0b2419;
-          font-size: 25px;
-          line-height: 1.12;
+          color: #0a2418;
+          font-size: 20px;
+          line-height: 1.13;
           font-weight: 500;
           letter-spacing: -.035em;
         }
 
         .ef-progress-copy a {
-          margin-top: 25px;
-          color: rgba(11,36,25,.48);
-          font-size: 13px;
+          margin-top: 17px;
+          color: rgba(10,36,24,.48);
+          font-size: 12px;
           text-decoration: none;
           display: inline-flex;
-          gap: 8px;
+          gap: 7px;
           align-items: center;
         }
 
         .ef-right {
           display: grid;
-          gap: 25px;
+          gap: 23px;
         }
 
         .ef-machine-card {
-          height: 276px;
-          border-radius: 29px;
+          height: 228px;
+          border-radius: 26px;
           background: #0d2118;
-          padding: 31px 31px 26px;
+          padding: 25px 25px 21px;
           color: white;
-          box-shadow: 0 27px 70px rgba(11,36,25,.18);
+          box-shadow: 0 25px 64px rgba(10,36,24,.18);
           overflow: hidden;
+          position: relative;
         }
 
         .ef-machine-card small {
-          font-size: 14px;
+          font-size: 13px;
           color: rgba(255,255,255,.82);
           display: block;
         }
 
         .ef-distance {
-          margin-top: 14px;
-          font-size: 35px;
+          margin-top: 13px;
+          font-size: 30px;
           line-height: 1;
           font-weight: 400;
           letter-spacing: -.04em;
+          position: relative;
+          z-index: 2;
         }
 
         .ef-machine-address {
-          margin-top: 12px;
-          font-size: 14px;
+          margin-top: 10px;
+          font-size: 12.5px;
           color: rgba(255,255,255,.82);
+          position: relative;
+          z-index: 2;
         }
 
         .ef-machine-open {
-          margin-top: 8px;
+          margin-top: 7px;
           color: #7ed957;
-          font-size: 14px;
+          font-size: 12.5px;
           font-weight: 500;
+          position: relative;
+          z-index: 2;
         }
 
         .ef-map-art {
-          margin-top: -90px;
-          margin-left: 205px;
-          width: 290px;
-          height: 151px;
+          position: absolute;
+          right: -44px;
+          top: 48px;
+          width: 245px;
+          height: 114px;
           opacity: .72;
           transform: rotate(-7deg);
         }
 
         .ef-machine-card a {
-          margin-top: -2px;
+          margin-top: 32px;
           position: relative;
           z-index: 2;
           display: inline-flex;
           align-items: center;
-          gap: 13px;
-          border-radius: 14px;
-          height: 44px;
-          padding: 0 18px;
+          gap: 11px;
+          border-radius: 12px;
+          height: 39px;
+          padding: 0 15px;
           background: rgba(255,255,255,.10);
           color: rgba(255,255,255,.92);
           text-decoration: none;
-          font-size: 13px;
+          font-size: 12px;
         }
 
         .ef-food-card {
-          height: 296px;
-          border-radius: 28px;
+          height: 249px;
+          border-radius: 25px;
           background: rgba(255,255,255,.82);
           border: 1px solid var(--ef-line);
-          box-shadow: 0 26px 70px rgba(11,36,25,.065);
-          padding: 26px;
+          box-shadow: 0 24px 62px rgba(10,36,24,.06);
+          padding: 22px;
         }
 
         .ef-food-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 18px;
+          margin-bottom: 15px;
         }
 
         .ef-food-head span:first-child {
-          font-size: 14px;
-          color: #0b2419;
+          font-size: 12.5px;
+          color: #0a2418;
         }
 
         .ef-new {
           background: #e6f1db;
           color: #6d9d44;
-          font-size: 14px;
-          padding: 6px 13px;
+          font-size: 12px;
+          padding: 5px 11px;
           border-radius: 8px;
         }
 
         .ef-food-body {
           display: grid;
-          grid-template-columns: 167px 1fr;
-          gap: 25px;
+          grid-template-columns: 136px 1fr;
+          gap: 18px;
         }
 
         .ef-food-image {
-          width: 167px;
-          height: 167px;
-          border-radius: 19px;
+          width: 136px;
+          height: 136px;
+          border-radius: 17px;
           overflow: hidden;
           background: #eef0eb;
         }
@@ -812,39 +813,39 @@ function HomePage() {
           background: radial-gradient(circle at center, #e9efe2, #f7f7f2);
         }
 
-        .ef-food-fallback .plate {
-          width: 120px;
-          height: 120px;
+        .ef-plate {
+          width: 100px;
+          height: 100px;
           border-radius: 50%;
           background: #f8f6ef;
           display: grid;
           place-items: center;
-          box-shadow: inset 0 0 0 8px #eee6dc;
-          font-size: 30px;
+          box-shadow: inset 0 0 0 7px #eee6dc;
+          font-size: 25px;
         }
 
         .ef-food-copy h2 {
-          margin: 5px 0 0;
-          font-size: 19px;
-          line-height: 1.2;
+          margin: 2px 0 0;
+          font-size: 16px;
+          line-height: 1.19;
           letter-spacing: -.025em;
-          color: #0b2419;
+          color: #0a2418;
         }
 
         .ef-food-copy p {
-          margin: 16px 0 0;
-          color: rgba(11,36,25,.46);
-          font-size: 14px;
-          line-height: 1.5;
+          margin: 10px 0 0;
+          color: rgba(10,36,24,.46);
+          font-size: 12.5px;
+          line-height: 1.43;
         }
 
         .ef-macros {
-          margin-top: 22px;
-          height: 54px;
+          margin-top: 15px;
+          height: 42px;
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           background: #efefe9;
-          border-radius: 10px;
+          border-radius: 9px;
           overflow: hidden;
         }
 
@@ -855,41 +856,41 @@ function HomePage() {
         }
 
         .ef-macro strong {
-          font-size: 15px;
-          color: #0b2419;
+          font-size: 12px;
+          color: #0a2418;
           letter-spacing: -.02em;
         }
 
         .ef-macro small {
           display: block;
-          font-size: 10px;
-          color: rgba(11,36,25,.45);
+          font-size: 8px;
+          color: rgba(10,36,24,.45);
         }
 
         .ef-food-actions {
           display: flex;
-          gap: 12px;
-          margin-top: 19px;
+          gap: 10px;
+          margin-top: 14px;
         }
 
         .ef-food-button {
-          height: 45px;
+          height: 38px;
           flex: 1;
-          border-radius: 14px;
+          border-radius: 12px;
           background: #0d2118;
           color: white;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 9px;
+          gap: 8px;
           text-decoration: none;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
         }
 
         .ef-plus {
-          width: 45px;
-          height: 45px;
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
           background: #0d2118;
           color: white;
@@ -899,39 +900,39 @@ function HomePage() {
         }
 
         .ef-phrase {
-          margin-top: 50px;
-          height: 93px;
-          border-radius: 19px;
+          margin-top: 35px;
+          height: 75px;
+          border-radius: 18px;
           background: linear-gradient(90deg, #eef3e4 0%, #f5f5ee 52%, #e1e9d9 100%);
           position: relative;
           overflow: hidden;
           display: flex;
           align-items: center;
-          padding-left: 31px;
+          padding-left: 28px;
           z-index: 5;
         }
 
         .ef-spark {
-          width: 60px;
-          height: 60px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
           background: #5f9446;
           display: grid;
           place-items: center;
           color: white;
-          margin-right: 27px;
+          margin-right: 24px;
         }
 
         .ef-phrase small {
-          color: rgba(11,36,25,.42);
-          font-size: 12px;
+          color: rgba(10,36,24,.42);
+          font-size: 11px;
           display: block;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
         }
 
         .ef-phrase strong {
-          color: #0b2419;
-          font-size: 15px;
+          color: #0a2418;
+          font-size: 13px;
           font-weight: 500;
         }
 
@@ -939,46 +940,46 @@ function HomePage() {
           position: absolute;
           right: 0;
           bottom: 0;
-          width: 58%;
+          width: 57%;
           height: 100%;
         }
 
         .ef-actions {
-          margin-top: 22px;
+          margin-top: 18px;
           position: relative;
           z-index: 5;
         }
 
         .ef-actions h3 {
-          margin: 0 0 21px 18px;
-          font-size: 14px;
+          margin: 0 0 15px 14px;
+          font-size: 12.5px;
           font-weight: 500;
-          color: #0b2419;
+          color: #0a2418;
         }
 
         .ef-actions-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 30px;
+          gap: 24px;
         }
 
         .ef-action {
-          height: 145px;
-          border-radius: 22px;
+          height: 96px;
+          border-radius: 19px;
           background: rgba(255,255,255,.82);
           border: 1px solid var(--ef-line);
-          box-shadow: 0 22px 60px rgba(11,36,25,.045);
+          box-shadow: 0 18px 45px rgba(10,36,24,.04);
           display: flex;
           align-items: center;
-          gap: 24px;
-          padding: 0 24px;
-          color: #0b2419;
+          gap: 18px;
+          padding: 0 18px;
+          color: #0a2418;
           text-decoration: none;
         }
 
         .ef-action-icon {
-          width: 65px;
-          height: 65px;
+          width: 49px;
+          height: 49px;
           border-radius: 50%;
           background: #f1f3ec;
           display: grid;
@@ -988,35 +989,35 @@ function HomePage() {
 
         .ef-action strong {
           display: block;
-          font-size: 15px;
-          margin-bottom: 9px;
+          font-size: 13px;
+          margin-bottom: 6px;
         }
 
         .ef-action p {
           margin: 0;
-          font-size: 13px;
-          line-height: 1.4;
-          color: rgba(11,36,25,.46);
+          font-size: 11.5px;
+          line-height: 1.34;
+          color: rgba(10,36,24,.46);
         }
 
-        @media (max-width: 1280px) {
-          .ef-main { padding-left: 72px; padding-right: 72px; }
-          .ef-hero-grid { grid-template-columns: 1fr; }
-          .ef-right { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-          .ef-actions-grid { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media (max-width: 1180px) {
+          .ef-page {
+            grid-template-columns: 160px minmax(0, 1fr);
+          }
 
-        @media (max-width: 900px) {
-          .ef-page { grid-template-columns: 1fr; }
-          .ef-sidebar { display: none; }
-          .ef-main { padding: 30px 22px; }
-          .ef-title { font-size: 52px; }
-          .ef-search { display: none; }
-          .ef-hero-grid { gap: 30px; }
-          .ef-right { grid-template-columns: 1fr; }
-          .ef-actions-grid { grid-template-columns: 1fr; }
-          .ef-progress-card { width: 100%; }
-          .ef-leaf-art { display: none; }
+          .ef-main {
+            padding-left: 50px;
+            padding-right: 50px;
+          }
+
+          .ef-hero-grid {
+            gap: 42px;
+            grid-template-columns: minmax(0, 1fr) 390px;
+          }
+
+          .ef-title {
+            font-size: 50px;
+          }
         }
       `}</style>
 
@@ -1027,12 +1028,12 @@ function HomePage() {
 
         <header className="ef-topbar">
           <div className="ef-search">
-            <Search size={18} strokeWidth={1.8} color="rgba(11,36,25,.42)" />
+            <Search size={16} strokeWidth={1.8} color="rgba(10,36,24,.42)" />
             <input placeholder="Buscar máquinas, refeições..." />
           </div>
 
           <Link to="/notifications" className="ef-bell">
-            <Bell size={20} strokeWidth={1.75} />
+            <Bell size={18} strokeWidth={1.75} />
             <span className="ef-bell-dot" />
           </Link>
         </header>
@@ -1053,22 +1054,20 @@ function HomePage() {
               constroem grandes transformações.
             </p>
 
-            <div className="ef-hero-stage">
-              <div className="ef-progress-card">
-                <ProgressRing pct={visualProgress} />
+            <div className="ef-progress-card">
+              <ProgressRing pct={visualProgress} />
 
-                <div className="ef-progress-copy">
-                  <small>Seu progresso semanal</small>
-                  <strong>
-                    Você está no
-                    <br />
-                    caminho certo!
-                  </strong>
-                  <Link to="/profile">
-                    Ver evolução
-                    <ChevronRight size={14} />
-                  </Link>
-                </div>
+              <div className="ef-progress-copy">
+                <small>Seu progresso semanal</small>
+                <strong>
+                  Você está no
+                  <br />
+                  caminho certo!
+                </strong>
+                <Link to="/profile">
+                  Ver evolução
+                  <ChevronRight size={13} />
+                </Link>
               </div>
             </div>
           </div>
@@ -1083,10 +1082,10 @@ function HomePage() {
               <div className="ef-machine-open">
                 Aberta agora até {nearest ? closesAt : "22h00"}
               </div>
-              <MapCardArt />
+              <MapArt />
               <Link to="/machines">
                 Ver todas as máquinas
-                <ChevronRight size={15} />
+                <ChevronRight size={14} />
               </Link>
             </section>
 
@@ -1141,10 +1140,10 @@ function HomePage() {
                   <div className="ef-food-actions">
                     <Link to="/catalog" className="ef-food-button">
                       Ver detalhes
-                      <ChevronRight size={14} />
+                      <ChevronRight size={13} />
                     </Link>
                     <Link to="/catalog" className="ef-plus">
-                      <Plus size={21} />
+                      <Plus size={18} />
                     </Link>
                   </div>
                 </div>
@@ -1155,7 +1154,7 @@ function HomePage() {
 
         <section className="ef-phrase">
           <div className="ef-spark">
-            <Sparkles size={27} strokeWidth={1.7} />
+            <Sparkles size={22} strokeWidth={1.7} />
           </div>
 
           <div>
@@ -1172,26 +1171,26 @@ function HomePage() {
           <div className="ef-actions-grid">
             {[
               {
-                icon: <ScanLine size={26} strokeWidth={1.65} />,
+                icon: <ScanLine size={21} strokeWidth={1.65} />,
                 label: "Escanear refeição",
                 desc: "Use a IA para analisar sua refeição",
                 to: "/nutrition",
               },
               {
-                icon: <Droplets size={26} strokeWidth={1.65} />,
+                icon: <Droplets size={21} strokeWidth={1.65} />,
                 label: "Registrar água",
                 desc: "Acompanhe sua hidratação diária",
                 to: "/",
                 onClick: () => logWater.mutate(250),
               },
               {
-                icon: <BellRing size={26} strokeWidth={1.65} />,
+                icon: <BellRing size={21} strokeWidth={1.65} />,
                 label: "Próximo lembrete",
                 desc: "Sua próxima refeição em 2h 15min",
                 to: "/notifications",
               },
               {
-                icon: <FileText size={26} strokeWidth={1.65} />,
+                icon: <FileText size={21} strokeWidth={1.65} />,
                 label: "Ver meu plano",
                 desc: "Seu plano alimentar personalizado",
                 to: "/meal-plan",
