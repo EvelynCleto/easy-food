@@ -88,8 +88,47 @@ ${ctx}`;
         .map((b) => b.text)
         .join("\n")
         .trim();
-      return { reply: reply || "Não consegui responder agora. Pode reformular?" };
+      const finalReply = reply || "Não consegui responder agora. Pode reformular?";
+
+      // Persist the latest exchange (best-effort — ignores missing table / errors)
+      try {
+        const lastUser = [...data.messages].reverse().find((m) => m.role === "user");
+        const toInsert = [
+          lastUser ? { user_id: context.userId, role: "user", content: lastUser.content } : null,
+          { user_id: context.userId, role: "assistant", content: finalReply },
+        ].filter(Boolean) as { user_id: string; role: string; content: string }[];
+        await context.supabase.from("coach_messages").insert(toInsert);
+      } catch { /* table may not exist yet — chat still works via localStorage */ }
+
+      return { reply: finalReply };
     } catch {
       return { reply: "Tive um problema pra responder agora. Tenta de novo em instantes 🙏" };
+    }
+  });
+
+export const getCoachHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ role: "user" | "assistant"; content: string }[]> => {
+    try {
+      const { data } = await context.supabase
+        .from("coach_messages")
+        .select("role,content,created_at")
+        .eq("user_id", context.userId)
+        .order("created_at", { ascending: true })
+        .limit(40);
+      return (data ?? []).map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
+    } catch {
+      return [];
+    }
+  });
+
+export const clearCoachHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ ok: boolean }> => {
+    try {
+      await context.supabase.from("coach_messages").delete().eq("user_id", context.userId);
+      return { ok: true };
+    } catch {
+      return { ok: false };
     }
   });

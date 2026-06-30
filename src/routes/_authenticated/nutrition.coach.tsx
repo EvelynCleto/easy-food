@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronLeft, Send, Sparkles } from "lucide-react";
-import { coachChat } from "@/lib/coach.functions";
+import { ChevronLeft, Send, Sparkles, Trash2 } from "lucide-react";
+import { coachChat, getCoachHistory, clearCoachHistory } from "@/lib/coach.functions";
+import { markCoachUsedToday } from "@/lib/engagement";
 
 export const Route = createFileRoute("/_authenticated/nutrition/coach")({
   component: CoachPage,
@@ -29,10 +30,19 @@ function loadHistory(): ChatMsg[] {
 
 function CoachPage() {
   const chat = useServerFn(coachChat);
+  const loadServerHistory = useServerFn(getCoachHistory);
+  const clearServer = useServerFn(clearCoachHistory);
   const [messages, setMessages] = useState<ChatMsg[]>(loadHistory);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Prefer the server-persisted history (cross-device); fall back to localStorage.
+  useEffect(() => {
+    loadServerHistory()
+      .then((rows) => { if (rows.length > 0) setMessages(rows); })
+      .catch(() => { /* keep localStorage */ });
+  }, [loadServerHistory]);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-20))); } catch { /* ignore */ }
@@ -42,6 +52,7 @@ function CoachPage() {
   async function send(text: string) {
     const content = text.trim();
     if (!content || pending) return;
+    markCoachUsedToday();
     const next = [...messages, { role: "user" as const, content }];
     setMessages(next);
     setInput("");
@@ -54,6 +65,12 @@ function CoachPage() {
     } finally {
       setPending(false);
     }
+  }
+
+  async function clearAll() {
+    setMessages([]);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    clearServer().catch(() => { /* ignore */ });
   }
 
   return (
@@ -71,6 +88,16 @@ function CoachPage() {
             <p className="text-caption">conhece seu histórico de verdade</p>
           </div>
         </div>
+        {messages.length > 0 && (
+          <button
+            onClick={clearAll}
+            className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:opacity-80"
+            style={{ background: "var(--surface)", color: "var(--ink-3)" }}
+            aria-label="Limpar conversa"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </header>
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto pb-4">

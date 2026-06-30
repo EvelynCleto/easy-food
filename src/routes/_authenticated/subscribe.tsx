@@ -3,46 +3,23 @@ import { useState } from "react";
 import { Check, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
+import { PLANS, loadSubscription, saveSubscription, clearSubscription, type ActiveSub, type Plan } from "@/lib/subscription";
 
 export const Route = createFileRoute("/_authenticated/subscribe")({
   component: SubscribePage,
 });
 
-const SUB_KEY = "easyfood_subscription_v1";
-
-type Plan = {
-  id: string;
-  name: string;
-  mealsPerWeek: number;
-  weekly: number;
-  fullPrice: number;
-  highlight?: boolean;
-};
-
-const PLANS: Plan[] = [
-  { id: "lite", name: "Leve", mealsPerWeek: 3, weekly: 80.10, fullPrice: 89.70 },
-  { id: "fit", name: "Fit", mealsPerWeek: 5, weekly: 123.25, fullPrice: 149.50, highlight: true },
-  { id: "full", name: "Completo", mealsPerWeek: 7, weekly: 160.30, fullPrice: 209.30 },
-];
-
-type ActiveSub = { planId: string; startedAt: string };
-
-function loadSub(): ActiveSub | null {
-  if (typeof window === "undefined") return null;
-  try { const raw = localStorage.getItem(SUB_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
-}
-
 function SubscribePage() {
-  const [sub, setSub] = useState<ActiveSub | null>(loadSub);
+  const [sub, setSub] = useState<ActiveSub | null>(loadSubscription);
 
   function subscribe(plan: Plan) {
     const next = { planId: plan.id, startedAt: new Date().toISOString() };
-    try { localStorage.setItem(SUB_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    saveSubscription(next);
     setSub(next);
     toast.success(`Assinatura ${plan.name} ativada! 🎉`);
   }
   function cancel() {
-    try { localStorage.removeItem(SUB_KEY); } catch { /* ignore */ }
+    clearSubscription();
     setSub(null);
     toast("Assinatura cancelada.");
   }

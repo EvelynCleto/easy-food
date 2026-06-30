@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, ShoppingBag, Sparkles, Utensils, Zap } from "lucide-react";
+import { ChevronRight, Crown, ShoppingBag, Sparkles, Utensils, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,9 @@ import { PulseCard } from "@/components/aurora/PulseCard";
 import { IntentCard } from "@/components/aurora/IntentCard";
 import { MachineTile, type MachineTileData } from "@/components/aurora/MachineTile";
 import { DiscoveryCard } from "@/components/aurora/DiscoveryCard";
+import { StreakFlame } from "@/components/premium/StreakFlame";
+import { loadSubscription, planById } from "@/lib/subscription";
+import { brl } from "@/lib/format";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
 import { computeIntent, streakNarrative, todayString } from "@/lib/intent";
 import { coachGreeting } from "@/lib/coach";
@@ -97,6 +100,11 @@ function HomePage() {
   }, [profile, navigate]);
 
   const { data: daily } = useDailyNutrition();
+
+  // Fictitious subscription (local-only) — read after mount to avoid SSR mismatch
+  const [sub, setSub] = useState<ReturnType<typeof loadSubscription>>(null);
+  useEffect(() => { setSub(loadSubscription()); }, []);
+  const subPlan = sub ? planById(sub.planId) : null;
 
   const { data: nearest } = useQuery({
     queryKey: ["nearest-machine"],
@@ -296,6 +304,11 @@ function HomePage() {
         </h1>
       </header>
 
+      {/* Streak */}
+      <section className="animate-rise mb-6">
+        <StreakFlame streak={streak} />
+      </section>
+
       {/* 2. PulseCard */}
       <section className="mb-8">
         <PulseCard
@@ -420,6 +433,34 @@ function HomePage() {
             </p>
           )}
         </div>
+      </section>
+
+      {/* Assinatura */}
+      <section className="mb-8 animate-rise-2">
+        {subPlan ? (
+          <Link to="/subscribe" className="card-aurora flex items-center gap-4 p-5 transition hover:opacity-90 active:scale-[0.99]" style={{ background: "linear-gradient(135deg, var(--accent), var(--card))" }}>
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>
+              <Crown size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--primary)" }}>plano ativo</p>
+              <p className="text-[15px] font-bold" style={{ color: "var(--ink-1)" }}>EasyFood {subPlan.name}</p>
+              <p className="text-caption">{subPlan.mealsPerWeek} refeições/semana · {brl(subPlan.weekly)}/sem · renova automático</p>
+            </div>
+            <ChevronRight size={16} style={{ color: "var(--ink-3)" }} />
+          </Link>
+        ) : (
+          <Link to="/subscribe" className="card-aurora flex items-center gap-4 p-5 transition hover:opacity-90 active:scale-[0.99]">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl" style={{ background: "var(--surface)", color: "var(--primary)" }}>
+              <Crown size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-bold" style={{ color: "var(--ink-1)" }}>Assine e economize até 23%</p>
+              <p className="text-caption">Marmita toda semana nas máquinas, sem pensar.</p>
+            </div>
+            <span className="shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>Ver planos</span>
+          </Link>
+        )}
       </section>
 
       {/* 7. Acesso rápido */}

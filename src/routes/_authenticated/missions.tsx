@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Check, Droplet, Beef, Camera, CalendarDays, Sparkles, Trophy } from "lucide-react";
+import { Check, Droplet, Beef, Camera, CalendarDays, MessageCircle, Sparkles, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usedCoachToday } from "@/lib/engagement";
+import { StreakFlame } from "@/components/premium/StreakFlame";
 
 export const Route = createFileRoute("/_authenticated/missions")({
   component: MissionsPage,
@@ -50,7 +52,7 @@ function MissionsPage() {
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     enabled: !!user,
-    queryFn: async () => (await supabase.from("profiles").select("xp,protein_goal,water_goal_ml").eq("id", user!.id).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("profiles").select("xp,protein_goal,water_goal_ml,streak_days").eq("id", user!.id).maybeSingle()).data,
   });
 
   const { data: stats } = useQuery({
@@ -96,6 +98,7 @@ function MissionsPage() {
     { id: "log_3", icon: Sparkles, title: "Registre 3 refeições", hint: "Mantenha o dia completo", progress: Math.min(s.mealCount, 3), target: 3, reward: 50, period: dayPeriod() },
     { id: "protein", icon: Beef, title: "Bata a meta de proteína", hint: `${Math.round(s.protein)}/${proteinGoal}g hoje`, progress: Math.min(s.protein, proteinGoal), target: proteinGoal, reward: 40, period: dayPeriod() },
     { id: "water", icon: Droplet, title: "Hidrate-se", hint: `${(s.water / 1000).toFixed(1)}/${(waterGoal / 1000).toFixed(1)}L hoje`, progress: Math.min(s.water, waterGoal), target: waterGoal, reward: 30, period: dayPeriod() },
+    { id: "coach", icon: MessageCircle, title: "Converse com o coach", hint: "Tire uma dúvida com a IA hoje", progress: usedCoachToday() ? 1 : 0, target: 1, reward: 25, period: dayPeriod() },
   ];
   const weekly: Mission[] = [
     { id: "plan", icon: CalendarDays, title: "Gere seu plano da semana", hint: "Cardápio personalizado de 7 dias", progress: s.planThisWeek ? 1 : 0, target: 1, reward: 80, period: weekPeriod() },
@@ -110,6 +113,10 @@ function MissionsPage() {
           Complete tarefas e ganhe XP de verdade. Renovam todo dia.
         </p>
       </header>
+
+      <div className="mb-8">
+        <StreakFlame streak={profile?.streak_days ?? 0} />
+      </div>
 
       <Section title="Hoje" missions={daily} claimed={claimed} onClaim={(m) => claim.mutate(m)} pending={claim.isPending} />
       <div className="mt-8">
