@@ -8,18 +8,18 @@ import { useCart } from "@/contexts/CartContext";
 import { cn, brl } from "@/lib/format";
 
 const navItems = [
-  { to: "/",          label: "Início"   },
-  { to: "/catalog",   label: "Catálogo" },
+  { to: "/",          label: "Hoje"     },
+  { to: "/catalog",   label: "Refeições" },
   { to: "/nutrition", label: "Nutri"    },
   { to: "/machines",  label: "Máquinas" },
-  { to: "/profile",   label: "Perfil"   },
+  { to: "/profile",   label: "Eu"       },
 ] as const;
 
 const navMobile = [
-  { to: "/",          icon: Home,     label: "Início"   },
-  { to: "/catalog",   icon: Compass,  label: "Catálogo" },
+  { to: "/",          icon: Home,     label: "Hoje"     },
+  { to: "/catalog",   icon: Compass,  label: "Refeições" },
   { to: "/nutrition", icon: Sparkles, label: "Nutri"    },
-  { to: "/profile",   icon: UserIcon, label: "Perfil"   },
+  { to: "/profile",   icon: UserIcon, label: "Eu"       },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
