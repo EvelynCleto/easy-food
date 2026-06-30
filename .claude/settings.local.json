@@ -14,7 +14,19 @@
       "Bash(npx tsc *)",
       "Bash(npx @tanstack/router-cli generate)",
       "Bash(npx tsr *)",
-      "Bash(xargs grep -l \"achievement\\\\|gamif\\\\|xp\\\\|badge\\\\|level\")"
+      "Bash(xargs grep -l \"achievement\\\\|gamif\\\\|xp\\\\|badge\\\\|level\")",
+      "Bash(npx vite *)",
+      "Bash(git checkout *)",
+      "Bash(perl -i -pe 's{to=\"/nutrition/\"}{to=\"/nutrition\"}g' src/routes/_authenticated/nutrition.history.tsx src/routes/index.tsx)",
+      "Bash(git stash *)",
+      "Bash(perl -i -pe 's/onClick=\\\\{\\\\\\(\\\\\\) => setF\\\\\\(DEFAULT\\\\\\)\\\\}/onClick={\\(\\) => { setQInput\\(\"\"\\); setF\\(DEFAULT\\); }}/g' src/routes/_authenticated/catalog.tsx)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__navigate",
+      "Bash(git merge *)"
     ]
   }
 }
