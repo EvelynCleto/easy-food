@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Camera, ChevronLeft, Star, UtensilsCrossed, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Markdown } from "@/components/Markdown";
 
 export const Route = createFileRoute("/_authenticated/nutrition/history")({
   component: NutritionHistoryPage,
@@ -194,9 +195,9 @@ function NutritionHistoryPage() {
                 </div>
 
                 {r.notes && (
-                  <p className="mt-3 text-xs italic" style={{ color: "var(--ink-2)" }}>
-                    {r.notes}
-                  </p>
+                  <div className="mt-3 text-xs italic" style={{ color: "var(--ink-2)" }}>
+                    <Markdown text={r.notes} />
+                  </div>
                 )}
 
                 {suggestions.length > 0 && (
@@ -212,8 +213,9 @@ function NutritionHistoryPage() {
                     </p>
                     <ul className="mt-2 space-y-1">
                       {suggestions.map((s, i) => (
-                        <li key={i} className="text-xs" style={{ color: "var(--ink-1)" }}>
-                          · {s}
+                        <li key={i} className="flex gap-2 text-xs" style={{ color: "var(--ink-1)" }}>
+                          <span style={{ color: "var(--ai)" }}>·</span>
+                          <span className="flex-1"><Markdown text={s} /></span>
                         </li>
                       ))}
                     </ul>

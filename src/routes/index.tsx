@@ -14,7 +14,7 @@ import { StreakFlame } from "@/components/premium/StreakFlame";
 import { loadSubscription, planById } from "@/lib/subscription";
 import { brl } from "@/lib/format";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
-import { computeIntent, streakNarrative, todayString } from "@/lib/intent";
+import { computeIntent, greetingForHour, streakNarrative, todayString } from "@/lib/intent";
 import { coachGreeting } from "@/lib/coach";
 import { grantAchievement, syncStreak } from "@/lib/achievements";
 
@@ -294,14 +294,16 @@ function HomePage() {
       <header className="animate-rise mb-8 sm:mb-10">
         <p className="text-eyebrow">{todayString(now)}</p>
         <h1 className="text-display-m mt-3" style={{ color: "var(--ink-1)" }}>
-          <span style={{ color: "var(--ink-2)" }}>{coach.lead}</span>
-          {coach.name && (
-            <>
-              <br />
-              <span style={{ color: "var(--ink-1)" }}>{coach.name}</span>
-            </>
-          )}
+          {greetingForHour(firstName, hour)}
         </h1>
+        <p className="mt-2 text-body-sm" style={{ color: "var(--ink-2)" }}>
+          {(() => {
+            const left = Math.max(0, calGoal - Math.round(daily?.calories ?? 0));
+            return left === 0
+              ? "Você fechou as calorias de hoje 🔥"
+              : `Faltam ${left.toLocaleString("pt-BR")} kcal para sua meta de hoje.`;
+          })()}
+        </p>
       </header>
 
       {/* Streak */}

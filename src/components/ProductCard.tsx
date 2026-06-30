@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Flame } from "lucide-react";
+import { Flame, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { brl } from "@/lib/format";
+import { useCart } from "@/contexts/CartContext";
+import { haptic } from "@/lib/celebrate";
 
 export type ProductCardData = {
   id: string;
@@ -14,18 +17,30 @@ export type ProductCardData = {
 };
 
 /**
- * Plate Tile — editorial product card.
- * - 4:5 portrait photo with editorial filter for visual uniformity
- * - Promo shown as discreet strikethrough on previous price (no badge)
+ * Plate Tile — editorial product card with one-tap add-to-cart.
+ * Uses the "stretched link" pattern so the whole card navigates to the product
+ * while the "+" button (above it) adds straight to the cart.
  */
 export function ProductCard({ p }: { p: ProductCardData; badges?: string[] | null }) {
+  const cart = useCart();
   const price = p.promo_price ?? p.price;
+
+  function quickAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    cart.add({ productId: p.id, name: p.name, price, image: p.image_url });
+    haptic(12);
+    toast.success("Adicionado ao pedido");
+  }
+
   return (
-    <Link
-      to="/product/$id"
-      params={{ id: p.id }}
-      className="group flex flex-col"
-    >
+    <div className="group relative flex flex-col">
+      <Link
+        to="/product/$id"
+        params={{ id: p.id }}
+        aria-label={p.name}
+        className="absolute inset-0 z-0 rounded-[20px]"
+      />
       <div className="card-nested relative aspect-[4/5] overflow-hidden p-2.5">
         <div className="absolute inset-2.5 overflow-hidden rounded-[14px]" style={{ background: "var(--surface)" }}>
           {p.image_url ? (
@@ -42,6 +57,16 @@ export function ProductCard({ p }: { p: ProductCardData; badges?: string[] | nul
             </div>
           )}
         </div>
+        {/* Quick add — sits above the stretched link */}
+        <button
+          type="button"
+          onClick={quickAdd}
+          aria-label={`Adicionar ${p.name} ao pedido`}
+          className="press absolute bottom-3.5 right-3.5 z-10 grid h-10 w-10 place-items-center rounded-full shadow-lg transition active:scale-90"
+          style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}
+        >
+          <Plus size={20} strokeWidth={2.4} />
+        </button>
       </div>
 
       <div className="px-1 pt-3.5">
@@ -66,6 +91,6 @@ export function ProductCard({ p }: { p: ProductCardData; badges?: string[] | nul
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

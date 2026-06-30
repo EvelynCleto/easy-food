@@ -12,7 +12,7 @@ export function StreakFlame({ streak }: { streak: number }) {
   const lastDays = Array.from({ length: 7 }, (_, i) => {
     const offsetFromToday = 6 - i; // 6 days ago ... today
     const lit = offsetFromToday < Math.min(streak, 7);
-    return { label: WEEKDAY[(today - offsetFromToday + 7) % 7][0], lit };
+    return { label: WEEKDAY[(today - offsetFromToday + 7) % 7].slice(0, 3), lit, isToday: offsetFromToday === 0 };
   });
 
   const message = !active
@@ -51,12 +51,15 @@ export function StreakFlame({ streak }: { streak: number }) {
           {lastDays.map((d, i) => (
             <div key={i} className="flex flex-col items-center gap-1">
               <div
-                className="grid h-5 w-5 place-items-center rounded-full transition-colors"
-                style={{ background: d.lit ? "linear-gradient(135deg, #FF9F43, #FF6B35)" : "var(--surface-2)" }}
+                className="grid h-6 w-6 place-items-center rounded-full transition-colors"
+                style={{
+                  background: d.lit ? "linear-gradient(135deg, #FF9F43, #FF6B35)" : "var(--surface-2)",
+                  boxShadow: d.isToday ? "0 0 0 2px var(--card), 0 0 0 3.5px #FF6B35" : "none",
+                }}
               >
-                {d.lit && <Flame size={10} color="#fff" fill="#fff" />}
+                {d.lit && <Flame size={11} color="#fff" fill="#fff" />}
               </div>
-              <span className="text-[9px]" style={{ color: "var(--ink-3)" }}>{d.label}</span>
+              <span className="text-[11px]" style={{ color: d.isToday ? "var(--ink-1)" : "var(--ink-3)", fontWeight: d.isToday ? 700 : 400 }}>{d.label}</span>
             </div>
           ))}
         </div>

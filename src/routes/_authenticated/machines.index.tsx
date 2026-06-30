@@ -7,6 +7,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { haversineKm, type LatLng } from "@/lib/geo";
 
 export const Route = createFileRoute("/_authenticated/machines/")({
+  head: () => ({ meta: [{ title: "Máquinas EasyFood perto de você" }] }),
   component: MachinesPage,
 });
 
@@ -59,7 +60,11 @@ function MachinesPage() {
       if (!L || !mapRef.current || mapInstance.current) return;
       const center: LatLng = geo.position ?? { lat: -23.5631, lng: -46.6544 };
       const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false }).setView([center.lat, center.lng], 13);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+      const tiles = isDark
+        ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png";
+      L.tileLayer(tiles, { maxZoom: 19 }).addTo(map);
       mapInstance.current = map;
       enriched.forEach((m) => {
         if (m.latitude == null || m.longitude == null) return;

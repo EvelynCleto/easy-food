@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/catalog")({
+  head: () => ({ meta: [{ title: "Catálogo de marmitas saudáveis — EasyFood" }] }),
   component: CatalogPage,
 });
 

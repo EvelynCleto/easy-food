@@ -6,6 +6,7 @@ import { brl } from "@/lib/format";
 import { PLANS, loadSubscription, saveSubscription, clearSubscription, type ActiveSub, type Plan } from "@/lib/subscription";
 
 export const Route = createFileRoute("/_authenticated/subscribe")({
+  head: () => ({ meta: [{ title: "Assine o EasyFood — marmitas toda semana" }] }),
   component: SubscribePage,
 });
 

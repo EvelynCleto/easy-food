@@ -129,7 +129,7 @@ function OrderDetail() {
           {items.map((it, i) => (
             <div key={i} className="flex gap-3">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-                {it.product_image && <img src={it.product_image} alt="" className="h-full w-full object-cover" />}
+                {it.product_image && <img src={it.product_image} alt={it.product_name} className="h-full w-full object-cover" />}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{it.product_name}</div>

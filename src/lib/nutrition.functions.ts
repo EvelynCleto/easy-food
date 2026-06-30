@@ -72,15 +72,19 @@ function parseNutritionJson(text: string): NutritionResult {
 
   const parsed = JSON.parse(match[0]) as NutritionResult;
 
+  // Clamp to biologically plausible ranges for a single meal so a hallucinated
+  // value can never surface an absurd number like "17.003 kcal" in the UI.
+  const clamp = (v: unknown, max: number) => Math.min(max, Math.max(0, Number(v) || 0));
+
   return {
     foods: Array.isArray(parsed.foods) ? parsed.foods : [],
-    calories: Number(parsed.calories || 0),
-    protein: Number(parsed.protein || 0),
-    carbs: Number(parsed.carbs || 0),
-    fiber: Number(parsed.fiber || 0),
-    fat: Number(parsed.fat || 0),
+    calories: Math.round(clamp(parsed.calories, 3000)),
+    protein: clamp(parsed.protein, 250),
+    carbs: clamp(parsed.carbs, 400),
+    fiber: clamp(parsed.fiber, 100),
+    fat: clamp(parsed.fat, 200),
     notes: parsed.notes,
-    score: parsed.score == null ? undefined : Number(parsed.score),
+    score: parsed.score == null ? undefined : clamp(parsed.score, 10),
     ai_suggestions: Array.isArray(parsed.ai_suggestions) ? parsed.ai_suggestions : [],
     meal_type: parsed.meal_type,
   };

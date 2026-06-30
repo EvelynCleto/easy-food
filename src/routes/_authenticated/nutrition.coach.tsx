@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, Send, Sparkles, Trash2 } from "lucide-react";
 import { coachChat, getCoachHistory, clearCoachHistory } from "@/lib/coach.functions";
 import { markCoachUsedToday } from "@/lib/engagement";
+import { Markdown } from "@/components/Markdown";
 
 export const Route = createFileRoute("/_authenticated/nutrition/coach")({
   component: CoachPage,
@@ -135,14 +136,16 @@ function CoachPage() {
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className="max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-[14.5px] leading-relaxed"
+              className="max-w-[85%] rounded-2xl px-4 py-3 text-[14.5px]"
               style={
                 m.role === "user"
                   ? { background: "var(--ink-1)", color: "var(--card)" }
                   : { background: "var(--surface)", color: "var(--ink-1)" }
               }
             >
-              {m.content}
+              {m.role === "assistant"
+                ? <Markdown text={m.content} className="space-y-1" />
+                : <span className="whitespace-pre-wrap">{m.content}</span>}
             </div>
           </div>
         ))}

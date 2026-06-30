@@ -13,6 +13,7 @@ import { makeThumbnail, fileToDataUrl } from "@/lib/image";
 import { levelFromXp } from "@/components/premium/XpBar";
 
 export const Route = createFileRoute("/_authenticated/profile")({
+  head: () => ({ meta: [{ title: "Seu perfil e progresso — EasyFood" }] }),
   component: ProfilePage,
 });
 

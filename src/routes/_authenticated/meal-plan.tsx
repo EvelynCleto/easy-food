@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { generateMealPlan, getLatestMealPlan, type MealPlan } from "@/lib/meal-plan.functions";
 
 export const Route = createFileRoute("/_authenticated/meal-plan")({
+  head: () => ({ meta: [{ title: "Seu plano alimentar da semana — EasyFood" }] }),
   component: MealPlanPage,
 });
 

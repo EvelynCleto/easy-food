@@ -8,8 +8,10 @@ import { analyzeMeal, type NutritionResult } from "@/lib/nutrition.functions";
 import { grantAchievement, checkHealthyWeek } from "@/lib/achievements";
 import { makeThumbnail } from "@/lib/image";
 import { IntentCard } from "@/components/aurora/IntentCard";
+import { Markdown } from "@/components/Markdown";
 
 export const Route = createFileRoute("/_authenticated/nutrition/")({
+  head: () => ({ meta: [{ title: "Análise de refeição por IA — EasyFood" }] }),
   component: NutritionPage,
 });
 
@@ -192,7 +194,7 @@ function NutritionPage() {
                 </div>
               ))}
             </div>
-            {result.notes && <p className="mt-4 text-caption italic">{result.notes}</p>}
+            {result.notes && <div className="mt-4 text-caption italic"><Markdown text={result.notes} /></div>}
           </section>
 
           {result.ai_suggestions && result.ai_suggestions.length > 0 && (
@@ -210,7 +212,7 @@ function NutritionPage() {
                         <path d="M12 2 L14.5 9.5 L22 12 L14.5 14.5 L12 22 L9.5 14.5 L2 12 L9.5 9.5 Z" />
                       </svg>
                     </div>
-                    <p className="flex-1 text-body" style={{ color: "var(--ink-1)" }}>{s}</p>
+                    <div className="flex-1 text-body" style={{ color: "var(--ink-1)" }}><Markdown text={s} /></div>
                   </div>
                 ))}
               </div>
