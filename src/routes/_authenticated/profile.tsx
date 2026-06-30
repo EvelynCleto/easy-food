@@ -23,6 +23,7 @@ function ProfilePage() {
   const qc = useQueryClient();
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalWeight, setGoalWeight] = useState<string>("");
+  const [tab, setTab] = useState<"progresso" | "conquistas" | "perfil">("progresso");
   const avatarInput = useRef<HTMLInputElement>(null);
 
   const { data: profile } = useQuery({
@@ -143,12 +144,28 @@ function ProfilePage() {
         <Stat label="Sequência" value={`${streak}`} unit="dias" divided />
       </div>
 
-      {/* SUA JORNADA */}
-      <section className="mt-12">
-        <p className="text-eyebrow">progresso</p>
-        <h2 className="text-headline mt-3">Sua jornada</h2>
+      {/* TABS */}
+      <div className="mt-8 flex gap-1 rounded-full p-1" style={{ background: "var(--surface)" }}>
+        {(["progresso", "conquistas", "perfil"] as const).map((id) => {
+          const label = id === "progresso" ? "Progresso" : id === "conquistas" ? "Conquistas" : "Conta";
+          const active = tab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className="press flex-1 rounded-full py-2.5 text-[13px] font-semibold transition"
+              style={{ background: active ? "var(--card)" : "transparent", color: active ? "var(--ink-1)" : "var(--ink-3)", boxShadow: active ? "0 1px 2px rgba(0,0,0,0.08)" : "none" }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      {/* SUA JORNADA */}
+      {tab === "progresso" && (
+      <section className="animate-fade mt-8">
+        <div className="grid gap-4 sm:grid-cols-2">
           {/* Level */}
           <div className="card-nested p-6">
             <p className="text-eyebrow">nível</p>
@@ -169,115 +186,126 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* Achievements */}
-        {achievements.length > 0 && (
-          <div className="mt-4 card-nested overflow-hidden">
-            <div className="px-6 py-5" style={{ borderBottom: "0.5px solid var(--hairline)" }}>
-              <p className="text-eyebrow">conquistas</p>
-              <p className="mt-1 text-body-sm" style={{ color: "var(--ink-2)" }}>
-                {achievements.filter((a) => a.unlocked).length} de {achievements.length}
+        {/* WEIGHT GOAL */}
+        <div className="card-nested mt-4 p-6 sm:p-7">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-eyebrow">meta de peso</p>
+              <p className="mt-2 font-display text-[32px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
+                {goalW ? <>{goalW.toFixed(1)}<span className="ml-1 text-[15px] font-normal" style={{ color: "var(--ink-3)" }}>kg</span></> : <span className="text-[20px]" style={{ color: "var(--ink-3)" }}>Definir meta</span>}
               </p>
-            </div>
-            {achievements.slice(0, 5).map((a, i) => (
-              <div key={a.id} className="flex items-center gap-4 px-6 py-4" style={{ borderTop: i > 0 ? "0.5px solid var(--hairline)" : "none" }}>
-                <div
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
-                  style={{
-                    background: a.unlocked ? "var(--accent)" : "var(--surface)",
-                    color: a.unlocked ? "var(--primary)" : "var(--ink-3)",
-                  }}
-                >
-                  {a.unlocked
-                    ? <span className="text-[14px] font-bold">✓</span>
-                    : <Lock size={13} strokeWidth={1.8} />
-                  }
+              {lost !== 0 && (
+                <div className="mt-2 inline-flex items-center gap-1.5 text-caption">
+                  <TrendingDown size={12} className={lost < 0 ? "rotate-180" : ""} />
+                  {Math.abs(lost).toFixed(1)} kg desde o início
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-semibold" style={{ color: a.unlocked ? "var(--ink-1)" : "var(--ink-3)" }}>
-                    {a.title}
-                  </p>
-                  <p className="truncate text-caption">{a.description}</p>
-                  {!a.unlocked && (
-                    <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-3)" }}>
-                      +{a.xp_reward} XP ao desbloquear
+              )}
+            </div>
+            <button
+              onClick={() => { setEditingGoal((v) => !v); setGoalWeight(goalW ? String(goalW) : ""); }}
+              className="rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition hover:opacity-80"
+              style={{ background: "var(--surface)", color: "var(--ink-1)" }}
+            >
+              {editingGoal ? "Cancelar" : "Editar"}
+            </button>
+          </div>
+          {editingGoal && (
+            <div className="mt-4 flex gap-2">
+              <input
+                type="number" step="0.1" placeholder="Peso alvo (kg)"
+                value={goalWeight} onChange={(e) => setGoalWeight(e.target.value)}
+                className="input-aurora flex-1"
+              />
+              <button onClick={() => saveGoal.mutate()} disabled={saveGoal.isPending} className="btn-primary">
+                Salvar
+              </button>
+            </div>
+          )}
+        </div>
+
+        <Link to="/nutrition/dashboard" className="btn-secondary mt-4 w-full">Ver gráficos completos →</Link>
+      </section>
+      )}
+
+      {/* CONQUISTAS */}
+      {tab === "conquistas" && (
+        <section className="animate-fade mt-8">
+          {achievements.length === 0 ? (
+            <p className="py-12 text-center text-body-sm" style={{ color: "var(--ink-2)" }}>Carregando conquistas…</p>
+          ) : (
+            <div className="card-nested overflow-hidden">
+              <div className="px-6 py-5" style={{ borderBottom: "0.5px solid var(--hairline)" }}>
+                <p className="text-eyebrow">conquistas</p>
+                <p className="mt-1 text-body-sm" style={{ color: "var(--ink-2)" }}>
+                  {achievements.filter((a) => a.unlocked).length} de {achievements.length} desbloqueadas
+                </p>
+              </div>
+              {achievements.map((a, i) => (
+                <div key={a.id} className="flex items-center gap-4 px-6 py-4" style={{ borderTop: i > 0 ? "0.5px solid var(--hairline)" : "none" }}>
+                  <div
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+                    style={{
+                      background: a.unlocked ? "var(--accent)" : "var(--surface)",
+                      color: a.unlocked ? "var(--primary)" : "var(--ink-3)",
+                    }}
+                  >
+                    {a.unlocked
+                      ? <span className="text-[14px] font-bold">✓</span>
+                      : <Lock size={13} strokeWidth={1.8} />
+                    }
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14.5px] font-semibold" style={{ color: a.unlocked ? "var(--ink-1)" : "var(--ink-3)" }}>
+                      {a.title}
+                    </p>
+                    <p className="truncate text-caption">{a.description}</p>
+                    {!a.unlocked && (
+                      <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-3)" }}>
+                        +{a.xp_reward} XP ao desbloquear
+                      </p>
+                    )}
+                  </div>
+                  {a.unlocked && a.unlocked_at && (
+                    <p className="text-caption shrink-0">
+                      {new Date(a.unlocked_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                     </p>
                   )}
                 </div>
-                {a.unlocked && a.unlocked_at && (
-                  <p className="text-caption shrink-0">
-                    {new Date(a.unlocked_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-                  </p>
-                )}
-              </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* CONTA */}
+      {tab === "perfil" && (
+        <section className="animate-fade mt-8">
+          <div className="card-nested overflow-hidden">
+            {items.map((it, i) => (
+              <Link key={i} to={it.to}
+                className="flex w-full items-center justify-between px-5 py-4 transition hover:opacity-80"
+                style={i > 0 ? { borderTop: "0.5px solid var(--hairline)" } : {}}
+              >
+                <span className="flex items-center gap-4">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: "var(--surface)" }}>
+                    <it.icon size={15} strokeWidth={1.7} style={{ color: "var(--ink-2)" }} />
+                  </span>
+                  <span className="text-[14.5px] font-medium" style={{ color: "var(--ink-1)" }}>{it.label}</span>
+                </span>
+                <ChevronRight size={16} style={{ color: "var(--ink-3)" }} />
+              </Link>
             ))}
           </div>
-        )}
-      </section>
 
-      {/* WEIGHT GOAL */}
-      <section className="card-nested mt-6 p-6 sm:p-7">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-eyebrow">meta de peso</p>
-            <p className="mt-2 font-display text-[32px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>
-              {goalW ? <>{goalW.toFixed(1)}<span className="ml-1 text-[15px] font-normal" style={{ color: "var(--ink-3)" }}>kg</span></> : <span className="text-[20px]" style={{ color: "var(--ink-3)" }}>Definir meta</span>}
-            </p>
-            {lost !== 0 && (
-              <div className="mt-2 inline-flex items-center gap-1.5 text-caption">
-                <TrendingDown size={12} className={lost < 0 ? "rotate-180" : ""} />
-                {Math.abs(lost).toFixed(1)} kg desde o início
-              </div>
-            )}
-          </div>
           <button
-            onClick={() => { setEditingGoal((v) => !v); setGoalWeight(goalW ? String(goalW) : ""); }}
-            className="rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition hover:opacity-80"
-            style={{ background: "var(--surface)", color: "var(--ink-1)" }}
+            onClick={async () => { await signOut(); navigate({ to: "/auth" }); }}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-[13.5px] font-semibold transition hover:opacity-70"
+            style={{ background: "var(--surface)", color: "var(--destructive)" }}
           >
-            {editingGoal ? "Cancelar" : "Editar"}
+            <LogOut size={15} /> Sair da conta
           </button>
-        </div>
-        {editingGoal && (
-          <div className="mt-4 flex gap-2">
-            <input
-              type="number" step="0.1" placeholder="Peso alvo (kg)"
-              value={goalWeight} onChange={(e) => setGoalWeight(e.target.value)}
-              className="input-aurora flex-1"
-            />
-            <button onClick={() => saveGoal.mutate()} disabled={saveGoal.isPending} className="btn-primary">
-              Salvar
-            </button>
-          </div>
-        )}
-      </section>
-
-      {/* MENU */}
-      <section className="mt-6">
-        <div className="card-nested overflow-hidden">
-          {items.map((it, i) => (
-            <Link key={i} to={it.to}
-              className="flex w-full items-center justify-between px-5 py-4 transition hover:opacity-80"
-              style={i > 0 ? { borderTop: "0.5px solid var(--hairline)" } : {}}
-            >
-              <span className="flex items-center gap-4">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: "var(--surface)" }}>
-                  <it.icon size={15} strokeWidth={1.7} style={{ color: "var(--ink-2)" }} />
-                </span>
-                <span className="text-[14.5px] font-medium" style={{ color: "var(--ink-1)" }}>{it.label}</span>
-              </span>
-              <ChevronRight size={16} style={{ color: "var(--ink-3)" }} />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <button
-        onClick={async () => { await signOut(); navigate({ to: "/auth" }); }}
-        className="mt-8 flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-[13.5px] font-semibold transition hover:opacity-70"
-        style={{ background: "var(--surface)", color: "var(--destructive)" }}
-      >
-        <LogOut size={15} /> Sair da conta
-      </button>
+        </section>
+      )}
     </div>
   );
 }
