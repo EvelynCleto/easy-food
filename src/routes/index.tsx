@@ -41,45 +41,36 @@ export const Route = createFileRoute("/")({
 
 function ProgressRing({ pct }: { pct: number }) {
   const value = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 72;
-  const r = 43;
+  const r = 48;
   const c = 2 * Math.PI * r;
   const dash = (value / 100) * c;
 
   return (
-    <svg width="112" height="112" viewBox="0 0 112 112" className="ef-ring">
-      <circle cx="56" cy="56" r={r} fill="none" stroke="#E6E9E2" strokeWidth="8" />
+    <svg width="126" height="126" viewBox="0 0 126 126">
+      <circle cx="63" cy="63" r={r} fill="none" stroke="#E7EAE3" strokeWidth="9" />
       <circle
-        cx="56"
-        cy="56"
+        cx="63"
+        cy="63"
         r={r}
         fill="none"
         stroke="#6A9E4E"
-        strokeWidth="8"
+        strokeWidth="9"
         strokeLinecap="round"
         strokeDasharray={`${dash} ${c}`}
         strokeDashoffset={c / 4}
       />
       <text
-        x="56"
-        y="61"
+        x="63"
+        y="68"
         textAnchor="middle"
-        fontSize="24"
-        fontWeight="500"
+        fontSize="29"
+        fontWeight="400"
         fontFamily="Inter, system-ui, sans-serif"
         fill="#0A2418"
       >
         {value}%
       </text>
     </svg>
-  );
-}
-
-function Logo() {
-  return (
-    <div className="ef-logo" aria-label="EasyFood">
-      <span>easy</span>
-      <span>food</span>
-    </div>
   );
 }
 
@@ -94,7 +85,10 @@ function Sidebar() {
 
   return (
     <aside className="ef-sidebar">
-      <Logo />
+      <div className="ef-logo">
+        <span>easy</span>
+        <span>food</span>
+      </div>
 
       <nav className="ef-nav">
         {nav.map((item, index) => {
@@ -105,7 +99,7 @@ function Sidebar() {
               to={item.to}
               className={`ef-nav-item ${index === 0 ? "active" : ""}`}
             >
-              <Icon size={19} strokeWidth={1.65} />
+              <Icon size={20} strokeWidth={1.7} />
               <span>{item.label}</span>
             </Link>
           );
@@ -114,18 +108,18 @@ function Sidebar() {
 
       <div className="ef-premium">
         <div className="ef-premium-icon">
-          <Crown size={14} strokeWidth={1.9} />
+          <Crown size={14} />
         </div>
         <strong>Seja Premium</strong>
         <p>Mais benefícios e inteligência para sua jornada.</p>
-        <Link to="/premium" className="ef-premium-button">
+        <Link to="/premium">
           Ver planos
           <ChevronRight size={13} />
         </Link>
       </div>
 
       <div className="ef-user">
-        <div className="ef-user-photo" />
+        <div className="ef-avatar" />
         <span>Maria Silva</span>
         <ChevronDown size={14} />
       </div>
@@ -136,20 +130,14 @@ function Sidebar() {
 function LeafArt() {
   return (
     <div className="ef-leaf-art" aria-hidden>
-      <div className="ef-leaf-glow" />
+      <div className="ef-leaf-shadow" />
       <svg viewBox="0 0 430 420" fill="none">
-        <path
-          d="M210 407C207 322 188 244 153 166C131 116 99 68 52 25"
-          stroke="#79B88D"
-          strokeWidth="4"
-          strokeLinecap="round"
-          opacity=".5"
-        />
-        <path d="M154 170C96 156 54 109 32 44C95 58 140 98 154 170Z" fill="#77C89C" opacity=".40" />
-        <path d="M178 240C119 232 78 198 51 145C113 153 162 187 178 240Z" fill="#77C89C" opacity=".31" />
-        <path d="M194 307C148 299 113 270 91 225C142 231 182 259 194 307Z" fill="#77C89C" opacity=".23" />
-        <path d="M146 150C202 89 267 61 371 63C319 135 238 172 146 150Z" fill="#77C89C" opacity=".35" />
-        <path d="M176 222C233 170 298 150 392 166C332 235 254 252 176 222Z" fill="#77C89C" opacity=".28" />
+        <path d="M208 407C206 326 188 250 153 168C130 116 99 69 52 25" stroke="#78AD83" strokeWidth="4.2" strokeLinecap="round" opacity=".55"/>
+        <path d="M154 170C96 156 54 109 32 44C95 58 140 98 154 170Z" fill="#6DBE8C" opacity=".48"/>
+        <path d="M178 240C119 232 78 198 51 145C113 153 162 187 178 240Z" fill="#6DBE8C" opacity=".36"/>
+        <path d="M194 307C148 299 113 270 91 225C142 231 182 259 194 307Z" fill="#6DBE8C" opacity=".25"/>
+        <path d="M146 150C202 89 267 61 371 63C319 135 238 172 146 150Z" fill="#6DBE8C" opacity=".42"/>
+        <path d="M176 222C233 170 298 150 392 166C332 235 254 252 176 222Z" fill="#6DBE8C" opacity=".31"/>
       </svg>
     </div>
   );
@@ -157,34 +145,32 @@ function LeafArt() {
 
 function MapArt() {
   return (
-    <div className="ef-map-art" aria-hidden>
-      <svg viewBox="0 0 360 118" preserveAspectRatio="none">
-        <rect width="360" height="118" rx="20" fill="#17351F" />
-        {Array.from({ length: 7 }).map((_, i) => (
-          <path key={`h-${i}`} d={`M0 ${i * 20 + 9}H360`} stroke="#335A3D" strokeWidth="1" />
-        ))}
-        {Array.from({ length: 10 }).map((_, i) => (
-          <path key={`v-${i}`} d={`M${i * 38 + 14} 0V118`} stroke="#335A3D" strokeWidth="1" />
-        ))}
-        <rect x="108" width="31" height="118" fill="#24432B" />
-        <rect y="40" width="360" height="14" fill="#24432B" />
-        <circle cx="124" cy="51" r="29" fill="#6FC653" opacity=".13" />
-        <circle cx="124" cy="51" r="18" fill="#6FC653" opacity=".23" />
-        <circle cx="124" cy="51" r="10" fill="#63C84F" />
-        <circle cx="124" cy="51" r="5" fill="white" />
-        <path d="M124 62V76" stroke="#2DAB6B" strokeWidth="4" strokeLinecap="round" />
-      </svg>
-    </div>
+    <svg className="ef-map-art" viewBox="0 0 380 150" preserveAspectRatio="none" aria-hidden>
+      <rect width="380" height="150" rx="22" fill="#142F1C" />
+      {Array.from({ length: 8 }).map((_, i) => (
+        <path key={`h-${i}`} d={`M0 ${i * 22 + 10}H380`} stroke="#33543A" strokeWidth="1" />
+      ))}
+      {Array.from({ length: 11 }).map((_, i) => (
+        <path key={`v-${i}`} d={`M${i * 39 + 14} 0V150`} stroke="#33543A" strokeWidth="1" />
+      ))}
+      <rect x="112" width="33" height="150" fill="#243F2A" />
+      <rect y="47" width="380" height="15" fill="#243F2A" />
+      <circle cx="128" cy="58" r="34" fill="#6FC653" opacity=".13" />
+      <circle cx="128" cy="58" r="21" fill="#6FC653" opacity=".22" />
+      <circle cx="128" cy="58" r="10" fill="#63C84F" />
+      <circle cx="128" cy="58" r="5" fill="white" />
+      <path d="M128 69V84" stroke="#2DAB6B" strokeWidth="4" strokeLinecap="round" />
+    </svg>
   );
 }
 
 function Landscape() {
   return (
-    <svg className="ef-landscape" viewBox="0 0 760 78" preserveAspectRatio="none" aria-hidden>
-      <path d="M0 78C108 33 178 52 265 32C365 10 445 38 543 20C620 7 686 18 760 0V78H0Z" fill="#7F9276" opacity=".22" />
-      <path d="M0 78C124 52 210 63 326 47C455 29 560 50 760 29V78H0Z" fill="#344235" opacity=".25" />
-      <circle cx="650" cy="18" r="3.5" fill="#0B2419" opacity=".65" />
-      <path d="M650 23V40M650 31L642 40M650 31L658 40M650 40L643 54M650 40L658 55" stroke="#0B2419" strokeWidth="1.7" strokeLinecap="round" opacity=".65" />
+    <svg className="ef-landscape" viewBox="0 0 760 84" preserveAspectRatio="none" aria-hidden>
+      <path d="M0 84C108 36 178 55 265 35C365 12 445 40 543 21C620 8 686 19 760 0V84H0Z" fill="#879B7D" opacity=".24" />
+      <path d="M0 84C124 55 210 66 326 50C455 31 560 52 760 31V84H0Z" fill="#334434" opacity=".26" />
+      <circle cx="650" cy="20" r="3.6" fill="#0B2419" opacity=".68" />
+      <path d="M650 25V43M650 33L642 43M650 33L658 43M650 43L643 58M650 43L658 59" stroke="#0B2419" strokeWidth="1.7" strokeLinecap="round" opacity=".68" />
     </svg>
   );
 }
@@ -194,11 +180,7 @@ function FoodImage({ src, alt }: { src?: string | null; alt: string }) {
 
   return (
     <div className="ef-food-fallback">
-      <div className="ef-plate">
-        <span>🍗</span>
-        <span>🥦</span>
-        <span>🍚</span>
-      </div>
+      <div className="ef-plate">🥗</div>
     </div>
   );
 }
@@ -322,7 +304,6 @@ function HomePage() {
 
   useEffect(() => {
     if (!user) return;
-
     syncStreak().then((synced) => {
       if (synced != null) {
         qc.invalidateQueries({ queryKey: ["profile"] });
@@ -333,7 +314,6 @@ function HomePage() {
 
   useEffect(() => {
     if (!user || !daily) return;
-
     const checks: Promise<boolean>[] = [];
 
     if (daily.water_ml >= waterGoal) checks.push(grantAchievement("water_goal"));
@@ -351,13 +331,15 @@ function HomePage() {
   return (
     <div className="ef-page">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap');
+
         html,
         body,
         #root {
           width: 100%;
-          min-width: 0;
           height: 100%;
           overflow: hidden !important;
+          margin: 0 !important;
           background: #fbfaf7 !important;
         }
 
@@ -365,35 +347,23 @@ function HomePage() {
           box-sizing: border-box;
         }
 
-        :root {
-          --ef-bg: #fbfaf7;
-          --ef-ink: #0a2418;
-          --ef-muted: rgba(10,36,24,.54);
-          --ef-card: rgba(255,255,255,.82);
-          --ef-line: rgba(10,36,24,.085);
-          --ef-green: #6A9E4E;
-          --ef-dark: #0d2118;
-          --ef-shadow: 0 22px 54px rgba(10,36,24,.07);
-        }
-
         .ef-page {
           width: 100vw;
           height: 100vh;
           overflow: hidden;
-          background: var(--ef-bg);
-          color: var(--ef-ink);
+          background: #fbfaf7;
+          color: #0a2418;
           display: grid;
           grid-template-columns: 184px minmax(0, 1fr);
-          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
 
         .ef-sidebar {
-          width: 184px;
           height: 100vh;
-          background: rgba(255,255,255,.76);
+          background: rgba(255,255,255,.77);
           border-right: 1px solid rgba(10,36,24,.055);
           box-shadow: 12px 0 34px rgba(10,36,24,.035);
-          border-radius: 0 34px 34px 0;
+          border-radius: 0 35px 35px 0;
           padding: 36px 24px 26px;
           display: flex;
           flex-direction: column;
@@ -401,25 +371,25 @@ function HomePage() {
         }
 
         .ef-logo {
-          width: 78px;
-          margin-left: 24px;
+          width: 70px;
+          margin-left: 26px;
+          color: #0a2418;
           font-size: 25px;
           font-weight: 800;
           line-height: .78;
           letter-spacing: -.065em;
-          color: #0a2418;
           display: grid;
         }
 
         .ef-nav {
-          margin-top: 55px;
+          margin-top: 57px;
           display: grid;
-          gap: 15px;
+          gap: 16px;
         }
 
         .ef-nav-item {
           height: 48px;
-          border-radius: 12px;
+          border-radius: 13px;
           display: flex;
           align-items: center;
           gap: 14px;
@@ -428,7 +398,6 @@ function HomePage() {
           text-decoration: none;
           font-size: 14px;
           font-weight: 500;
-          letter-spacing: -.015em;
         }
 
         .ef-nav-item.active {
@@ -471,7 +440,7 @@ function HomePage() {
           margin: 0 0 15px;
         }
 
-        .ef-premium-button {
+        .ef-premium a {
           height: 36px;
           border-radius: 11px;
           background: #f1f3ec;
@@ -495,7 +464,7 @@ function HomePage() {
           font-size: 12px;
         }
 
-        .ef-user-photo {
+        .ef-avatar {
           width: 30px;
           height: 30px;
           border-radius: 50%;
@@ -503,48 +472,40 @@ function HomePage() {
             radial-gradient(circle at 50% 34%, #f2c5a7 0 18%, transparent 19%),
             radial-gradient(circle at 50% 77%, #7d3d23 0 26%, transparent 27%),
             linear-gradient(135deg, #ead2bd, #c88d65);
-          box-shadow: inset 0 0 0 1px rgba(10,36,24,.08);
         }
 
         .ef-main {
           position: relative;
+          width: 100%;
           height: 100vh;
           overflow: hidden;
-          padding: 41px 76px 40px 92px;
-        }
-
-        .ef-topbar {
-          position: relative;
-          z-index: 5;
-          display: flex;
-          justify-content: flex-end;
-          gap: 28px;
-          align-items: center;
-          height: 56px;
-          margin-bottom: 38px;
         }
 
         .ef-search {
-          width: 340px;
+          position: absolute;
+          top: 39px;
+          right: 220px;
+          width: 310px;
           height: 48px;
-          border-radius: 18px;
-          background: rgba(255,255,255,.80);
-          border: 1px solid var(--ef-line);
+          border-radius: 17px;
+          background: rgba(255,255,255,.82);
+          border: 1px solid rgba(10,36,24,.085);
+          box-shadow: 0 16px 42px rgba(10,36,24,.04);
           display: flex;
           align-items: center;
           gap: 13px;
           padding: 0 20px;
-          box-shadow: 0 16px 42px rgba(10,36,24,.04);
+          z-index: 5;
         }
 
         .ef-search input {
-          border: none;
-          outline: none;
+          border: 0;
+          outline: 0;
           background: transparent;
           width: 100%;
           height: 100%;
           font-size: 13px;
-          color: var(--ef-ink);
+          color: #0a2418;
         }
 
         .ef-search input::placeholder {
@@ -552,21 +513,24 @@ function HomePage() {
         }
 
         .ef-bell {
+          position: absolute;
+          top: 39px;
+          right: 143px;
           width: 48px;
           height: 48px;
           border-radius: 50%;
-          background: rgba(255,255,255,.80);
-          border: 1px solid var(--ef-line);
+          background: rgba(255,255,255,.82);
+          border: 1px solid rgba(10,36,24,.085);
+          color: #0a2418;
           display: grid;
           place-items: center;
-          position: relative;
-          color: var(--ef-ink);
           box-shadow: 0 16px 42px rgba(10,36,24,.04);
+          z-index: 5;
         }
 
-        .ef-bell-dot {
+        .ef-bell span {
           position: absolute;
-          right: 12px;
+          right: 11px;
           top: 10px;
           width: 8px;
           height: 8px;
@@ -574,51 +538,53 @@ function HomePage() {
           background: #70ad4c;
         }
 
-        .ef-hero-grid {
-          position: relative;
-          z-index: 5;
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) 420px;
-          gap: 78px;
-          align-items: start;
-        }
-
         .ef-greeting {
+          position: absolute;
+          left: 91px;
+          top: 122px;
+          margin: 0;
           color: rgba(10,36,24,.52);
           font-size: 18px;
           font-weight: 400;
           letter-spacing: -.02em;
-          margin: 7px 0 0;
+          z-index: 6;
         }
 
         .ef-title {
-          margin: 25px 0 0;
-          font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-          font-size: 56px;
+          position: absolute;
+          left: 91px;
+          top: 168px;
+          margin: 0;
+          font-family: "Cormorant Garamond", Georgia, serif;
+          font-size: 66px;
           line-height: .99;
           font-weight: 500;
           letter-spacing: -.052em;
           color: #0a2418;
-          max-width: 550px;
+          width: 560px;
+          z-index: 6;
         }
 
         .ef-subtitle {
-          margin: 31px 0 0;
-          max-width: 390px;
+          position: absolute;
+          left: 91px;
+          top: 352px;
+          margin: 0;
           color: rgba(10,36,24,.48);
           font-size: 16px;
           line-height: 1.48;
           letter-spacing: -.02em;
+          z-index: 6;
         }
 
         .ef-leaf-art {
           position: absolute;
-          left: 49.8%;
-          top: 178px;
+          left: 462px;
+          top: 205px;
           width: 360px;
           height: 348px;
-          z-index: 0;
-          opacity: .88;
+          z-index: 1;
+          opacity: .86;
         }
 
         .ef-leaf-art svg {
@@ -628,34 +594,34 @@ function HomePage() {
           transform: rotate(-11deg);
         }
 
-        .ef-leaf-glow {
+        .ef-leaf-shadow {
           position: absolute;
           inset: 16px;
           border-radius: 999px;
-          background: radial-gradient(circle, rgba(91,151,85,.12), transparent 68%);
+          background: radial-gradient(circle, rgba(91,151,85,.11), transparent 68%);
           filter: blur(22px);
         }
 
         .ef-progress-card {
+          position: absolute;
+          left: 91px;
+          top: 454px;
           width: 350px;
           height: 155px;
           border-radius: 24px;
           background: rgba(255,255,255,.82);
-          border: 1px solid var(--ef-line);
-          box-shadow: var(--ef-shadow);
-          backdrop-filter: blur(18px);
+          border: 1px solid rgba(10,36,24,.085);
+          box-shadow: 0 22px 54px rgba(10,36,24,.07);
           display: flex;
           align-items: center;
           padding: 0 26px;
           gap: 23px;
-          margin-top: 69px;
-          position: relative;
-          z-index: 2;
+          z-index: 6;
         }
 
         .ef-progress-copy small {
-          display: block;
           color: rgba(10,36,24,.42);
+          display: block;
           font-size: 12px;
           font-weight: 500;
           margin-bottom: 13px;
@@ -663,8 +629,7 @@ function HomePage() {
 
         .ef-progress-copy strong {
           display: block;
-          font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-          color: #0a2418;
+          font-family: "Cormorant Garamond", Georgia, serif;
           font-size: 20px;
           line-height: 1.13;
           font-weight: 500;
@@ -681,31 +646,29 @@ function HomePage() {
           align-items: center;
         }
 
-        .ef-right {
-          display: grid;
-          gap: 23px;
-        }
-
         .ef-machine-card {
+          position: absolute;
+          right: 143px;
+          top: 111px;
+          width: 420px;
           height: 228px;
           border-radius: 26px;
           background: #0d2118;
-          padding: 25px 25px 21px;
           color: white;
           box-shadow: 0 25px 64px rgba(10,36,24,.18);
           overflow: hidden;
-          position: relative;
+          padding: 25px 25px 21px;
+          z-index: 6;
         }
 
         .ef-machine-card small {
           font-size: 13px;
           color: rgba(255,255,255,.82);
-          display: block;
         }
 
         .ef-distance {
           margin-top: 13px;
-          font-size: 30px;
+          font-size: 34px;
           line-height: 1;
           font-weight: 400;
           letter-spacing: -.04em;
@@ -732,8 +695,8 @@ function HomePage() {
 
         .ef-map-art {
           position: absolute;
-          right: -44px;
-          top: 48px;
+          right: -40px;
+          top: 49px;
           width: 245px;
           height: 114px;
           opacity: .72;
@@ -741,8 +704,9 @@ function HomePage() {
         }
 
         .ef-machine-card a {
-          margin-top: 32px;
-          position: relative;
+          position: absolute;
+          left: 25px;
+          bottom: 21px;
           z-index: 2;
           display: inline-flex;
           align-items: center;
@@ -757,18 +721,23 @@ function HomePage() {
         }
 
         .ef-food-card {
+          position: absolute;
+          right: 143px;
+          top: 363px;
+          width: 420px;
           height: 249px;
           border-radius: 25px;
           background: rgba(255,255,255,.82);
-          border: 1px solid var(--ef-line);
+          border: 1px solid rgba(10,36,24,.085);
           box-shadow: 0 24px 62px rgba(10,36,24,.06);
           padding: 22px;
+          z-index: 6;
         }
 
         .ef-food-head {
           display: flex;
-          align-items: center;
           justify-content: space-between;
+          align-items: center;
           margin-bottom: 15px;
         }
 
@@ -817,11 +786,11 @@ function HomePage() {
           width: 100px;
           height: 100px;
           border-radius: 50%;
-          background: #f8f6ef;
           display: grid;
           place-items: center;
+          font-size: 44px;
+          background: #f8f6ef;
           box-shadow: inset 0 0 0 7px #eee6dc;
-          font-size: 25px;
         }
 
         .ef-food-copy h2 {
@@ -858,7 +827,6 @@ function HomePage() {
         .ef-macro strong {
           font-size: 12px;
           color: #0a2418;
-          letter-spacing: -.02em;
         }
 
         .ef-macro small {
@@ -900,16 +868,18 @@ function HomePage() {
         }
 
         .ef-phrase {
-          margin-top: 35px;
+          position: absolute;
+          left: 91px;
+          right: 143px;
+          top: 638px;
           height: 75px;
           border-radius: 18px;
           background: linear-gradient(90deg, #eef3e4 0%, #f5f5ee 52%, #e1e9d9 100%);
-          position: relative;
           overflow: hidden;
           display: flex;
           align-items: center;
           padding-left: 28px;
-          z-index: 5;
+          z-index: 6;
         }
 
         .ef-spark {
@@ -944,30 +914,33 @@ function HomePage() {
           height: 100%;
         }
 
-        .ef-actions {
-          margin-top: 18px;
-          position: relative;
-          z-index: 5;
-        }
-
-        .ef-actions h3 {
-          margin: 0 0 15px 14px;
+        .ef-actions-title {
+          position: absolute;
+          left: 106px;
+          top: 729px;
           font-size: 12.5px;
           font-weight: 500;
           color: #0a2418;
+          z-index: 6;
         }
 
-        .ef-actions-grid {
+        .ef-actions {
+          position: absolute;
+          left: 91px;
+          right: 143px;
+          top: 759px;
+          height: 96px;
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           gap: 24px;
+          z-index: 6;
         }
 
         .ef-action {
           height: 96px;
           border-radius: 19px;
           background: rgba(255,255,255,.82);
-          border: 1px solid var(--ef-line);
+          border: 1px solid rgba(10,36,24,.085);
           box-shadow: 0 18px 45px rgba(10,36,24,.04);
           display: flex;
           align-items: center;
@@ -1000,23 +973,10 @@ function HomePage() {
           color: rgba(10,36,24,.46);
         }
 
-        @media (max-width: 1180px) {
-          .ef-page {
-            grid-template-columns: 160px minmax(0, 1fr);
-          }
-
-          .ef-main {
-            padding-left: 50px;
-            padding-right: 50px;
-          }
-
-          .ef-hero-grid {
-            gap: 42px;
-            grid-template-columns: minmax(0, 1fr) 390px;
-          }
-
-          .ef-title {
-            font-size: 50px;
+        @media (max-height: 820px) {
+          .ef-actions-title,
+          .ef-actions {
+            display: none;
           }
         }
       `}</style>
@@ -1024,132 +984,124 @@ function HomePage() {
       <Sidebar />
 
       <main className="ef-main">
+        <div className="ef-search">
+          <Search size={16} strokeWidth={1.8} color="rgba(10,36,24,.42)" />
+          <input placeholder="Buscar máquinas, refeições..." />
+        </div>
+
+        <Link to="/notifications" className="ef-bell">
+          <Bell size={18} strokeWidth={1.75} />
+          <span />
+        </Link>
+
         <LeafArt />
 
-        <header className="ef-topbar">
-          <div className="ef-search">
-            <Search size={16} strokeWidth={1.8} color="rgba(10,36,24,.42)" />
-            <input placeholder="Buscar máquinas, refeições..." />
+        <p className="ef-greeting">Oi, Maria 👋</p>
+
+        <h1 className="ef-title">
+          Cuidar de você
+          <br />
+          nunca foi tão fácil.
+        </h1>
+
+        <p className="ef-subtitle">
+          Pequenas escolhas todos os dias
+          <br />
+          constroem grandes transformações.
+        </p>
+
+        <div className="ef-progress-card">
+          <ProgressRing pct={visualProgress} />
+
+          <div className="ef-progress-copy">
+            <small>Seu progresso semanal</small>
+            <strong>
+              Você está no
+              <br />
+              caminho certo!
+            </strong>
+            <Link to="/profile">
+              Ver evolução
+              <ChevronRight size={13} />
+            </Link>
+          </div>
+        </div>
+
+        <section className="ef-machine-card">
+          <small>Máquina mais próxima</small>
+          <div className="ef-distance">{nearest ? "89 m" : "—"}</div>
+          <div className="ef-machine-address">
+            {nearest?.address ?? "Rua Pamplona, 145"}
+          </div>
+          <div className="ef-machine-open">
+            Aberta agora até {nearest ? closesAt : "22h00"}
+          </div>
+          <MapArt />
+          <Link to="/machines">
+            Ver todas as máquinas
+            <ChevronRight size={14} />
+          </Link>
+        </section>
+
+        <section className="ef-food-card">
+          <div className="ef-food-head">
+            <span>Sugestão para você</span>
+            <span className="ef-new">Novo</span>
           </div>
 
-          <Link to="/notifications" className="ef-bell">
-            <Bell size={18} strokeWidth={1.75} />
-            <span className="ef-bell-dot" />
-          </Link>
-        </header>
+          <div className="ef-food-body">
+            <div className="ef-food-image">
+              <FoodImage
+                src={featuredProduct?.image_url}
+                alt={featuredProduct?.name ?? "Frango grelhado com arroz integral"}
+              />
+            </div>
 
-        <section className="ef-hero-grid">
-          <div>
-            <p className="ef-greeting">Oi, Maria 👋</p>
+            <div className="ef-food-copy">
+              <h2>
+                {featuredProduct?.name ?? (
+                  <>
+                    Frango grelhado
+                    <br />
+                    com arroz integral
+                  </>
+                )}
+              </h2>
+              <p>
+                {featuredProduct?.description ??
+                  "Equilibrada, nutritiva e cheia de sabor."}
+              </p>
 
-            <h1 className="ef-title">
-              Cuidar de você
-              <br />
-              nunca foi tão fácil.
-            </h1>
+              <div className="ef-macros">
+                {[
+                  { value: featuredProduct?.calories ?? 480, unit: "kcal", label: "" },
+                  { value: featuredProduct?.protein ?? 32, unit: "g", label: "Proteína" },
+                  { value: featuredProduct?.carbs ?? 56, unit: "g", label: "Carbo" },
+                  { value: featuredProduct?.fat ?? 12, unit: "g", label: "Gordura" },
+                ].map((macro) => (
+                  <div className="ef-macro" key={macro.label || "kcal"}>
+                    <div>
+                      <strong>
+                        {macro.value}
+                        {macro.unit}
+                      </strong>
+                      {macro.label && <small>{macro.label}</small>}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-            <p className="ef-subtitle">
-              Pequenas escolhas todos os dias
-              <br />
-              constroem grandes transformações.
-            </p>
-
-            <div className="ef-progress-card">
-              <ProgressRing pct={visualProgress} />
-
-              <div className="ef-progress-copy">
-                <small>Seu progresso semanal</small>
-                <strong>
-                  Você está no
-                  <br />
-                  caminho certo!
-                </strong>
-                <Link to="/profile">
-                  Ver evolução
+              <div className="ef-food-actions">
+                <Link to="/catalog" className="ef-food-button">
+                  Ver detalhes
                   <ChevronRight size={13} />
+                </Link>
+                <Link to="/catalog" className="ef-plus">
+                  <Plus size={18} />
                 </Link>
               </div>
             </div>
           </div>
-
-          <aside className="ef-right">
-            <section className="ef-machine-card">
-              <small>Máquina mais próxima</small>
-              <div className="ef-distance">{nearest ? "89 m" : "—"}</div>
-              <div className="ef-machine-address">
-                {nearest?.address ?? "Rua Pamplona, 145"}
-              </div>
-              <div className="ef-machine-open">
-                Aberta agora até {nearest ? closesAt : "22h00"}
-              </div>
-              <MapArt />
-              <Link to="/machines">
-                Ver todas as máquinas
-                <ChevronRight size={14} />
-              </Link>
-            </section>
-
-            <section className="ef-food-card">
-              <div className="ef-food-head">
-                <span>Sugestão para você</span>
-                <span className="ef-new">Novo</span>
-              </div>
-
-              <div className="ef-food-body">
-                <div className="ef-food-image">
-                  <FoodImage
-                    src={featuredProduct?.image_url}
-                    alt={featuredProduct?.name ?? "Frango grelhado com arroz integral"}
-                  />
-                </div>
-
-                <div className="ef-food-copy">
-                  <h2>
-                    {featuredProduct?.name ?? (
-                      <>
-                        Frango grelhado
-                        <br />
-                        com arroz integral
-                      </>
-                    )}
-                  </h2>
-                  <p>
-                    {featuredProduct?.description ??
-                      "Equilibrada, nutritiva e cheia de sabor."}
-                  </p>
-
-                  <div className="ef-macros">
-                    {[
-                      { value: featuredProduct?.calories ?? 480, unit: "kcal", label: "" },
-                      { value: featuredProduct?.protein ?? 32, unit: "g", label: "Proteína" },
-                      { value: featuredProduct?.carbs ?? 56, unit: "g", label: "Carbo" },
-                      { value: featuredProduct?.fat ?? 12, unit: "g", label: "Gordura" },
-                    ].map((macro) => (
-                      <div className="ef-macro" key={macro.label || "kcal"}>
-                        <div>
-                          <strong>
-                            {macro.value}
-                            {macro.unit}
-                          </strong>
-                          {macro.label && <small>{macro.label}</small>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="ef-food-actions">
-                    <Link to="/catalog" className="ef-food-button">
-                      Ver detalhes
-                      <ChevronRight size={13} />
-                    </Link>
-                    <Link to="/catalog" className="ef-plus">
-                      <Plus size={18} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </aside>
         </section>
 
         <section className="ef-phrase">
@@ -1165,46 +1117,44 @@ function HomePage() {
           <Landscape />
         </section>
 
-        <section className="ef-actions">
-          <h3>Ações rápidas</h3>
+        <div className="ef-actions-title">Ações rápidas</div>
 
-          <div className="ef-actions-grid">
-            {[
-              {
-                icon: <ScanLine size={21} strokeWidth={1.65} />,
-                label: "Escanear refeição",
-                desc: "Use a IA para analisar sua refeição",
-                to: "/nutrition",
-              },
-              {
-                icon: <Droplets size={21} strokeWidth={1.65} />,
-                label: "Registrar água",
-                desc: "Acompanhe sua hidratação diária",
-                to: "/",
-                onClick: () => logWater.mutate(250),
-              },
-              {
-                icon: <BellRing size={21} strokeWidth={1.65} />,
-                label: "Próximo lembrete",
-                desc: "Sua próxima refeição em 2h 15min",
-                to: "/notifications",
-              },
-              {
-                icon: <FileText size={21} strokeWidth={1.65} />,
-                label: "Ver meu plano",
-                desc: "Seu plano alimentar personalizado",
-                to: "/meal-plan",
-              },
-            ].map(({ icon, label, desc, to, onClick }) => (
-              <Link key={label} to={to} onClick={onClick} className="ef-action">
-                <div className="ef-action-icon">{icon}</div>
-                <div>
-                  <strong>{label}</strong>
-                  <p>{desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+        <section className="ef-actions">
+          {[
+            {
+              icon: <ScanLine size={21} strokeWidth={1.65} />,
+              label: "Escanear refeição",
+              desc: "Use a IA para analisar sua refeição",
+              to: "/nutrition",
+            },
+            {
+              icon: <Droplets size={21} strokeWidth={1.65} />,
+              label: "Registrar água",
+              desc: "Acompanhe sua hidratação diária",
+              to: "/",
+              onClick: () => logWater.mutate(250),
+            },
+            {
+              icon: <BellRing size={21} strokeWidth={1.65} />,
+              label: "Próximo lembrete",
+              desc: "Sua próxima refeição em 2h 15min",
+              to: "/notifications",
+            },
+            {
+              icon: <FileText size={21} strokeWidth={1.65} />,
+              label: "Ver meu plano",
+              desc: "Seu plano alimentar personalizado",
+              to: "/meal-plan",
+            },
+          ].map(({ icon, label, desc, to, onClick }) => (
+            <Link key={label} to={to} onClick={onClick} className="ef-action">
+              <div className="ef-action-icon">{icon}</div>
+              <div>
+                <strong>{label}</strong>
+                <p>{desc}</p>
+              </div>
+            </Link>
+          ))}
         </section>
       </main>
     </div>
