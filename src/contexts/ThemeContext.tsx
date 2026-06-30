@@ -11,8 +11,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stored = (localStorage.getItem("easyfood-theme") as Theme | null) ?? null;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initial: Theme = stored ?? (prefersDark ? "dark" : "light");
+    const initial: Theme = stored ?? "light"; // always default to light — design reference is light mode
     setThemeState(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
   }, []);
