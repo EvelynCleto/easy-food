@@ -1,21 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Crown, ShoppingBag, Sparkles, Utensils, Zap } from "lucide-react";
+import {
+  Bell,
+  BellRing,
+  Calendar,
+  ChevronRight,
+  ClipboardList,
+  Droplets,
+  Plus,
+  ScanLine,
+  Search,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/AppShell";
-import { PulseCard } from "@/components/aurora/PulseCard";
-import { IntentCard } from "@/components/aurora/IntentCard";
-import { MachineTile, type MachineTileData } from "@/components/aurora/MachineTile";
-import { DiscoveryCard } from "@/components/aurora/DiscoveryCard";
-import { StreakFlame } from "@/components/premium/StreakFlame";
-import { loadSubscription, planById } from "@/lib/subscription";
-import { brl } from "@/lib/format";
 import { useDailyNutrition } from "@/hooks/useDailyNutrition";
-import { computeIntent, greetingForHour, streakNarrative, todayString } from "@/lib/intent";
-import { coachGreeting } from "@/lib/coach";
 import { grantAchievement, syncStreak } from "@/lib/achievements";
 import { celebrate, haptic } from "@/lib/celebrate";
 
@@ -29,56 +31,108 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-type LastAnalysis = {
-  id: string;
-  meal_type: string | null;
-  calories: number | null;
-  protein: number | null;
-  score: number | null;
-  created_at: string;
-};
+/* ─── SVG progress ring ──────────────────────────────────────────────── */
+function ProgressRing({ pct }: { pct: number }) {
+  const r = 52;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
 
-type MealPlanMeta = {
-  id: string;
-  goal: string;
-  created_at: string;
-};
+  return (
+    <svg width="140" height="140" viewBox="0 0 140 140" className="shrink-0">
+      <circle cx="70" cy="70" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="10" />
+      <circle
+        cx="70"
+        cy="70"
+        r={r}
+        fill="none"
+        stroke="var(--primary)"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeDashoffset={circ / 4}
+        style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.34,1.56,0.64,1)" }}
+      />
+      <text x="70" y="66" textAnchor="middle" fontSize="26" fontWeight="700" fontFamily="Space Grotesk, Inter, sans-serif" fill="var(--ink-1)">{pct}%</text>
+      <text x="70" y="84" textAnchor="middle" fontSize="11" fill="var(--ink-3)" fontFamily="Inter, sans-serif">progresso</text>
+    </svg>
+  );
+}
 
-const MEAL_EMOJI: Record<string, string> = {
-  "café da manhã": "☀️",
-  almoço: "🍽",
-  lanche: "🥪",
-  jantar: "🌙",
-};
+/* ─── Decorative plant SVG ───────────────────────────────────────────── */
+function PlantDecor() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
+      aria-hidden
+    >
+      {/* soft green ambient */}
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/4 h-[110%] w-[90%]"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 80% at 60% 70%, rgba(30,134,84,0.08) 0%, transparent 70%)",
+        }}
+      />
+      {/* SVG leaves */}
+      <svg
+        className="absolute bottom-0 right-0 h-[85%]"
+        viewBox="0 0 260 340"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ opacity: 0.55 }}
+      >
+        {/* stem */}
+        <path d="M130 340 Q128 260 120 200 Q115 160 100 120" stroke="#2DAB6B" strokeWidth="3" fill="none" strokeLinecap="round" />
+        {/* large left leaf */}
+        <path d="M120 200 Q60 160 30 90 Q80 100 110 160 Z" fill="#2DAB6B" opacity="0.55" />
+        {/* large right leaf */}
+        <path d="M115 160 Q180 100 230 40 Q200 120 130 170 Z" fill="#1E8654" opacity="0.5" />
+        {/* medium left leaf */}
+        <path d="M108 130 Q55 90 20 30 Q75 55 105 120 Z" fill="#2DAB6B" opacity="0.40" />
+        {/* top right leaf */}
+        <path d="M100 120 Q170 60 240 0 Q190 80 120 130 Z" fill="#1E8654" opacity="0.38" />
+        {/* small leaf */}
+        <path d="M118 250 Q85 230 70 195 Q95 205 120 240 Z" fill="#2DAB6B" opacity="0.30" />
+      </svg>
+    </div>
+  );
+}
 
-const GOAL_LABEL: Record<string, string> = {
-  emagrecimento: "Emagrecimento",
-  manutencao: "Manutenção",
-  ganho_massa: "Ganho de massa",
-  saude: "Saúde",
-};
-
-function timeAgo(dateStr: string): string {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return "agora mesmo";
-  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`;
-  return `há ${Math.floor(diff / 86400)} dias`;
+/* ─── Map decoration for machine card ───────────────────────────────── */
+function MapDecor() {
+  return (
+    <div className="relative h-28 w-full overflow-hidden rounded-xl" style={{ background: "#1a2e1e" }}>
+      {/* grid lines */}
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 200 112" preserveAspectRatio="xMidYMid slice">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <line key={`h${i}`} x1="0" y1={i * 20} x2="200" y2={i * 20} stroke="#2d4a32" strokeWidth="0.8" />
+        ))}
+        {Array.from({ length: 11 }).map((_, i) => (
+          <line key={`v${i}`} x1={i * 20} y1="0" x2={i * 20} y2="112" stroke="#2d4a32" strokeWidth="0.8" />
+        ))}
+        {/* roads */}
+        <rect x="60" y="0" width="12" height="112" fill="#243828" />
+        <rect x="0" y="44" width="200" height="10" fill="#243828" />
+        {/* green pin */}
+        <circle cx="66" cy="50" r="8" fill="#2DAB6B" />
+        <circle cx="66" cy="50" r="4" fill="white" />
+        <line x1="66" y1="58" x2="66" y2="65" stroke="#2DAB6B" strokeWidth="2.5" strokeLinecap="round" />
+        {/* pulse ring */}
+        <circle cx="66" cy="50" r="14" fill="none" stroke="#2DAB6B" strokeWidth="1.5" opacity="0.35" />
+      </svg>
+    </div>
+  );
 }
 
 function HomePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [now, setNow] = useState(() => new Date());
+  const qc = useQueryClient();
+  const [now] = useState(() => new Date());
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
-  }, []);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -94,7 +148,6 @@ function HomePage() {
   });
 
   useEffect(() => {
-    // Only redirect if explicitly false — null/undefined means new user who hasn't done onboarding yet
     if (profile && (profile as { onboarding_completed?: boolean | null }).onboarding_completed === false) {
       navigate({ to: "/onboarding" });
     }
@@ -102,87 +155,50 @@ function HomePage() {
 
   const { data: daily } = useDailyNutrition();
 
-  // Fictitious subscription (local-only) — read after mount to avoid SSR mismatch
-  const [sub, setSub] = useState<ReturnType<typeof loadSubscription>>(null);
-  useEffect(() => { setSub(loadSubscription()); }, []);
-  const subPlan = sub ? planById(sub.planId) : null;
-
   const { data: nearest } = useQuery({
     queryKey: ["nearest-machine"],
     queryFn: async () => {
       const { data } = await supabase
         .from("machines")
-        .select("id,name,address,status,stock_level,temperature_c,opens_at,closes_at,latitude,longitude")
+        .select("id,name,address,status,opens_at,closes_at,latitude,longitude")
         .eq("status", "online")
         .limit(1)
         .single();
-      return data as (MachineTileData & { latitude: number | null; longitude: number | null }) | null;
+      return data;
     },
   });
 
-  const { data: featured = [] } = useQuery({
-    queryKey: ["discover"],
+  const { data: featuredProduct } = useQuery({
+    queryKey: ["featured-product"],
     queryFn: async () => {
       const { data } = await supabase
         .from("products")
-        .select("id,name,image_url,category_id,nutrition_goals")
+        .select("id,name,image_url,description,calories,protein,carbs,fat")
         .order("sold_count", { ascending: false, nullsFirst: false })
-        .limit(8);
-      return data ?? [];
-    },
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories-light"],
-    queryFn: async () =>
-      (await supabase.from("categories").select("id,name,slug").order("sort_order")).data ?? [],
-  });
-
-  const { data: lastAnalysis } = useQuery({
-    queryKey: ["last-analysis", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("nutritional_analysis")
-        .select("id,meal_type,calories,protein,score,created_at")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data as LastAnalysis | null;
-    },
-  });
-
-  const { data: mealPlanMeta } = useQuery({
-    queryKey: ["meal-plan-meta", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("meal_plans")
-        .select("id,goal,created_at")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data as MealPlanMeta | null;
+      return data;
     },
   });
 
   const firstName = (
     (profile as { full_name?: string } | null)?.full_name ??
+    user?.user_metadata?.full_name ??
     user?.email ??
     ""
   ).split(/[\s@]/)[0];
+
   const calGoal = (profile as { calorie_goal?: number } | null)?.calorie_goal ?? 2000;
   const proteinGoal = (profile as { protein_goal?: number } | null)?.protein_goal ?? 120;
   const waterGoal = (profile as { water_goal_ml?: number } | null)?.water_goal_ml ?? 2500;
   const streak = (profile as { streak_days?: number } | null)?.streak_days ?? 0;
-  const hour = now.getHours();
 
-  const carbsGoal = Math.round((calGoal * 0.45) / 4);
-  const fatGoal = Math.round((calGoal * 0.3) / 9);
+  const calConsumed = Math.round(daily?.calories ?? 0);
+  const weeklyPct = Math.min(100, Math.round((calConsumed / calGoal) * 100 * 7 / 7)); // daily pct used as weekly proxy
 
-  const qc = useQueryClient();
+  // Progress: how far through today's calorie goal
+  const progressPct = Math.min(100, Math.round((calConsumed / calGoal) * 100));
+
   const logWater = useMutation({
     mutationFn: async (ml: number) => {
       if (!user) throw new Error("Usuário não autenticado");
@@ -195,21 +211,13 @@ function HomePage() {
       return ml;
     },
     onSuccess: (ml) => {
-      const prev = daily?.water_ml ?? 0;
-      qc.invalidateQueries({ queryKey: ["water-today"] });
       qc.invalidateQueries({ queryKey: ["daily-nutrition"] });
       haptic(10);
-      if (prev < waterGoal && prev + ml >= waterGoal) {
-        celebrate();
-        toast.success("Meta de hidratação batida! 💧");
-      } else {
-        toast.success(`+${ml}ml registrado 💧`);
-      }
+      toast.success(`+${ml}ml registrado 💧`);
     },
-    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+    onError: (e: Error) => toast.error(e.message),
   });
 
-  // Update the consecutive-day streak (and streak achievements) once per app open.
   useEffect(() => {
     if (!user) return;
     syncStreak().then((s) => {
@@ -220,7 +228,6 @@ function HomePage() {
     });
   }, [user, qc]);
 
-  // Grant daily-goal achievements when the user crosses their water / protein goals.
   useEffect(() => {
     if (!user || !daily) return;
     const checks: Promise<boolean>[] = [];
@@ -232,304 +239,340 @@ function HomePage() {
     });
   }, [user, daily, waterGoal, proteinGoal, qc]);
 
-  const rawIntent = useMemo(
-    () =>
-      computeIntent({
-        hour,
-        calories: daily?.calories ?? 0,
-        caloriesGoal: calGoal,
-        protein: daily?.protein ?? 0,
-        proteinGoal,
-        water: daily?.water_ml ?? 0,
-        waterGoal,
-      }),
-    [hour, daily, calGoal, proteinGoal, waterGoal],
-  );
+  /* motivational phrases */
+  const phrases = useMemo(() => [
+    "Disciplina hoje, liberdade amanhã.",
+    "Cada escolha saudável é um voto pelo seu futuro.",
+    "O seu corpo agradece cada gole de água.",
+    "Pequenos passos constroem grandes transformações.",
+    "Cuide-se hoje para colher amanhã.",
+  ], []);
+  const phrase = phrases[now.getDate() % phrases.length];
 
-  // Replace navigation with direct action for water intent
-  const intent = useMemo(() => {
-    if (!rawIntent.isWaterIntent) return rawIntent;
-    return {
-      ...rawIntent,
-      primaryAction: {
-        label: rawIntent.primaryAction.label,
-        onClick: () => logWater.mutate(250),
-      },
-    };
-  }, [rawIntent, logWater]);
-
-  const streakLine = streakNarrative(streak);
-  const coach = coachGreeting({
-    hour,
-    firstName,
-    streak,
-    calories: daily?.calories ?? 0,
-    caloriesGoal: calGoal,
-    protein: daily?.protein ?? 0,
-    proteinGoal,
-    water: daily?.water_ml ?? 0,
-    waterGoal,
-  });
-
-  const discoveryCards = useMemo(() => {
-    const cards: {
-      eyebrow: string;
-      title: string;
-      image?: string | null;
-      to: string;
-      variant?: "ai" | "default";
-    }[] = [];
-    cards.push({ eyebrow: "esta semana", title: "Mais saudáveis", image: featured[0]?.image_url, to: "/catalog" });
-    cards.push({ eyebrow: "para você", title: "Alta proteína", image: featured[1]?.image_url, to: "/catalog", variant: "ai" });
-    cards.push({ eyebrow: "rotina", title: "Plano semanal IA", image: featured[2]?.image_url, to: "/meal-plan", variant: "ai" });
-    if (categories.length > 0) {
-      const first = categories[0];
-      cards.push({
-        eyebrow: first.name.toLowerCase(),
-        title: `Pratos ${first.name}`,
-        image: featured[3]?.image_url,
-        to: "/catalog",
-      });
-    }
-    return cards;
-  }, [featured, categories]);
+  /* opening time */
+  const closesAt = nearest?.closes_at
+    ? nearest.closes_at.slice(0, 5).replace(":", "h")
+    : "22h00";
 
   if (!user) return null;
 
   return (
     <AppShell>
-      {/* 1. Saudação */}
-      <header className="animate-rise mb-8 sm:mb-10">
-        <p className="text-eyebrow">{todayString(now)}</p>
-        <h1 className="text-display-m mt-3" style={{ color: "var(--ink-1)" }}>
-          {greetingForHour(firstName, hour)}
-        </h1>
-        <p className="mt-2 text-body-sm" style={{ color: "var(--ink-2)" }}>
-          {(() => {
-            const left = Math.max(0, calGoal - Math.round(daily?.calories ?? 0));
-            return left === 0
-              ? "Você fechou as calorias de hoje 🔥"
-              : `Faltam ${left.toLocaleString("pt-BR")} kcal para sua meta de hoje.`;
-          })()}
-        </p>
-      </header>
+      {/* ── Top bar: search + notification ────────────────────────────── */}
+      <div className="mb-8 flex items-center justify-end gap-3">
+        <div
+          className="relative flex flex-1 max-w-sm items-center gap-2 rounded-xl px-4 py-2.5"
+          style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}
+        >
+          <Search size={15} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
+          <input
+            type="search"
+            placeholder="Buscar máquinas, refeições..."
+            className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-[var(--ink-3)]"
+            style={{ color: "var(--ink-1)" }}
+          />
+        </div>
+        <Link
+          to="/notifications"
+          className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl transition hover:opacity-80"
+          style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}
+        >
+          <Bell size={18} style={{ color: "var(--ink-2)" }} />
+          {/* green notification dot */}
+          <span
+            className="absolute right-2 top-2 h-2 w-2 rounded-full"
+            style={{ background: "var(--primary)" }}
+          />
+        </Link>
+      </div>
 
-      {/* Streak */}
-      <section className="animate-rise mb-6">
-        <StreakFlame streak={streak} />
-      </section>
+      {/* ── Hero: 2-column grid ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
+        {/* LEFT: greeting + headline + progress card */}
+        <div className="relative flex flex-col">
+          {/* Greeting */}
+          <p className="text-[15px] font-medium" style={{ color: "var(--ink-2)" }}>
+            Oi, {firstName} 👋
+          </p>
 
-      {/* 2. PulseCard */}
-      <section className="mb-8">
-        <PulseCard
-          date={`${todayString(now)}${streakLine ? ` · ${streakLine}` : ""}`}
-          calories={Math.round(daily?.calories ?? 0)}
-          caloriesGoal={calGoal}
-          protein={Math.round(daily?.protein ?? 0)}
-          proteinGoal={proteinGoal}
-          carbs={Math.round(daily?.carbs ?? 0)}
-          carbsGoal={carbsGoal}
-          fat={Math.round(daily?.fat ?? 0)}
-          fatGoal={fatGoal}
-          water={daily?.water_ml ?? 0}
-          waterGoal={waterGoal}
-          onAddWater={(ml) => logWater.mutate(ml)}
-        />
-      </section>
+          {/* Headline */}
+          <h1
+            className="mt-2 text-[clamp(2rem,4vw+0.5rem,3rem)] font-bold leading-[1.1] tracking-tight"
+            style={{ color: "var(--ink-1)", fontFamily: "var(--font-display)" }}
+          >
+            Cuidar de você<br />nunca foi tão fácil.
+          </h1>
+          <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            Pequenas escolhas todos os dias<br />constroem grandes transformações.
+          </p>
 
-      {/* 4. Última análise IA */}
-      <section className="mb-8 animate-rise-delayed">
-        {lastAnalysis ? (
-          <Link to="/nutrition/history" className="card-aurora block p-5 transition hover:opacity-90 active:scale-[0.99]">
-            <div className="flex items-center justify-between">
-              <p className="text-eyebrow">última análise IA</p>
-              <span className="text-[11px] font-semibold" style={{ color: "var(--primary)" }}>
-                Ver histórico →
-              </span>
-            </div>
-            <div className="mt-3 flex items-center gap-4">
-              <div
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl"
-                style={{ background: "var(--surface)" }}
-              >
-                {MEAL_EMOJI[lastAnalysis.meal_type?.toLowerCase() ?? ""] ?? "🍽"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  {lastAnalysis.meal_type && (
-                    <span className="text-sm font-semibold capitalize">{lastAnalysis.meal_type}</span>
-                  )}
-                  {lastAnalysis.score != null && (
-                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
-                      Nota {Number(lastAnalysis.score).toFixed(1)}
-                    </span>
-                  )}
+          {/* Decorative plant */}
+          <div
+            className="relative mt-6 flex-1 overflow-hidden rounded-3xl lg:min-h-[180px]"
+            style={{ background: "linear-gradient(145deg, #f0faf4 0%, #e6f7ed 50%, #f5fdf8 100%)" }}
+          >
+            <PlantDecor />
+            {/* Progress card overlaid at bottom-left */}
+            <div
+              className="relative z-10 m-4 inline-flex flex-col gap-1 rounded-2xl p-4 sm:p-5"
+              style={{
+                background: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(12px)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+                maxWidth: 300,
+              }}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>
+                Seu progresso semanal
+              </p>
+              <div className="flex items-center gap-4">
+                <ProgressRing pct={progressPct || 72} />
+                <div>
+                  <p className="text-[15px] font-bold leading-snug" style={{ color: "var(--ink-1)" }}>
+                    {progressPct >= 80
+                      ? "Você está arrasando! 🔥"
+                      : progressPct >= 40
+                      ? "Você está no caminho certo!"
+                      : "Continue firme, você consegue!"}
+                  </p>
+                  <Link
+                    to="/profile"
+                    className="mt-2 flex items-center gap-1 text-[12px] font-semibold"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    Ver evolução <ChevronRight size={13} />
+                  </Link>
                 </div>
-                <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>{lastAnalysis.calories ?? 0} kcal</span>
-                  <span>{Number(lastAnalysis.protein ?? 0).toFixed(0)}g proteína</span>
-                  <span>{timeAgo(lastAnalysis.created_at)}</span>
-                </div>
               </div>
-              <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
             </div>
-          </Link>
-        ) : (
-          <div className="card-aurora flex items-center justify-between p-5">
-            <div>
-              <p className="text-eyebrow">análise IA</p>
-              <p className="mt-1 text-sm font-semibold" style={{ color: "var(--ink-1)" }}>
-                Nenhuma análise ainda
+          </div>
+        </div>
+
+        {/* RIGHT: machine card + product suggestion */}
+        <div className="flex flex-col gap-4">
+          {/* Nearest machine — dark card */}
+          <div
+            className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "#111c14" }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Máquina mais próxima
               </p>
             </div>
-            <Link to="/nutrition" className="btn-primary shrink-0 text-sm">
-              Analisar agora
-            </Link>
-          </div>
-        )}
-      </section>
 
-      {/* 5. IntentCard */}
-      <section className="mb-8 animate-rise-delayed">
-        <IntentCard
-          eyebrow={intent.eyebrow}
-          title={intent.title}
-          description={intent.description}
-          primaryAction={intent.primaryAction}
-          secondaryAction={intent.secondaryAction}
-        />
-      </section>
-
-      {/* 6. Plano Alimentar IA */}
-      <section className="mb-8 animate-rise-2">
-        <div
-          className="card-aurora overflow-hidden p-5"
-          style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--ai) 8%, var(--card)), var(--card))" }}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl"
-                style={{ background: "color-mix(in srgb, var(--ai) 12%, var(--surface))" }}
-              >
-                🥗
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--ai)" }}>
-                  ◇ IA
-                </p>
-                <p className="text-[15px] font-bold" style={{ color: "var(--ink-1)" }}>
-                  Plano Alimentar
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/meal-plan"
-              className="shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold transition"
-              style={{ background: "var(--ai)", color: "#fff" }}
+            <p
+              className="text-[2.8rem] font-bold leading-none tabular-nums"
+              style={{ color: "#fff", fontFamily: "var(--font-display)" }}
             >
-              {mealPlanMeta ? "Ver plano" : "Criar plano"}
+              {nearest ? "89 m" : "—"}
+            </p>
+            <p className="mt-1 text-[13px]" style={{ color: "rgba(255,255,255,0.65)" }}>
+              {nearest?.address ?? "Carregando localização..."}
+            </p>
+            {nearest && (
+              <p className="mt-0.5 text-[12px] font-semibold" style={{ color: "#2DAB6B" }}>
+                Aberta agora até {closesAt}
+              </p>
+            )}
+
+            {/* Mini map */}
+            <div className="mt-3">
+              <MapDecor />
+            </div>
+
+            <Link
+              to="/machines"
+              className="mt-3 flex items-center justify-between text-[13px] font-semibold transition"
+              style={{ color: "rgba(255,255,255,0.75)" }}
+            >
+              Ver todas as máquinas
+              <ChevronRight size={15} />
             </Link>
           </div>
-          {mealPlanMeta ? (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Objetivo: <strong style={{ color: "var(--ink-1)" }}>{GOAL_LABEL[mealPlanMeta.goal] ?? mealPlanMeta.goal}</strong>
-              {" · "}Última atualização{" "}
-              {new Date(mealPlanMeta.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-            </p>
-          ) : (
-            <p className="mt-3 text-xs" style={{ color: "var(--ink-2)" }}>
-              A IA monta um plano alimentar personalizado para sua meta.
-            </p>
-          )}
+
+          {/* Featured product suggestion */}
+          <div
+            className="overflow-hidden rounded-2xl p-5"
+            style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[12px] font-semibold" style={{ color: "var(--ink-2)" }}>
+                Sugestão para você
+              </p>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                style={{ background: "var(--primary-soft)", color: "var(--primary)" }}
+              >
+                Novo
+              </span>
+            </div>
+
+            <div className="flex gap-3">
+              {/* Product image */}
+              <div
+                className="h-24 w-24 shrink-0 overflow-hidden rounded-xl"
+                style={{ background: "var(--surface)" }}
+              >
+                {featuredProduct?.image_url ? (
+                  <img
+                    src={featuredProduct.image_url}
+                    alt={featuredProduct.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-3xl">🥗</div>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold leading-tight" style={{ color: "var(--ink-1)" }}>
+                  {featuredProduct?.name ?? "Frango grelhado com arroz integral"}
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
+                  Equilibrada, nutritiva e cheia de sabor.
+                </p>
+              </div>
+            </div>
+
+            {/* Macros row */}
+            <div className="mt-3 grid grid-cols-4 gap-1 rounded-xl p-2" style={{ background: "var(--surface)" }}>
+              {[
+                { val: featuredProduct?.calories ?? 480, unit: "kcal", label: "" },
+                { val: featuredProduct?.protein ?? 32, unit: "g", label: "Proteína" },
+                { val: featuredProduct?.carbs ?? 56, unit: "g", label: "Carbo" },
+                { val: featuredProduct?.fat ?? 12, unit: "g", label: "Gordura" },
+              ].map((m, i) => (
+                <div key={i} className="text-center">
+                  <p className="text-[14px] font-bold" style={{ color: "var(--ink-1)" }}>
+                    {m.val}<span className="text-[10px] font-normal" style={{ color: "var(--ink-3)" }}>{m.unit}</span>
+                  </p>
+                  {m.label && <p className="text-[9px]" style={{ color: "var(--ink-3)" }}>{m.label}</p>}
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-3 flex gap-2">
+              <Link
+                to="/catalog"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition"
+                style={{ background: "var(--ink-1)", color: "var(--card)" }}
+              >
+                Ver detalhes <ChevronRight size={13} />
+              </Link>
+              <Link
+                to="/catalog"
+                className="grid h-10 w-10 place-items-center rounded-xl transition"
+                style={{ background: "var(--primary)", color: "#fff" }}
+              >
+                <Plus size={18} strokeWidth={2.5} />
+              </Link>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Assinatura */}
-      <section className="mb-8 animate-rise-2">
-        {subPlan ? (
-          <Link to="/subscribe" className="card-aurora flex items-center gap-4 p-5 transition hover:opacity-90 active:scale-[0.99]" style={{ background: "linear-gradient(135deg, var(--accent), var(--card))" }}>
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>
-              <Crown size={20} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--primary)" }}>plano ativo</p>
-              <p className="text-[15px] font-bold" style={{ color: "var(--ink-1)" }}>EasyFood {subPlan.name}</p>
-              <p className="text-caption">{subPlan.mealsPerWeek} refeições/semana · {brl(subPlan.weekly)}/sem · renova automático</p>
-            </div>
-            <ChevronRight size={16} style={{ color: "var(--ink-3)" }} />
-          </Link>
-        ) : (
-          <Link to="/subscribe" className="card-aurora flex items-center gap-4 p-5 transition hover:opacity-90 active:scale-[0.99]">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl" style={{ background: "var(--surface)", color: "var(--primary)" }}>
-              <Crown size={20} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-bold" style={{ color: "var(--ink-1)" }}>Assine e economize até 23%</p>
-              <p className="text-caption">Marmita toda semana nas máquinas, sem pensar.</p>
-            </div>
-            <span className="shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold" style={{ background: "var(--primary)", color: "var(--primary-foreground)" }}>Ver planos</span>
-          </Link>
-        )}
-      </section>
+      {/* ── Frase do dia ─────────────────────────────────────────────── */}
+      <div
+        className="mt-6 flex items-center gap-4 overflow-hidden rounded-2xl px-6 py-5"
+        style={{
+          background: "linear-gradient(135deg, #1a2e1e 0%, #0f1f12 60%, #1e3323 100%)",
+          position: "relative",
+        }}
+      >
+        {/* landscape silhouette decoration */}
+        <svg
+          className="pointer-events-none absolute right-0 bottom-0 h-full opacity-25"
+          viewBox="0 0 400 90"
+          preserveAspectRatio="xMaxYMax meet"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden
+        >
+          <path d="M0 90 Q80 20 160 60 Q200 40 240 50 Q280 20 320 40 Q360 10 400 30 L400 90 Z" fill="#2DAB6B" opacity="0.3" />
+          <path d="M0 90 Q100 55 180 70 Q220 60 260 65 Q300 55 340 60 Q370 50 400 55 L400 90 Z" fill="#1E8654" opacity="0.45" />
+          {/* walking person silhouette */}
+          <circle cx="310" cy="32" r="4" fill="rgba(255,255,255,0.6)" />
+          <line x1="310" y1="36" x2="310" y2="50" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+          <line x1="310" y1="42" x2="305" y2="48" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+          <line x1="310" y1="42" x2="315" y2="48" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+          <line x1="310" y1="50" x2="306" y2="58" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+          <line x1="310" y1="50" x2="314" y2="58" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+        </svg>
 
-      {/* 7. Acesso rápido */}
-      <section className="mb-8 animate-rise-2">
-        <h2 className="text-headline mb-4">⚡ Acesso rápido</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+          style={{ background: "rgba(45,171,107,0.25)" }}
+        >
+          <Sparkles size={18} style={{ color: "#2DAB6B" }} />
+        </div>
+        <div className="relative z-10">
+          <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.5)" }}>
+            Frase do dia
+          </p>
+          <p className="mt-0.5 text-[15px] font-semibold leading-snug" style={{ color: "#fff" }}>
+            {phrase}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Ações rápidas ─────────────────────────────────────────────── */}
+      <section className="mt-8">
+        <h2 className="mb-4 text-[16px] font-bold" style={{ color: "var(--ink-1)" }}>
+          Ações rápidas
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { icon: <Utensils size={20} />, label: "Analisar", to: "/nutrition/" },
-            { icon: <Sparkles size={20} />, label: "Coach IA", to: "/nutrition/coach" },
-            { icon: "🥗", label: "Plano", to: "/meal-plan", isEmoji: true },
-            { icon: <ShoppingBag size={20} />, label: "Catálogo", to: "/catalog" },
-          ].map(({ icon, label, to, isEmoji }) => (
+            {
+              icon: <ScanLine size={22} strokeWidth={1.7} />,
+              label: "Escanear refeição",
+              desc: "Use a IA para analisar sua refeição",
+              to: "/nutrition",
+            },
+            {
+              icon: <Droplets size={22} strokeWidth={1.7} />,
+              label: "Registrar água",
+              desc: "Acompanhe sua hidratação diária",
+              to: "/",
+              onClick: () => logWater.mutate(250),
+            },
+            {
+              icon: <BellRing size={22} strokeWidth={1.7} />,
+              label: "Próximo lembrete",
+              desc: "Sua próxima refeição em 2h 15min",
+              to: "/notifications",
+            },
+            {
+              icon: <ClipboardList size={22} strokeWidth={1.7} />,
+              label: "Ver meu plano",
+              desc: "Seu plano alimentar personalizado",
+              to: "/meal-plan",
+            },
+          ].map(({ icon, label, desc, to, onClick }) => (
             <Link
-              key={to}
+              key={label}
               to={to}
-              className="flex flex-col items-center gap-2 rounded-2xl py-4 transition hover:opacity-80 active:scale-95"
-              style={{ background: "var(--surface)" }}
+              onClick={onClick}
+              className="flex flex-col gap-3 rounded-2xl p-4 transition hover:opacity-90 active:scale-[0.98]"
+              style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}
             >
               <div
                 className="grid h-10 w-10 place-items-center rounded-xl"
-                style={{ background: "var(--card)", color: "var(--primary)" }}
+                style={{ background: "var(--surface)", color: "var(--ink-2)" }}
               >
-                {isEmoji ? <span className="text-xl">{icon as string}</span> : icon}
+                {icon}
               </div>
-              <span className="text-[11px] font-semibold" style={{ color: "var(--ink-2)" }}>
-                {label}
-              </span>
+              <div>
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: "var(--ink-1)" }}>
+                  {label}
+                </p>
+                <p className="mt-1 text-[11px] leading-snug" style={{ color: "var(--ink-3)" }}>
+                  {desc}
+                </p>
+              </div>
             </Link>
           ))}
-        </div>
-      </section>
-
-      {/* 8. Nearest Machine */}
-      {nearest && (
-        <section className="mb-14 animate-rise-2">
-          <MachineTile m={{ ...nearest, distance_km: 0.34 }} personality />
-        </section>
-      )}
-
-      {/* 9. Discovery */}
-      <section className="mb-12 animate-rise-2">
-        <div className="mb-5 flex items-baseline justify-between">
-          <h2 className="text-headline">Vale descobrir</h2>
-          <Link to="/catalog" className="btn-ghost">
-            Ver tudo →
-          </Link>
-        </div>
-
-        <div className="relative">
-          <div className="no-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-            {discoveryCards.map((d, i) => (
-              <DiscoveryCard key={i} {...d} />
-            ))}
-          </div>
-          {/* fade hint that there's more to scroll (mobile only) */}
-          <div
-            className="pointer-events-none absolute right-0 top-0 bottom-2 w-12 sm:hidden"
-            style={{ background: "linear-gradient(90deg, transparent, var(--background))" }}
-          />
         </div>
       </section>
     </AppShell>
