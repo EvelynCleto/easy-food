@@ -5,6 +5,7 @@ import { ChevronLeft, Send, Sparkles, Trash2 } from "lucide-react";
 import { coachChat, getCoachHistory, clearCoachHistory } from "@/lib/coach.functions";
 import { markCoachUsedToday } from "@/lib/engagement";
 import { Markdown } from "@/components/Markdown";
+import { useDailyNutrition } from "@/hooks/useDailyNutrition";
 
 export const Route = createFileRoute("/_authenticated/nutrition/coach")({
   component: CoachPage,
@@ -37,6 +38,15 @@ function CoachPage() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { data: daily } = useDailyNutrition();
+
+  const insight = (() => {
+    const cal = Math.round(daily?.calories ?? 0);
+    const prot = Math.round(daily?.protein ?? 0);
+    if (cal === 0) return "Seu dia está em branco até agora. Me conta o que você comeu — ou me pergunta o que vale a pena comer agora.";
+    if (prot > 0) return `Até agora hoje: ${cal} kcal e ${prot}g de proteína. Quer que eu te ajude a fechar o resto do dia?`;
+    return `Você já registrou ${cal} kcal hoje. Posso te ajudar a equilibrar o que falta.`;
+  })();
 
   // Prefer the server-persisted history (cross-device); fall back to localStorage.
   useEffect(() => {
@@ -115,8 +125,9 @@ function CoachPage() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto pb-4">
         {messages.length === 0 && (
           <div className="card-aurora p-6">
-            <p className="text-body" style={{ color: "var(--ink-1)" }}>
-              Oi! Eu sou seu coach. Eu vejo o que você registrou hoje e na semana, então pode perguntar de verdade — sobre suas metas, o que comer, como tá indo.
+            <p className="text-eyebrow" style={{ color: "var(--ai)" }}>◇ insight do dia</p>
+            <p className="mt-3 text-body" style={{ color: "var(--ink-1)" }}>
+              {insight}
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
