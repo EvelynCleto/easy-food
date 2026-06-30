@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, CreditCard, Loader2, QrCode, Wallet } from "lucide-react";
+import { Check, CreditCard, Loader2, QrCode, Wallet, Tag, ShieldCheck, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 
 type Method = PaymentMethod;
 
+const STEPS = ["Refeição", "Máquina", "Pagamento", "Confirmação"];
+
 function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
   const { user } = useAuth();
@@ -25,7 +27,7 @@ function CheckoutPage() {
   const [coupon, setCoupon] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
-  const [method, setMethod] = useState<Method>("pix");
+  const [method, setMethod] = useState<Method>("credit_card");
   const [busy, setBusy] = useState(false);
 
   const { data: machines = [] } = useQuery({
@@ -85,126 +87,244 @@ function CheckoutPage() {
   }
 
   if (items.length === 0) {
-    return <div className="grid h-[60vh] place-items-center text-caption">Carrinho vazio.</div>;
+    return <div className="grid h-[60vh] place-items-center" style={{ color: "var(--ink-3)" }}>Carrinho vazio.</div>;
   }
 
-  const methods: { id: Method; label: string; Icon: typeof CreditCard }[] = [
-    { id: "pix", label: "PIX", Icon: QrCode },
-    { id: "credit_card", label: "Crédito", Icon: CreditCard },
-    { id: "debit_card", label: "Débito", Icon: CreditCard },
-    { id: "meal_voucher", label: "VR", Icon: Wallet },
+  const payMethods: { id: Method; label: string; sub: string; Icon: typeof CreditCard }[] = [
+    { id: "credit_card", label: "Cartão de crédito", sub: "Visa, Mastercard, Elo", Icon: CreditCard },
+    { id: "pix",         label: "Pix",               sub: "Transferência instantânea", Icon: QrCode },
+    { id: "debit_card",  label: "Carteira digital",  sub: "Apple Pay, Google Pay",    Icon: Wallet },
+    { id: "meal_voucher",label: "Vale-refeição",      sub: "Alelo, Sodexo, VR",        Icon: Ticket },
   ];
 
   return (
-    <div className="animate-rise mx-auto max-w-[1000px]">
-      <header className="mb-10">
-        <p className="text-eyebrow">finalizar pedido</p>
-        <h1 className="text-display-m mt-3">Checkout</h1>
-      </header>
+    <div className="mx-auto max-w-[1100px]">
+      {/* Step indicator */}
+      <div className="mb-8 flex items-center gap-0">
+        {STEPS.map((s, i) => {
+          const done = i < 2;
+          const active = i === 2;
+          return (
+            <div key={s} className="flex items-center">
+              <div className="flex items-center gap-2">
+                <div
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-bold transition"
+                  style={{
+                    background: done ? "var(--primary)" : active ? "var(--ink-1)" : "var(--surface)",
+                    color: done || active ? "#fff" : "var(--ink-3)",
+                  }}
+                >
+                  {done ? <Check size={13} strokeWidth={3} /> : i + 1}
+                </div>
+                <span
+                  className="hidden text-[13px] font-semibold sm:block"
+                  style={{ color: active ? "var(--ink-1)" : done ? "var(--primary)" : "var(--ink-3)" }}
+                >
+                  {s}
+                </span>
+              </div>
+              {i < STEPS.length - 1 && (
+                <div className="mx-3 h-px w-8 sm:w-16" style={{ background: done ? "var(--primary)" : "var(--hairline)" }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-      <div className="grid gap-8 md:grid-cols-[1fr_320px]">
-        <div className="space-y-6">
-          {/* Machine */}
-          <section className="card-nested p-6 sm:p-7">
-            <p className="text-eyebrow">onde retirar</p>
-            <h2 className="text-title-lg mt-2">Escolha a máquina</h2>
-            <div className="mt-5 space-y-1">
-              {machines.map((m) => {
-                const active = machineId === m.id;
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        {/* LEFT */}
+        <div className="space-y-5">
+          {/* Resumo do pedido */}
+          <section className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink-3)" }}>1. Resumo do pedido</p>
+            <div className="flex flex-col gap-3">
+              {items.map((item, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div
+                    className="h-14 w-14 shrink-0 overflow-hidden rounded-xl"
+                    style={{ background: "var(--surface)" }}
+                  >
+                    {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-cover" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-[14px] font-semibold" style={{ color: "var(--ink-1)" }}>{item.name}</p>
+                    <p className="text-[12px]" style={{ color: "var(--ink-3)" }}>{item.quantity}× {brl(item.price)}</p>
+                    <div className="mt-1 flex gap-2">
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--primary-soft)", color: "var(--primary)" }}>
+                        ~420 kcal
+                      </span>
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--surface)", color: "var(--ink-3)" }}>
+                        32g prot.
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--ink-1)" }}>
+                    {brl(item.price * item.quantity)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Machine selector */}
+            {machines.length > 0 && (
+              <div className="mt-5 pt-4" style={{ borderTop: "1px solid var(--hairline)" }}>
+                <p className="mb-2 text-[12px] font-semibold" style={{ color: "var(--ink-2)" }}>Máquina de retirada</p>
+                <div className="flex flex-col gap-1">
+                  {machines.slice(0, 3).map((m) => {
+                    const active = machineId === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setMachineId(m.id)}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:opacity-80"
+                        style={{ background: active ? "var(--primary-soft)" : "var(--surface)" }}
+                      >
+                        <div
+                          className="grid h-5 w-5 shrink-0 place-items-center rounded-full"
+                          style={{
+                            background: active ? "var(--primary)" : "transparent",
+                            border: active ? "none" : "1.5px solid var(--ink-3)",
+                          }}
+                        >
+                          {active && <Check size={11} className="text-white" strokeWidth={3.5} />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold" style={{ color: active ? "var(--primary)" : "var(--ink-1)" }}>{m.name}</p>
+                          <p className="text-[11px]" style={{ color: "var(--ink-3)" }}>{m.address}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Pagamento */}
+          <section className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}>
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink-3)" }}>2. Pagamento</p>
+            <div className="flex flex-col gap-2">
+              {payMethods.map(({ id, label, sub, Icon }) => {
+                const active = method === id;
                 return (
-                  <button key={m.id} onClick={() => setMachineId(m.id)}
-                    className="press flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition"
-                    style={{ background: active ? "var(--accent)" : "transparent" }}>
+                  <button
+                    key={id}
+                    onClick={() => setMethod(id)}
+                    className="flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-left transition"
+                    style={{
+                      background: active ? "var(--primary-soft)" : "var(--surface)",
+                      border: active ? "1.5px solid var(--primary)" : "1.5px solid transparent",
+                    }}
+                  >
+                    <div
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+                      style={{ background: active ? "var(--primary)" : "var(--card)" }}
+                    >
+                      <Icon size={18} style={{ color: active ? "#fff" : "var(--ink-2)" }} strokeWidth={1.8} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-semibold" style={{ color: "var(--ink-1)" }}>{label}</p>
+                      <p className="text-[11px]" style={{ color: "var(--ink-3)" }}>{sub}</p>
+                    </div>
                     <div
                       className="grid h-5 w-5 shrink-0 place-items-center rounded-full transition"
                       style={{
                         background: active ? "var(--primary)" : "transparent",
-                        border: active ? "1.5px solid var(--primary)" : "1.5px solid var(--ink-3)",
-                      }}>
+                        border: active ? "none" : "1.5px solid var(--ink-3)",
+                      }}
+                    >
                       {active && <Check size={11} className="text-white" strokeWidth={3.5} />}
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>{m.name}</div>
-                      <div className="text-caption">{m.address}</div>
-                    </div>
                   </button>
                 );
               })}
             </div>
-          </section>
-
-          {/* Payment */}
-          <section className="card-nested p-6 sm:p-7">
-            <p className="text-eyebrow">pagamento</p>
-            <h2 className="text-title-lg mt-2">Forma de pagamento</h2>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {methods.map(({ id, label, Icon }) => {
-                const active = method === id;
-                return (
-                  <button key={id} onClick={() => setMethod(id)}
-                    className="press flex flex-col items-center gap-2 rounded-2xl py-5 transition"
-                    style={{
-                      background: active ? "var(--ink-1)" : "var(--surface)",
-                      color: active ? "var(--card)" : "var(--ink-1)",
-                    }}>
-                    <Icon size={20} strokeWidth={1.7} />
-                    <span className="text-[12.5px] font-semibold">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Coupon */}
-          <section className="card-nested p-6 sm:p-7">
-            <p className="text-eyebrow">cupom</p>
-            <h2 className="text-title-lg mt-2">Código de desconto</h2>
-            <div className="mt-5 flex gap-2">
-              <input
-                value={coupon}
-                onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-                placeholder="Digite o código"
-                className="input-aurora flex-1 uppercase"
-              />
-              <button onClick={applyCoupon} className="btn-secondary px-6">Aplicar</button>
-            </div>
-            {appliedDiscount > 0 && (
-              <p className="mt-3 text-[13px] font-semibold" style={{ color: "var(--primary)" }}>
-                ✓ Desconto de {brl(appliedDiscount)} aplicado
-              </p>
-            )}
           </section>
         </div>
 
-        {/* Summary */}
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="card-aurora p-6">
-            <p className="text-eyebrow">resumo</p>
-            <div className="mt-5 space-y-3 text-body-sm">
-              <Row label="Subtotal" value={brl(subtotal)} />
-              <Row label="Taxa" value={brl(fee)} />
-              {appliedDiscount > 0 && <Row label="Desconto" value={`-${brl(appliedDiscount)}`} colored />}
+        {/* RIGHT SIDEBAR */}
+        <aside className="lg:sticky lg:top-24 lg:self-start flex flex-col gap-4">
+          {/* Total card */}
+          <div className="rounded-2xl p-5" style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}>
+            <p className="mb-4 text-[13px] font-semibold" style={{ color: "var(--ink-1)" }}>Total do pedido</p>
+            <div className="space-y-2.5 text-[13px]">
+              <div className="flex justify-between">
+                <span style={{ color: "var(--ink-2)" }}>Subtotal</span>
+                <span className="tabular-nums font-medium" style={{ color: "var(--ink-1)" }}>{brl(subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: "var(--ink-2)" }}>Taxa de serviço</span>
+                <span className="tabular-nums font-medium" style={{ color: "var(--ink-1)" }}>{brl(fee)}</span>
+              </div>
+              {appliedDiscount > 0 && (
+                <div className="flex justify-between">
+                  <span style={{ color: "var(--primary)" }}>Desconto</span>
+                  <span className="tabular-nums font-medium" style={{ color: "var(--primary)" }}>-{brl(appliedDiscount)}</span>
+                </div>
+              )}
             </div>
-            <div className="mt-5 flex items-baseline justify-between pt-5" style={{ borderTop: "0.5px solid var(--hairline)" }}>
-              <span className="text-[14.5px] font-semibold" style={{ color: "var(--ink-1)" }}>Total</span>
-              <span className="font-display text-[28px] font-semibold tabular-nums" style={{ color: "var(--ink-1)" }}>{brl(total)}</span>
+
+            {/* Coupon row */}
+            <div className="mt-3 flex gap-2">
+              <div
+                className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2"
+                style={{ background: "var(--surface)" }}
+              >
+                <Tag size={14} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
+                <input
+                  value={coupon}
+                  onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+                  placeholder="Cupom de desconto"
+                  className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-[var(--ink-3)]"
+                  style={{ color: "var(--ink-1)" }}
+                />
+              </div>
+              <button
+                onClick={applyCoupon}
+                className="rounded-xl px-3 py-2 text-[12px] font-semibold transition hover:opacity-80"
+                style={{ background: "var(--primary-soft)", color: "var(--primary)" }}
+              >
+                Aplicar
+              </button>
             </div>
-            <button onClick={placeOrder} disabled={busy} className="btn-primary mt-6 w-full">
-              {busy && <Loader2 size={16} className="animate-spin" />}
-              Pagar {brl(total)}
-            </button>
+
+            <div
+              className="mt-4 flex items-baseline justify-between pt-4"
+              style={{ borderTop: "1px solid var(--hairline)" }}
+            >
+              <span className="text-[14px] font-semibold" style={{ color: "var(--ink-1)" }}>Total</span>
+              <span className="text-[26px] font-bold tabular-nums" style={{ color: "var(--ink-1)", fontFamily: "var(--font-display)" }}>
+                {brl(total)}
+              </span>
+            </div>
           </div>
+
+          {/* Benefits */}
+          <div className="rounded-2xl p-4" style={{ background: "var(--primary-soft)" }}>
+            <div className="mb-3 flex items-center gap-2">
+              <ShieldCheck size={14} style={{ color: "var(--primary)" }} />
+              <p className="text-[12px] font-semibold" style={{ color: "var(--primary)" }}>Benefícios incluídos</p>
+            </div>
+            {["Retirada em até 10 min", "Produto fresco garantido", "+10 XP por pedido"].map((b) => (
+              <div key={b} className="flex items-center gap-2 py-1">
+                <Check size={12} style={{ color: "var(--primary)", flexShrink: 0 }} strokeWidth={2.5} />
+                <span className="text-[12px]" style={{ color: "var(--ink-1)" }}>{b}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={placeOrder}
+            disabled={busy}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-bold transition hover:opacity-90 disabled:opacity-60"
+            style={{ background: "var(--ink-1)", color: "#fff" }}
+          >
+            {busy && <Loader2 size={16} className="animate-spin" />}
+            {busy ? "Processando..." : `Confirmar pagamento • ${brl(total)}`}
+          </button>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function Row({ label, value, colored }: { label: string; value: string; colored?: boolean }) {
-  return (
-    <div className="flex justify-between">
-      <span style={{ color: "var(--ink-2)" }}>{label}</span>
-      <span className="tabular-nums" style={{ color: colored ? "var(--primary)" : "var(--ink-1)" }}>{value}</span>
     </div>
   );
 }

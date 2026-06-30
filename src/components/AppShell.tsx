@@ -5,7 +5,9 @@ import {
   ClipboardList,
   Clock,
   Crown,
+  Heart,
   Home,
+  LogOut,
   MapPin,
   ScanLine,
   ShoppingBag,
@@ -19,15 +21,18 @@ import { CookieBanner } from "./CookieBanner";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn, brl } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
-  { to: "/",                    label: "Início",    icon: Home          },
-  { to: "/machines",            label: "Máquinas",  icon: MapPin        },
-  { to: "/nutrition",           label: "Escanear",  icon: ScanLine      },
-  { to: "/meal-plan",           label: "Plano",     icon: ClipboardList },
-  { to: "/nutrition/dashboard", label: "Evolução",  icon: BarChart2     },
-  { to: "/nutrition/history",   label: "Histórico", icon: Clock         },
-  { to: "/profile",             label: "Perfil",    icon: UserCircle    },
+  { to: "/",                    label: "Início",         icon: Home          },
+  { to: "/machines",            label: "Máquinas",       icon: MapPin        },
+  { to: "/nutrition",           label: "Scanner IA",     icon: ScanLine      },
+  { to: "/meal-plan",           label: "Plano alimentar",icon: ClipboardList },
+  { to: "/nutrition/history",   label: "Histórico",      icon: Clock         },
+  { to: "/nutrition/dashboard", label: "Evolução",       icon: BarChart2     },
+  { to: "/favorites",           label: "Favoritos",      icon: Heart         },
+  { to: "/notifications",       label: "Notificações",   icon: Bell          },
+  { to: "/profile",             label: "Perfil",         icon: UserCircle    },
 ] as const;
 
 const navMobile = [
@@ -122,6 +127,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span style={{ color: "var(--ink-3)" }}>›</span>
             </Link>
           </div>
+        </div>
+
+        {/* Sair */}
+        <div className="mx-3 mb-2" style={{ borderTop: "1px solid var(--hairline)", paddingTop: 8 }}>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 transition hover:opacity-80"
+            style={{ color: "var(--ink-2)" }}
+          >
+            <LogOut size={17} strokeWidth={1.7} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
+            <span className="text-[14px] font-medium">Sair</span>
+          </button>
         </div>
 
         {/* User profile */}
