@@ -99,6 +99,12 @@ function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-[1100px]">
+      {/* Page title */}
+      <header className="mb-8">
+        <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--ink-3)" }}>checkout</p>
+        <h1 className="text-[28px] font-bold" style={{ color: "var(--ink-1)", fontFamily: "var(--font-display)" }}>Finalizar compra</h1>
+      </header>
+
       {/* Step indicator */}
       <div className="mb-8 flex items-center gap-0">
         {STEPS.map((s, i) => {

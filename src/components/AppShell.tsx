@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { type ReactNode } from "react";
 import { Logo } from "./Logo";
-import { ThemeToggle } from "./premium/ThemeToggle";
 import { CookieBanner } from "./CookieBanner";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,17 +35,18 @@ const navItems = [
 ] as const;
 
 const navMobile = [
-  { to: "/",           icon: Home,         label: "Início"   },
-  { to: "/catalog",    icon: ShoppingBag,  label: "Cardápio" },
-  { to: "/nutrition",  icon: ScanLine,     label: "Escanear" },
-  { to: "/profile",    icon: BarChart2,    label: "Evolução" },
+  { to: "/",                   icon: Home,        label: "Início"   },
+  { to: "/machines",           icon: MapPin,      label: "Máquinas" },
+  { to: "/nutrition",          icon: ScanLine,    label: "Escanear" },
+  { to: "/nutrition/history",  icon: Clock,       label: "Histórico"},
+  { to: "/profile",            icon: UserCircle,  label: "Perfil"   },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { count, subtotal } = useCart();
   const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const showCartBar = count > 0 && !pathname.startsWith("/cart") && !pathname.startsWith("/checkout");
+  const showCartBar = count > 0 && (pathname === "/" || pathname.startsWith("/catalog") || pathname.startsWith("/machines")) && !pathname.startsWith("/checkout");
 
   const firstName = (user?.user_metadata?.full_name ?? user?.email ?? "Você").split(/[\s@]/)[0];
 
@@ -171,7 +171,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex h-14 items-center justify-between px-5">
           <Link to="/"><Logo /></Link>
           <div className="flex items-center gap-0.5">
-            <ThemeToggle />
             <Link to="/notifications" aria-label="Notificações" className="btn-icon">
               <Bell size={17} strokeWidth={1.6} />
             </Link>
@@ -205,7 +204,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           borderTop: "0.5px solid var(--hairline)",
         }}
       >
-        <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-1.5">
+        <div className="mx-auto grid max-w-md grid-cols-5 px-2 py-1.5">
           {navMobile.map((item) => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             const Icon = item.icon;

@@ -429,6 +429,130 @@ function NutritionPage() {
     );
   }
 
+  /* ── ANALYZING VIEW ─────────────────────────────────────────────── */
+  if (busy) {
+    const steps = [
+      { label: "Detectando alimentos", done: true },
+      { label: "Calculando nutrientes", active: true },
+      { label: "Comparando com seu objetivo", done: false },
+      { label: "Gerando recomendações", done: false },
+    ];
+    const stepsDone = steps.filter((s) => s.done).length;
+    const pct = Math.round(((stepsDone + 0.5) / steps.length) * 100);
+
+    return (
+      <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+        {/* LEFT */}
+        <div>
+          <h1
+            className="mb-2 text-[clamp(1.6rem,3vw,2.4rem)] font-bold leading-tight"
+            style={{ color: "var(--ink-1)", fontFamily: "var(--font-display)" }}
+          >
+            Analisando sua refeição...
+          </h1>
+          <p className="mb-8 text-[14px]" style={{ color: "var(--ink-2)" }}>
+            Nossa IA está identificando os nutrientes da sua foto.
+          </p>
+
+          {/* Animated leaf ring */}
+          <div className="flex justify-center mb-8">
+            <div className="relative h-44 w-44">
+              <svg className="h-full w-full" viewBox="0 0 176 176">
+                <circle cx="88" cy="88" r="76" fill="none" stroke="var(--surface)" strokeWidth="10" />
+                <circle
+                  cx="88" cy="88" r="76"
+                  fill="none" stroke="var(--primary)" strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={`${pct * 4.78} 478`}
+                  strokeDashoffset="120"
+                  style={{ transition: "stroke-dasharray 1s ease" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className="grid h-20 w-20 place-items-center rounded-full"
+                  style={{ background: "var(--primary-soft)" }}
+                >
+                  <span className="text-4xl">🍃</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div className="space-y-3 mb-6">
+            {steps.map((s, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full"
+                  style={{
+                    background: s.done ? "var(--primary)" : s.active ? "var(--primary-soft)" : "var(--surface)",
+                  }}
+                >
+                  {s.done ? (
+                    <CheckCircle2 size={14} style={{ color: "#fff" }} strokeWidth={2.5} />
+                  ) : s.active ? (
+                    <Loader2 size={14} style={{ color: "var(--primary)" }} className="animate-spin" />
+                  ) : (
+                    <span className="text-[10px] font-bold" style={{ color: "var(--ink-3)" }}>{i + 1}</span>
+                  )}
+                </div>
+                <span
+                  className="text-[14px] font-medium"
+                  style={{
+                    color: s.done ? "var(--ink-1)" : s.active ? "var(--primary)" : "var(--ink-3)",
+                    fontWeight: s.active ? 600 : undefined,
+                  }}
+                >
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Progress bar */}
+          <div className="rounded-full overflow-hidden h-2" style={{ background: "var(--surface)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-1000"
+              style={{ width: `${pct}%`, background: "var(--primary)" }}
+            />
+          </div>
+          <p className="mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+            Análise em andamento... {stepsDone} de {steps.length} etapas concluídas
+          </p>
+        </div>
+
+        {/* RIGHT sidebar */}
+        <div className="flex flex-col gap-4">
+          {preview && (
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--hairline)" }}>
+              <img src={preview} alt="Sua refeição" className="h-40 w-full object-cover" />
+              <div className="p-3" style={{ background: "var(--card)" }}>
+                <p className="text-[12px] font-semibold" style={{ color: "var(--ink-1)" }}>Sua refeição</p>
+                <p className="text-[11px]" style={{ color: "var(--ink-3)" }}>Foto enviada para análise</p>
+              </div>
+            </div>
+          )}
+          <div className="rounded-2xl p-5" style={{ background: "var(--card)", border: "1px solid var(--hairline)" }}>
+            <p className="mb-3 text-[13px] font-semibold" style={{ color: "var(--ink-1)" }}>Por que escanear?</p>
+            <div className="space-y-3">
+              {[
+                { icon: "🎯", text: "Veja se a refeição está alinhada ao seu objetivo" },
+                { icon: "📊", text: "Macros e calorias calculados automaticamente" },
+                { icon: "💡", text: "Receba recomendações personalizadas" },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-start gap-3">
+                  <span className="text-lg shrink-0">{icon}</span>
+                  <p className="text-[12px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ── SCAN VIEW ───────────────────────────────────────────────────── */
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_340px]">

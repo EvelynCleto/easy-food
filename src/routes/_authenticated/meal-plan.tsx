@@ -235,6 +235,15 @@ function DayMealCard({ mealKey, meal }: { mealKey: MealKey; meal: PlanMeal | nul
             <MacroPill label="Carbo" value={`${meal.carbs}g`} />
             <MacroPill label="Gordura" value={`${meal.fat}g`} />
           </div>
+
+          {/* Trocar refeição */}
+          <button
+            type="button"
+            className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold transition hover:opacity-70"
+            style={{ color: "var(--primary)" }}
+          >
+            <RefreshCw size={12} /> Trocar refeição
+          </button>
         </div>
       ) : (
         <div
@@ -539,10 +548,10 @@ function MealPlanPage() {
           <button
             type="button"
             onClick={() => setShowGenerateForm(true)}
-            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition"
-            style={{ border: "1px solid var(--hairline)", color: "var(--ink-1)", background: "var(--card)" }}
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition hover:opacity-90"
+            style={{ background: "var(--ink-1)", color: "#fff" }}
           >
-            <Pencil size={13} /> Editar plano
+            <Sparkles size={13} /> Regenerar plano com IA
           </button>
           <button
             type="button"
